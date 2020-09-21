@@ -6,6 +6,13 @@ import lombok.ToString;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.log4j.Logger;
+import org.matsim.api.core.v01.Id;
+import org.matsim.api.core.v01.network.Link;
+import org.matsim.api.core.v01.network.Network;
+import org.matsim.api.core.v01.network.Node;
+import org.matsim.core.config.ConfigUtils;
+import org.matsim.core.network.io.MatsimNetworkReader;
+import org.matsim.core.scenario.ScenarioUtils;
 
 import java.io.FileReader;
 import java.io.IOException;
@@ -18,10 +25,14 @@ public class GetCountData {
 
 	private static final Logger logger = Logger.getLogger(CreateCounts.class);
 
-	Map<String, CountingData> countData(String filePath1, String filePath2, Map<String, NodeMatcher.MatchedLinkID> nodeMatcher) throws IOException {
+	Map<String, CountingData> countData(String filePath1, String filePath2, String networkFile, Map<String, NodeMatcher.MatchedLinkID> nodeMatcher) throws IOException {
 
-		var result1 = readData(filePath1, nodeMatcher);
-		var result2 = readData(filePath2, nodeMatcher);
+		Network network = ScenarioUtils.createScenario(ConfigUtils.createConfig()).getNetwork();
+		MatsimNetworkReader reader = new MatsimNetworkReader(network);
+
+		reader.readFile(networkFile);
+		var result1 = readData(filePath1, nodeMatcher, network);
+		var result2 = readData(filePath2, nodeMatcher, network);
 
 		for (var entry : result1.entrySet()) {
 			result2.put(entry.getKey(), entry.getValue());
@@ -36,7 +47,7 @@ public class GetCountData {
 		return result2;
 	}
 
-	private Map<String, CountingData> readData(String filePath, Map<String, NodeMatcher.MatchedLinkID> nodeMatcher) throws IOException {
+	private Map<String, CountingData> readData(String filePath, Map<String, NodeMatcher.MatchedLinkID> nodeMatcher, Network network) throws IOException {
 
 		Map<String, CountingData> data = new HashMap<>();
 
@@ -51,8 +62,15 @@ public class GetCountData {
 
 						if (isValid(record, "PLZ_R1")) {
 
-							var linkId1 = nodeMatcher.get(idR1).getLinkID();
-							var countData1 = data.computeIfAbsent(idR1, key -> new CountingData(key, linkId1));
+							Id<Node> fromId1 = Id.createNodeId(nodeMatcher.get(idR1).getFromID());
+							Id<Node> toId1 = Id.createNodeId(nodeMatcher.get(idR1).getToID());
+
+							// Id<Link> linkId1 = getLinkId(fromId1, toId1, network, record);
+							Id<Link> linkId1 = Id.createLinkId(nodeMatcher.get(idR1).getLinkID());
+
+							// System.out.println(linkId1);
+
+							var countData1 = data.computeIfAbsent(idR1, key -> new CountingData(key, linkId1, fromId1, toId1));
 
 							var hour = record.get("Stunde");
 							var value1 = Integer.parseInt(record.get("PLZ_R1").trim());
@@ -63,8 +81,13 @@ public class GetCountData {
 
 						if (isValid(record, "PLZ_R2")) {
 
-							var linkId2 = nodeMatcher.get(idR2).getLinkID();
-							var countData2 = data.computeIfAbsent(idR2, key -> new CountingData(key, linkId2));
+							Id<Node> fromId2 = Id.createNodeId(nodeMatcher.get(idR2).getFromID());
+							Id<Node> toId2 = Id.createNodeId(nodeMatcher.get(idR2).getToID());
+
+							// Id<Link> linkId2 = getLinkId(fromId2, toId2, network);
+							Id<Link> linkId2 = Id.createLinkId(nodeMatcher.get(idR2).getLinkID());
+
+							var countData2 = data.computeIfAbsent(idR2, key -> new CountingData(key, linkId2, fromId2, toId2));
 
 							var hour = record.get("Stunde");
 							var value2 = Integer.parseInt(record.get("PLZ_R2").trim());
@@ -102,13 +125,35 @@ public class GetCountData {
 		return !record.get(plz_r2).trim().equals("-1") && !record.get(plz_r2).trim().equals("0");
 	}
 
+	private Id<Link> getLinkId(Id<Node> fromNodeId, Id<Node> toNodeId, Network network, CSVRecord record) {
+		Id<Link> linkId = null;
+		System.out.println(record.get("Datum"));
+		for (Link link : network.getLinks().values()) {
+			if (link.getFromNode().getId().toString().equals(fromNodeId.toString())
+					&& link.getToNode().getId().toString().equals(toNodeId.toString())) {
+				if (linkId == null) {
+					linkId = link.getId();
+				} else {
+					logger.warn("There is more than one link with the from node Id " + fromNodeId + " and to node Id " + toNodeId + ": "
+							+ linkId + " and " + link.getId());
+				}
+			}
+		}
+		if (linkId == null) {
+			logger.warn("No Link id found for from node Id " + fromNodeId + " and to node Id " + toNodeId + ".");
+		}
+		return linkId;
+	}
+
 	@Getter
 	@RequiredArgsConstructor
 	@ToString
 	static class CountingData {
 
 		private final String stationId;
-		private final String linkId;
+		private final Id<Link> linkId;
+		private final Id<Node> fromId;
+		private final Id<Node> toId;
 		private final Map<String, List<Integer>> values = new HashMap<>();
 		private final Map<String, Integer> result = new HashMap<>();
 
