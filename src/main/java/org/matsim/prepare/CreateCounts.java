@@ -12,37 +12,42 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.concurrent.Callable;
 
-public class CreateCounts {
+public class CreateCounts implements Callable<Integer> {
 
 	private static final Logger logger = Logger.getLogger(CreateCounts.class);
 
 	@CommandLine.Option(names = {"-p", "--project"}, description = "Input csv federal road count file", defaultValue = "/Users/friedrich/SVN/public-svn/matsim/scenarios/countries/de/duesseldorf/")
-	private static String project;
+	private String project;
 
 	@CommandLine.Option(names = {"-f", "--federalRoad"}, description = "Input csv federal road count file", defaultValue = "duesseldorf-v1.0/original-data/long-term-counts-federal-road.txt")
-	private static String federalRoad;
+	private String federalRoad;
 
 	@CommandLine.Option(names = {"-h", "--highway"}, description = "Input csv highway count file", defaultValue = "duesseldorf-v1.0/original-data/long-term-counts-highway.txt")
-	private static String highway;
+	private String highway;
 
 	@CommandLine.Option(names = {"-m", "--mapping"}, description = "Input csv mapping file", defaultValue = "duesseldorf-v1.0/original-data/countstation-osm-node-matching.csv")
-	private static String mapping;
+	private String mapping;
 
 	@CommandLine.Option(names = {"-n", "--network"}, description = "Input csv mapping file", defaultValue = "duesseldorf-v1.0/input/duesseldorf-v1.0-network-with-pt.xml.gz")
-	private static String network;
+	private String network;
 
 	@CommandLine.Option(names = {"-o", "--output"}, description = "Output xml file", defaultValue = "duesseldorf-v1.0/matsim-input-files/counts-duesseldorf.xml.gz")
-	private static String output;
+	private String output;
 
 	public static void main(String[] args) throws IOException {
+		System.exit(new CommandLine(new CreateCounts()).execute(args));
+	}
+
+	@Override
+	public Integer call() throws Exception {
 
 		logger.info("Program starts!");
 
-		var test = new CommandLine(new CreateCounts()).execute(args);
-
 		if (!testInputFiles()) {
-			throw new RuntimeException("NO!");
+			logger.error("TODO");
+			return 1;
 		}
 
 		var matching = new NodeMatcher();
@@ -74,10 +79,10 @@ public class CreateCounts {
 
 		logger.info("Finish!!!");
 
+		return 0;
 	}
 
-	private static boolean testInputFiles() {
+	private boolean testInputFiles() {
 		return Files.exists(Paths.get(project + mapping)) && Files.exists(Paths.get(project + highway)) && Files.exists(Paths.get(project + federalRoad)) && Files.exists(Paths.get(network)) && Files.exists(Paths.get(project + output));
 	}
-
 }

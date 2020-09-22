@@ -127,8 +127,9 @@ public class GetCountData {
 
 	private Id<Link> getLinkId(Id<Node> fromNodeId, Id<Node> toNodeId, Network network, CSVRecord record) {
 		Id<Link> linkId = null;
+
 		System.out.println(record.get("Datum"));
-		for (Link link : network.getLinks().values()) {
+		for (Link link : network.getNodes().get(fromNodeId).getOutLinks().values()) {
 			if (link.getFromNode().getId().toString().equals(fromNodeId.toString())
 					&& link.getToNode().getId().toString().equals(toNodeId.toString())) {
 				if (linkId == null) {
