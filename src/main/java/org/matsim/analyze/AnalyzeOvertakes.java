@@ -90,9 +90,6 @@ public class AnalyzeOvertakes implements Callable<Integer>, LinkEnterEventHandle
 
         log.info("Read {} events", events.size());
 
-        // TODO: analyze
-        // Map<Id<Link>, Event> links = null;
-
         Map<Id<Link>, List<Event>> links = new HashMap<>();
 
         for (int i = 0; i < events.size(); i++){
@@ -130,7 +127,7 @@ public class AnalyzeOvertakes implements Callable<Integer>, LinkEnterEventHandle
         double diff = abs(eventOneEnter.getTime() - eventTwoEnter.getTime());
         double diffOne = eventOneLeft.getTime() - eventOneEnter.getTime();
         double diffTwo = eventTwoLeft.getTime() - eventTwoEnter.getTime();
-        if (diff < 10000 && diffOne < 1000 && diffTwo < 10000 && diffOne > 0 && diffTwo > 0) {
+        if (diff < 100 && diffOne < 10000 && diffTwo < 10000 && diffOne > 0 && diffTwo > 0) {
             if(eventOneEnter.getAttributes().get("type").equals("entered link") && eventOneLeft.getAttributes().get("type").equals("left link") && eventTwoEnter.getAttributes().get("type").equals("entered link") && eventTwoLeft.getAttributes().get("type").equals("left link")) {
                 if(eventOneEnter.getAttributes().get("vehicle").equals(eventOneLeft.getAttributes().get("vehicle")) && eventTwoEnter.getAttributes().get("vehicle").equals(eventTwoLeft.getAttributes().get("vehicle"))) {
                     if(eventOneEnter.getTime() < eventTwoEnter.getTime() && eventOneLeft.getTime() > eventTwoLeft.getTime()) {
