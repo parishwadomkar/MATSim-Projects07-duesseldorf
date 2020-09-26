@@ -9,21 +9,30 @@ import org.matsim.api.core.v01.events.LinkLeaveEvent;
 import org.matsim.api.core.v01.events.handler.LinkEnterEventHandler;
 import org.matsim.api.core.v01.events.handler.LinkLeaveEventHandler;
 import org.matsim.api.core.v01.network.Link;
+import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.api.experimental.events.LaneEnterEvent;
 import org.matsim.core.api.experimental.events.LaneLeaveEvent;
 import org.matsim.core.api.experimental.events.handler.LaneEnterEventHandler;
 import org.matsim.core.api.experimental.events.handler.LaneLeaveEventHandler;
+import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.events.EventsManagerImpl;
 import org.matsim.core.events.MatsimEventsReader;
+import org.matsim.core.network.io.MatsimNetworkReader;
+import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.lanes.Lane;
+import org.matsim.prepare.GetCountData;
+import org.matsim.prepare.NodeMatcher;
 import picocli.CommandLine;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+
+import static java.lang.StrictMath.abs;
 
 /**
  * TODO: documentation
@@ -41,7 +50,6 @@ public class AnalyzeOvertakes implements Callable<Integer>, LinkEnterEventHandle
 
     private List<Event> events;
 
-
     public static void main(String[] args) {
         System.exit(new CommandLine(new AnalyzeOvertakes()).execute(args));
     }
@@ -50,6 +58,7 @@ public class AnalyzeOvertakes implements Callable<Integer>, LinkEnterEventHandle
     public Integer call() throws Exception {
 
         events = new ArrayList<>();
+        int checkedEvents = 0;
 
         EventsManager manager = new EventsManagerImpl();
         manager.addHandler(this);
@@ -82,9 +91,58 @@ public class AnalyzeOvertakes implements Callable<Integer>, LinkEnterEventHandle
         log.info("Read {} events", events.size());
 
         // TODO: analyze
-        Map<Id<Link>, List<Event>> links;
+        // Map<Id<Link>, Event> links = null;
+
+        Map<Id<Link>, List<Event>> links = new HashMap<>();
+
+        for (int i = 0; i < events.size(); i++){
+
+            Id<Link> linkTemp = Id.createLinkId(events.get(i).getAttributes().get("link"));
+            Event eventTemp = events.get(i);
+
+            if(!links.keySet().contains(linkTemp)) {
+                links.put(linkTemp, new ArrayList<Event>());
+            }
+            links.get(linkTemp).add(eventTemp);
+        }
+
+        for (List<Event> event : links.values()) {
+            int temp = 0;
+            for (int i = 0; i < event.size(); i++) {
+                for (int j = 0; j < event.size(); j++) {
+                    for (int k = 0; k < event.size(); k++) {
+                        for (int l = 0; l < event.size(); l++) {
+                            checkLinkForOvertake(event.get(i), event.get(j), event.get(k), event.get(l));
+                        }
+                    }
+                }
+            }
+            checkedEvents = checkedEvents + event.size();
+            log.info("Checked link " + event.get(temp).getAttributes().get("link") + " with " + event.size() + " events.");
+            log.info("Checked " + checkedEvents + "/" + events.size());
+            temp++;
+        }
 
         return 0;
+    }
+
+    private void checkLinkForOvertake(Event eventOneEnter, Event eventTwoEnter, Event eventOneLeft, Event eventTwoLeft) {
+        double diff = abs(eventOneEnter.getTime() - eventTwoEnter.getTime());
+        double diffOne = eventOneLeft.getTime() - eventOneEnter.getTime();
+        double diffTwo = eventTwoLeft.getTime() - eventTwoEnter.getTime();
+        if (diff < 10000 && diffOne < 1000 && diffTwo < 10000 && diffOne > 0 && diffTwo > 0) {
+            if(eventOneEnter.getAttributes().get("type").equals("entered link") && eventOneLeft.getAttributes().get("type").equals("left link") && eventTwoEnter.getAttributes().get("type").equals("entered link") && eventTwoLeft.getAttributes().get("type").equals("left link")) {
+                if(eventOneEnter.getAttributes().get("vehicle").equals(eventOneLeft.getAttributes().get("vehicle")) && eventTwoEnter.getAttributes().get("vehicle").equals(eventTwoLeft.getAttributes().get("vehicle"))) {
+                    if(eventOneEnter.getTime() < eventTwoEnter.getTime() && eventOneLeft.getTime() > eventTwoLeft.getTime()) {
+                        log.error("Found Overtake on link " + eventOneEnter.getAttributes().get("link"));
+                        System.out.println(eventOneEnter.getAttributes());
+                        System.out.println(eventOneLeft.getAttributes());
+                        System.out.println(eventTwoEnter.getAttributes());
+                        System.out.println(eventTwoLeft.getAttributes());
+                    }
+                }
+            }
+        }
     }
 
     @Override
