@@ -132,10 +132,10 @@ public class AnalyzeOvertakes implements Callable<Integer>, LinkEnterEventHandle
                 if(eventOneEnter.getAttributes().get("vehicle").equals(eventOneLeft.getAttributes().get("vehicle")) && eventTwoEnter.getAttributes().get("vehicle").equals(eventTwoLeft.getAttributes().get("vehicle"))) {
                     if(eventOneEnter.getTime() < eventTwoEnter.getTime() && eventOneLeft.getTime() > eventTwoLeft.getTime()) {
                         log.error("Found Overtake on link " + eventOneEnter.getAttributes().get("link"));
-                        System.out.println(eventOneEnter.getAttributes());
-                        System.out.println(eventOneLeft.getAttributes());
-                        System.out.println(eventTwoEnter.getAttributes());
-                        System.out.println(eventTwoLeft.getAttributes());
+                        log.info(eventOneEnter.getAttributes());
+                        log.info(eventOneLeft.getAttributes());
+                        log.info(eventTwoEnter.getAttributes());
+                        log.info(eventTwoLeft.getAttributes());
                     }
                 }
             }

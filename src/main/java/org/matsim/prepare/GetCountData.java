@@ -34,6 +34,8 @@ public class GetCountData {
 		var result1 = readData(filePath1, nodeMatcher, network);
 		var result2 = readData(filePath2, nodeMatcher, network);
 
+		System.out.println(network.getNodes().values().size());
+
 		for (var entry : result1.entrySet()) {
 			result2.put(entry.getKey(), entry.getValue());
 		}
@@ -65,10 +67,8 @@ public class GetCountData {
 							Id<Node> fromId1 = Id.createNodeId(nodeMatcher.get(idR1).getFromID());
 							Id<Node> toId1 = Id.createNodeId(nodeMatcher.get(idR1).getToID());
 
-							// Id<Link> linkId1 = getLinkId(fromId1, toId1, network, record);
-							Id<Link> linkId1 = Id.createLinkId(nodeMatcher.get(idR1).getLinkID());
-
-							// System.out.println(linkId1);
+							Id<Link> linkId1 = getLinkId(fromId1, toId1, network);
+							// Id<Link> linkId1 = Id.createLinkId(nodeMatcher.get(idR1).getLinkID());
 
 							var countData1 = data.computeIfAbsent(idR1, key -> new CountingData(key, linkId1, fromId1, toId1));
 
@@ -84,8 +84,8 @@ public class GetCountData {
 							Id<Node> fromId2 = Id.createNodeId(nodeMatcher.get(idR2).getFromID());
 							Id<Node> toId2 = Id.createNodeId(nodeMatcher.get(idR2).getToID());
 
-							// Id<Link> linkId2 = getLinkId(fromId2, toId2, network);
-							Id<Link> linkId2 = Id.createLinkId(nodeMatcher.get(idR2).getLinkID());
+							Id<Link> linkId2 = getLinkId(fromId2, toId2, network);
+							/// Id<Link> linkId2 = Id.createLinkId(nodeMatcher.get(idR2).getLinkID());
 
 							var countData2 = data.computeIfAbsent(idR2, key -> new CountingData(key, linkId2, fromId2, toId2));
 
@@ -125,25 +125,26 @@ public class GetCountData {
 		return !record.get(plz_r2).trim().equals("-1") && !record.get(plz_r2).trim().equals("0");
 	}
 
-	private Id<Link> getLinkId(Id<Node> fromNodeId, Id<Node> toNodeId, Network network, CSVRecord record) {
+	private Id<Link> getLinkId(Id<Node> fromNodeId, Id<Node> toNodeId, Network network) {
 		Id<Link> linkId = null;
 
-		System.out.println(record.get("Datum"));
-		for (Link link : network.getNodes().get(fromNodeId).getOutLinks().values()) {
-			if (link.getFromNode().getId().toString().equals(fromNodeId.toString())
-					&& link.getToNode().getId().toString().equals(toNodeId.toString())) {
-				if (linkId == null) {
-					linkId = link.getId();
-				} else {
-					logger.warn("There is more than one link with the from node Id " + fromNodeId + " and to node Id " + toNodeId + ": "
-							+ linkId + " and " + link.getId());
+		System.out.println(network.getNodes().get(fromNodeId).getOutLinks().values());
+
+		for (Node node : network.getNodes().values()) {
+			System.out.println(node.getId().toString() + "\t" + fromNodeId.toString() + "\t" + toNodeId.toString());
+			if (node.getId().equals(fromNodeId)) {
+				System.out.println("Found Node!  " + fromNodeId.toString() + "\t" + node.toString());
+				for (Link link : node.getOutLinks().values()) {
+					System.out.println(link.getToNode().toString() + "\t" + link.getFromNode().toString());
+					if (link.getToNode().equals(toNodeId)) {
+						System.out.println("Link: " + link);
+					}
 				}
 			}
 		}
-		if (linkId == null) {
-			logger.warn("No Link id found for from node Id " + fromNodeId + " and to node Id " + toNodeId + ".");
-		}
+
 		return linkId;
+
 	}
 
 	@Getter
