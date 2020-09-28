@@ -1,5 +1,6 @@
 package org.matsim.analyze;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Id;
@@ -9,27 +10,18 @@ import org.matsim.api.core.v01.events.LinkLeaveEvent;
 import org.matsim.api.core.v01.events.handler.LinkEnterEventHandler;
 import org.matsim.api.core.v01.events.handler.LinkLeaveEventHandler;
 import org.matsim.api.core.v01.network.Link;
-import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.api.experimental.events.LaneEnterEvent;
 import org.matsim.core.api.experimental.events.LaneLeaveEvent;
 import org.matsim.core.api.experimental.events.handler.LaneEnterEventHandler;
 import org.matsim.core.api.experimental.events.handler.LaneLeaveEventHandler;
-import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.events.EventsManagerImpl;
 import org.matsim.core.events.MatsimEventsReader;
-import org.matsim.core.network.io.MatsimNetworkReader;
-import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.lanes.Lane;
-import org.matsim.prepare.GetCountData;
-import org.matsim.prepare.NodeMatcher;
 import picocli.CommandLine;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.Callable;
 
 import static java.lang.StrictMath.abs;
@@ -90,37 +82,67 @@ public class AnalyzeOvertakes implements Callable<Integer>, LinkEnterEventHandle
 
         log.info("Read {} events", events.size());
 
-        Map<Id<Link>, List<Event>> links = new HashMap<>();
+        Map<Id<Link>, List<LinkEnterEvent>> linkEntered = new HashMap<>();
+        Map<Id<Link>, List<LinkLeaveEvent>> linkLeave = new HashMap<>();
 
-        for (int i = 0; i < events.size(); i++){
+        for (Event value : events) {
+            Id<Link> linkTemp = Id.createLinkId(value.getAttributes().get("link"));
 
-            Id<Link> linkTemp = Id.createLinkId(events.get(i).getAttributes().get("link"));
-            Event eventTemp = events.get(i);
+            if (value instanceof LinkEnterEvent)
+                linkEntered.computeIfAbsent(linkTemp, (k) -> new ArrayList<>()).add((LinkEnterEvent) value);
+            else if (value instanceof LinkLeaveEvent)
+                linkLeave.computeIfAbsent(linkTemp, (k) -> new ArrayList<>()).add((LinkLeaveEvent) value);
 
-            if(!links.keySet().contains(linkTemp)) {
-                links.put(linkTemp, new ArrayList<Event>());
-            }
-            links.get(linkTemp).add(eventTemp);
         }
 
-        for (List<Event> event : links.values()) {
-            int temp = 0;
-            for (int i = 0; i < event.size(); i++) {
-                for (int j = 0; j < event.size(); j++) {
-                    for (int k = 0; k < event.size(); k++) {
-                        for (int l = 0; l < event.size(); l++) {
-                            checkLinkForOvertake(event.get(i), event.get(j), event.get(k), event.get(l));
-                        }
-                    }
+        // sort all events by time
+        linkEntered.values().forEach(l -> l.sort(Comparator.comparingDouble(Event::getTime)));
+        linkLeave.values().forEach(l -> l.sort(Comparator.comparingDouble(Event::getTime)));
+
+        Map<Id<Link>, List<Pair<LinkEnterEvent, LinkLeaveEvent>>> linkPairs = new HashMap<>();
+
+        // TODO: generate link pairs
+        for (Map.Entry<Id<Link>, List<LinkEnterEvent>> e : linkEntered.entrySet()) {
+
+            Id<Link> link = e.getKey();
+
+            for (LinkEnterEvent linkEnterEvent : e.getValue()) {
+
+                //  TODO find link leave event
+                LinkLeaveEvent linkLeaveEvent = null;
+
+                for (LinkLeaveEvent otherLinkLeave : linkLeave.get(link)) {
+                    // TODO: compare time and vehicle
+                }
+
+
+                linkPairs.computeIfAbsent(link, (k) -> new ArrayList<>())
+                        .add(Pair.of(linkEnterEvent, linkLeaveEvent));
+            }
+        }
+
+
+        for (Map.Entry<Id<Link>, List<Pair<LinkEnterEvent, LinkLeaveEvent>>> e : linkPairs.entrySet()) {
+
+            //Id<Link> link = e.getKey();
+            List<Pair<LinkEnterEvent, LinkLeaveEvent>> pairs = e.getValue();
+
+            for (int i = 0; i < pairs.size(); i++) {
+                for (int j = 0; j < pairs.size(); j++) {
+                    checkLinkForOvertake(pairs.get(i), pairs.get(j));
                 }
             }
-            checkedEvents = checkedEvents + event.size();
-            log.info("Checked link " + event.get(temp).getAttributes().get("link") + " with " + event.size() + " events.");
-            log.info("Checked " + checkedEvents + "/" + events.size());
-            temp++;
+
+            //log.info("Checked link " + event.get(temp).getAttributes().get("link") + " with " + event.size() + " events.");
+            //log.info("Checked " + checkedEvents + "/" + this.events.size());
         }
 
         return 0;
+    }
+
+    private void checkLinkForOvertake(Pair<LinkEnterEvent, LinkLeaveEvent> p1, Pair<LinkEnterEvent, LinkLeaveEvent> p2) {
+        // TODO: check p1 link entered < p2 link entered && p1 link leave > p2 link leave
+        // TODO: logging
     }
 
     private void checkLinkForOvertake(Event eventOneEnter, Event eventTwoEnter, Event eventOneLeft, Event eventTwoLeft) {

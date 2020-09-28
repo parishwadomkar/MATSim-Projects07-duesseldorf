@@ -128,7 +128,9 @@ public class GetCountData {
 	private Id<Link> getLinkId(Id<Node> fromNodeId, Id<Node> toNodeId, Network network) {
 		Id<Link> linkId = null;
 
-		System.out.println(network.getNodes().get(fromNodeId).getOutLinks().values());
+		Node fromNode = network.getNodes().get(fromNodeId);
+		System.out.println(fromNode);
+		System.out.println(fromNode.getOutLinks());
 
 		for (Node node : network.getNodes().values()) {
 			System.out.println(node.getId().toString() + "\t" + fromNodeId.toString() + "\t" + toNodeId.toString());
