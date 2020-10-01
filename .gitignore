@@ -204,3 +204,5 @@ $RECYCLE.BIN/
 *.lnk
 
 # End of https://www.gitignore.io/api/osx,java,linux,maven,windows,intellij
+/.classpath
+/.project
