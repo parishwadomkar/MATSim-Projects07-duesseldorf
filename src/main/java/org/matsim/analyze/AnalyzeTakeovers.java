@@ -24,39 +24,37 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.Callable;
 
-import static java.lang.StrictMath.abs;
-
 /**
  * TODO: documentation
  */
 @CommandLine.Command(
-        name = "analyzeOvertakes",
+        name = "analyzeTakeovers",
         description = "TODO"
 )
-public class AnalyzeOvertakes implements Callable<Integer>, LinkEnterEventHandler, LinkLeaveEventHandler, LaneEnterEventHandler, LaneLeaveEventHandler {
+public class AnalyzeTakeovers implements Callable<Integer>, LinkEnterEventHandler, LinkLeaveEventHandler, LaneEnterEventHandler, LaneLeaveEventHandler {
 
-    private static final Logger log = LogManager.getLogger(AnalyzeOvertakes.class);
+    private static final Logger log = LogManager.getLogger(AnalyzeTakeovers.class);
 
     @CommandLine.Parameters(arity = "1", paramLabel = "INPUT", description = "Input event file")
     private Path input;
 
     private List<Event> events;
-    private int countOvertakes  = 0;
+    private int countOvertakes = 0;
 
     public static void main(String[] args) {
-        System.exit(new CommandLine(new AnalyzeOvertakes()).execute(args));
+        System.exit(new CommandLine(new AnalyzeTakeovers()).execute(args));
     }
 
     @Override
     public Integer call() throws Exception {
 
         /*
-        2020-10-03T16:00:57,356  INFO AnalyzeOvertakes:201 Event 1
-        2020-10-03T16:00:57,356  INFO AnalyzeOvertakes:202 	<event time="58741.0" type="entered link" link="pt_12340" vehicle="tr_21546"  />
-        2020-10-03T16:00:57,356  INFO AnalyzeOvertakes:203 	<event time="58921.0" type="left link" link="pt_12340" vehicle="tr_21546"  />
-        2020-10-03T16:00:57,356  INFO AnalyzeOvertakes:204 Event 2
-        2020-10-03T16:00:57,356  INFO AnalyzeOvertakes:205 	<event time="58745.0" type="entered link" link="pt_12340" vehicle="tr_22984"  />
-        2020-10-03T16:00:57,356  INFO AnalyzeOvertakes:206 	<event time="58863.0" type="left link" link="pt_12340" vehicle="tr_22984"  />
+        2020-10-03T16:00:57,356  INFO AnalyzeTakeovers:201 Event 1
+        2020-10-03T16:00:57,356  INFO AnalyzeTakeovers:202 	<event time="58741.0" type="entered link" link="pt_12340" vehicle="tr_21546"  />
+        2020-10-03T16:00:57,356  INFO AnalyzeTakeovers:203 	<event time="58921.0" type="left link" link="pt_12340" vehicle="tr_21546"  />
+        2020-10-03T16:00:57,356  INFO AnalyzeTakeovers:204 Event 2
+        2020-10-03T16:00:57,356  INFO AnalyzeTakeovers:205 	<event time="58745.0" type="entered link" link="pt_12340" vehicle="tr_22984"  />
+        2020-10-03T16:00:57,356  INFO AnalyzeTakeovers:206 	<event time="58863.0" type="left link" link="pt_12340" vehicle="tr_22984"  />
         */
 
         events = new ArrayList<>();
@@ -91,17 +89,37 @@ public class AnalyzeOvertakes implements Callable<Integer>, LinkEnterEventHandle
 
         log.info("Read {} events", events.size());
 
+        analyze(events);
+
+        return 0;
+    }
+
+    /**
+     * Analyze events for takeover maneuver
+     *
+     * @return number of takeovers
+     */
+    int analyze(List<Event> events) {
+
         Map<Id<Link>, List<LinkEnterEvent>> linkEntered = new HashMap<>();
         Map<Id<Link>, List<LinkLeaveEvent>> linkLeave = new HashMap<>();
+
+        Map<Id<Link>, List<Event>> laneEvents = new HashMap<>();
 
         for (Event value : events) {
 
             Id<Link> linkTemp = Id.createLinkId(value.getAttributes().get("link"));
 
+            if (linkTemp.toString().startsWith("pt_"))
+                continue;
+
             if (value instanceof LinkEnterEvent)
                 linkEntered.computeIfAbsent(linkTemp, (k) -> new ArrayList<>()).add((LinkEnterEvent) value);
             else if (value instanceof LinkLeaveEvent)
                 linkLeave.computeIfAbsent(linkTemp, (k) -> new ArrayList<>()).add((LinkLeaveEvent) value);
+            else if (value instanceof LaneEnterEvent || value instanceof LaneLeaveEvent)
+                laneEvents.computeIfAbsent(linkTemp, (k) -> new ArrayList<>()).add(value);
+
 
         }
 
@@ -122,11 +140,12 @@ public class AnalyzeOvertakes implements Callable<Integer>, LinkEnterEventHandle
 
                 try {
                     for (LinkLeaveEvent otherLinkLeave : linkLeave.get(link)) {
-                        if (otherLinkLeave.getAttributes().get("vehicle").equals(linkEnterEvent.getAttributes().get("vehicle"))) {
+
+                        if (otherLinkLeave.getVehicleId().equals(linkEnterEvent.getVehicleId())) {
                             if (linkLeaveEvent.getAttributes().get("vehicle").equals("") && otherLinkLeave.getTime() > linkEnterEvent.getTime()) {
                                 linkLeaveEvent = otherLinkLeave;
                             } else {
-                                if (Double.parseDouble(linkLeaveEvent.getAttributes().get("time")) > Double.parseDouble(otherLinkLeave.getAttributes().get("time"))) {
+                                if (linkLeaveEvent.getTime() > otherLinkLeave.getTime()) {
                                     if (Double.parseDouble(otherLinkLeave.getAttributes().get("time")) > Double.parseDouble(linkEnterEvent.getAttributes().get("time"))) {
                                         linkLeaveEvent = otherLinkLeave;
                                     }
@@ -137,6 +156,11 @@ public class AnalyzeOvertakes implements Callable<Integer>, LinkEnterEventHandle
                 } catch (NullPointerException ignored) {
                 }
 
+                // TODO: find next link enter event
+                // given linkEnterEvent:
+                // look for
+                // nextLinkLeave < nextLinkEnter, sonst continue
+
                 if (linkLeaveEvent.getTime() != 0) {
                     linkPairs.computeIfAbsent(link, (k) -> new ArrayList<>())
                             .add(Pair.of(linkEnterEvent, linkLeaveEvent));
@@ -146,21 +170,28 @@ public class AnalyzeOvertakes implements Callable<Integer>, LinkEnterEventHandle
 
         log.info("Added all pairs!");
 
-        for (Map.Entry<Id<Link>, List<Pair<LinkEnterEvent, LinkLeaveEvent>>> e : linkPairs.entrySet()) {
+        linkPairs.entrySet().parallelStream().forEach(e -> {
+
+            //});
+            //for (Map.Entry<Id<Link>, List<Pair<LinkEnterEvent, LinkLeaveEvent>>> e : linkPairs.entrySet()) {
 
             List<Pair<LinkEnterEvent, LinkLeaveEvent>> pairs = e.getValue();
 
             for (int i = 0; i < pairs.size(); i++) {
                 for (Pair<LinkEnterEvent, LinkLeaveEvent> pair : pairs) {
                     checkLinkForOvertake(pairs.get(i), pair);
+
+                    // TODO output lane events for vehicle
+                    //List<Event> lEvents = laneEvents.get(pair.getKey().getLinkId());
                 }
             }
-        }
+
+        });
 
         log.info("Checked all pairs for overtake!");
         log.info("########################## " + countOvertakes + " Overtakes were found ##########################");
 
-        return 0;
+        return countOvertakes;
     }
 
     private void checkLinkForOvertake(Pair<LinkEnterEvent, LinkLeaveEvent> p1, Pair<LinkEnterEvent, LinkLeaveEvent> p2) {
@@ -172,6 +203,7 @@ public class AnalyzeOvertakes implements Callable<Integer>, LinkEnterEventHandle
             log.info("Leave Event 1: " + p1.getRight().getTime());
             log.info("Enter Event 2: " + p2.getLeft().getTime());
             log.info("Leave Event 2: " + p2.getRight().getTime());
+
             countOvertakes += 1;
         }
     }
