@@ -52,7 +52,7 @@ public class RunDuesseldorfScenario extends MATSimApplication {
     private boolean noLanes;
 
     public RunDuesseldorfScenario() {
-        super(String.format("scenarios/input/duesseldorf-%s-1pct.config.xml", VERSION));
+        super(String.format("scenarios/input/duesseldorf-%s-1pct.config_fv.xml", VERSION));
     }
 
     public static void main(String[] args) {
