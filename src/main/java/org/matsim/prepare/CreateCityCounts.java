@@ -11,7 +11,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
@@ -36,20 +38,27 @@ public class CreateCityCounts implements Callable<Integer> {
     @Override
     public Integer call() throws Exception {
 
-        List<Object> counts = Files.list(input)
+        List<Map<String, Map<String, DayCounts>>> collect = Files.list(input)
                 .filter(f -> f.getFileName().toString().endsWith(".zip"))
                 .collect(Collectors.toList()) // need to collect first
                 .parallelStream()
                 .map(this::readCounts)
                 .collect(Collectors.toList());
 
+        // list of months, mapped to station mapped to day
+
+        // TODO: transform and aggregate
+        // station id as top level
+
         return 0;
     }
 
     /**
-     * Read count data from for all sensors for zip file.
+     * Read one month of count data from for all sensors for zip file.
      */
-    private Object readCounts(Path zip) {
+    private Map<String, Map<String, DayCounts>> readCounts(Path zip) {
+
+        Map<String, Map<String, DayCounts>> result = new HashMap<>();
 
         try (ZipInputStream in = new ZipInputStream(Files.newInputStream(zip))) {
 
@@ -58,7 +67,11 @@ public class CreateCityCounts implements Callable<Integer> {
                 if (entry.isDirectory())
                     continue;
 
-                readCsvCounts(entry.getName(), in);
+                Map<String, DayCounts> month = readCsvCounts(in);
+
+                // TODO which month is contained in the zip file name
+                result.put(entry.getName(), month);
+
                 log.info("Finished reading {}", entry.getName());
             }
 
@@ -67,13 +80,15 @@ public class CreateCityCounts implements Callable<Integer> {
         }
 
 
-        return null;
+        return result;
     }
 
     /**
-     * Read counts from CSV data.
+     * Read counts from CSV data for one station. One month per file.
+     *
+     * @return map of date to counts for whole day.
      */
-    private void readCsvCounts(String name, ZipInputStream in) throws IOException {
+    private Map<String, DayCounts> readCsvCounts(ZipInputStream in) throws IOException {
 
         // reader must not be closed
         InputStreamReader reader = new InputStreamReader(in);
@@ -82,11 +97,28 @@ public class CreateCityCounts implements Callable<Integer> {
                 .withFirstRecordAsHeader()
         );
 
+        Map<String, DayCounts> result = new HashMap<>();
+
         for (CSVRecord record : parser) {
 
+            // TODO: aggregate by hours
 //                System.out.println(record);
         }
+
+        return result;
     }
 
+
+    /**
+     * Contains counts for one day.
+     */
+    private static class DayCounts {
+
+        /**
+         * Counts for each hour of the day.
+         */
+        double[] counts = new double[24];
+
+    }
 
 }
