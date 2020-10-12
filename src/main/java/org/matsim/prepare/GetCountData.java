@@ -23,7 +23,7 @@ import java.util.Map;
 
 public class GetCountData {
 
-	private static final Logger logger = Logger.getLogger(CreateCounts.class);
+	private static final Logger logger = Logger.getLogger(CreateBAStCounts.class);
 
 	Map<String, CountingData> countData(String filePath1, String filePath2, String networkFile, Map<String, NodeMatcher.MatchedLinkID> nodeMatcher) throws IOException {
 

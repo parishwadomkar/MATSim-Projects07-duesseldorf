@@ -10,13 +10,16 @@ import picocli.CommandLine;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.Callable;
 
-public class CreateCounts implements Callable<Integer> {
+@CommandLine.Command(
+		name = "createBAStCounts",
+		description = "Create vehicle counts from BASt data"
+)
+public class CreateBAStCounts implements Callable<Integer> {
 
-	private static final Logger logger = Logger.getLogger(CreateCounts.class);
+	private static final Logger logger = Logger.getLogger(CreateBAStCounts.class);
 
 	@CommandLine.Option(names = {"-p", "--project"}, description = "Input csv federal road count file", defaultValue = "/Users/friedrich/SVN/public-svn/matsim/scenarios/countries/de/duesseldorf/")
 	private String project;
@@ -37,7 +40,7 @@ public class CreateCounts implements Callable<Integer> {
 	private String output;
 
 	public static void main(String[] args) throws IOException {
-		System.exit(new CommandLine(new CreateCounts()).execute(args));
+		System.exit(new CommandLine(new CreateBAStCounts()).execute(args));
 	}
 
 	@Override
