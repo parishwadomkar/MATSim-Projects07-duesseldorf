@@ -96,6 +96,9 @@ public class AnalyzeTakeovers implements Callable<Integer>, LinkEnterEventHandle
         Map<Id<Link>, List<LinkLeaveEvent>> linkLeave = new HashMap<>();
         Map<Id<Link>, List<Event>> laneEvents = new HashMap<>();
 
+        // maximum time for one vehicle on a link
+        double timeThreshold = 400;
+
         for (Event value : events) {
 
             Id<Link> linkTemp = Id.createLinkId(value.getAttributes().get("link"));
@@ -151,8 +154,10 @@ public class AnalyzeTakeovers implements Callable<Integer>, LinkEnterEventHandle
                 }
 
                 if (linkLeaveEvent.getTime() != 0) {
-                    linkPairs.computeIfAbsent(link, (k) -> new ArrayList<>())
-                            .add(Pair.of(linkEnterEvent, linkLeaveEvent));
+                    if ((linkLeaveEvent.getTime() - linkEnterEvent.getTime()) < timeThreshold) {
+                        linkPairs.computeIfAbsent(link, (k) -> new ArrayList<>())
+                                .add(Pair.of(linkEnterEvent, linkLeaveEvent));
+                    }
                 }
             }
         }
@@ -196,7 +201,7 @@ public class AnalyzeTakeovers implements Callable<Integer>, LinkEnterEventHandle
                         log.info("Event 2 lane: " + laneEvent.getAttributes().get("lane"));
                     }
                 }
-            } catch (NullPointerException e) {}
+            } catch (NullPointerException ignored) {}
 
             countOvertakes += 1;
 
