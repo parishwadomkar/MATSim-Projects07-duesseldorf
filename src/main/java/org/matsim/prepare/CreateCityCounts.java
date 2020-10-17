@@ -5,6 +5,10 @@ import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.matsim.api.core.v01.Id;
+import org.matsim.api.core.v01.network.Link;
+import org.matsim.counts.Count;
+import org.matsim.counts.Counts;
 import picocli.CommandLine;
 
 import java.io.IOException;
@@ -54,6 +58,7 @@ public class CreateCityCounts implements Callable<Integer> {
 
                     log.info("* Month: " + monthMap.getKey());
                     log.info("* Counts per hour: " + monthMap.getValue().getCountsToString());
+                    log.info("* Counts per hour: " + monthMap.getValue().count.getVolumes());
                 }
                 log.info("**********************************************************************************************************************************");
             }
@@ -83,7 +88,7 @@ public class CreateCityCounts implements Callable<Integer> {
 
                 String monthNumber = entry.getName().split("-19")[1].split("01_")[0];
 
-                Map<String, DayCounts> month = readCsvCounts(in, monthNumber);
+                Map<String, DayCounts> month = readCsvCounts(in, monthNumber, id);
 
                 result.put(id, month);
                 log.info("Finished reading {}", entry.getName());
@@ -99,7 +104,7 @@ public class CreateCityCounts implements Callable<Integer> {
      *
      * @return map of date to counts for whole day.
      */
-    private Map<String, DayCounts> readCsvCounts(ZipInputStream in, String monthNumber) throws IOException {
+    private Map<String, DayCounts> readCsvCounts(ZipInputStream in, String monthNumber, String id) throws IOException {
 
         Map<Integer, List<Double>> tempCountSum = new HashMap<>();
         Map<String, DayCounts> result = new HashMap<>();
@@ -110,6 +115,9 @@ public class CreateCityCounts implements Callable<Integer> {
         List<Integer> weekendDaysList = Arrays.asList(1, 5, 6, 7);
         Integer[] hourCountsTmp = new Integer[24];
         Double countMean;
+        var counts = new Counts<Link>();
+        counts.setYear(2019);
+        var count = counts.createAndAddCount(Id.createLinkId(""), "");
 
         InputStreamReader reader = new InputStreamReader(in);
 
@@ -134,8 +142,9 @@ public class CreateCityCounts implements Callable<Integer> {
             }
             countMean = countMean/(meanCounts.getValue().size());
             hourCountsTmp[meanCounts.getKey()] = countMean.intValue();
+            count.createVolume(meanCounts.getKey().intValue() + 1, countMean);
         }
-        DayCounts dayCount = new DayCounts(hourCountsTmp);
+        DayCounts dayCount = new DayCounts(hourCountsTmp, count, id);
         result.put(monthNumber, dayCount);
         return result;
     }
@@ -152,15 +161,19 @@ public class CreateCityCounts implements Callable<Integer> {
         /**
          * Counts for each hour of the day.
          */
-        Integer[] counts;
+        Integer[] hourCounts;
 
-        public DayCounts(Integer[] counts) {
-            this.counts = counts;
+        Counts counts = new Counts<Link>();
+        Count count = counts.createAndAddCount(Id.createLinkId(""), "");
+
+        public DayCounts(Integer[] counts, Count count, String id) {
+            this.hourCounts = counts;
+            this.count = count;
         }
 
         public String getCountsToString() {
             StringBuilder ret = new StringBuilder("[");
-            for (Integer count : counts) {
+            for (Integer count : hourCounts) {
                 ret.append(count.toString()).append(", ");
             }
             ret = new StringBuilder(ret.substring(0, ret.length() - 2));
