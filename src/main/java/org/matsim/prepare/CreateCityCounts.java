@@ -81,8 +81,9 @@ public class CreateCityCounts implements Callable<Integer> {
                 if (entry.isDirectory())
                     continue;
 
-                String id = entry.getName().split("_")[2].substring(0, 15);
-                String monthNumber = entry.getName().split("Verarbeitet-19")[1].split("01_")[0];
+                // String id = entry.getName().split("_")[2].substring(0, 15);
+                String id = entry.getName().split("_")[2];
+                String monthNumber = entry.getName().split("19")[1].split("01_")[0];
 
                 Map<String, DayCounts> month = readCsvCounts(in, monthNumber);
 
@@ -144,7 +145,6 @@ public class CreateCityCounts implements Callable<Integer> {
     private boolean isWeekend(LocalDate date, List<Integer> weekendDaysList) {
         return weekendDaysList.contains(date.getDayOfWeek().getValue());
     }
-
 
     /**
      * Contains counts for one day.
