@@ -5,18 +5,13 @@ import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jfree.data.time.Day;
 import picocli.CommandLine;
-import scala.Int;
-import scala.util.parsing.combinator.testing.Str;
 
-import javax.lang.model.util.Types;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -82,11 +77,9 @@ public class CreateCityCounts implements Callable<Integer> {
 
                 // Chose definition of station id
                 String id = entry.getName().split("_")[2];
-                if (true) {
-                    id = id.substring(0, id.length() - 4);
-                } else {
-                    id = id.substring(0, 15);
-                }
+
+                id = id.substring(0, id.length() - 4);
+                // id = id.substring(0, 15);
 
                 String monthNumber = entry.getName().split("-19")[1].split("01_")[0];
 
