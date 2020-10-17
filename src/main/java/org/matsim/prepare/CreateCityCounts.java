@@ -50,16 +50,15 @@ public class CreateCityCounts implements Callable<Integer> {
                 .map(this::readCounts)
                 .collect(Collectors.toList());
 
-        for (Map<String, Map<String, DayCounts>> collectTmp : collect) {
-            for (Map.Entry<String, Map<String, DayCounts>> collect2Tmp : collectTmp.entrySet()) {
-
+        for (Map<String, Map<String, DayCounts>> list : collect) {
+            for (Map.Entry<String, Map<String, DayCounts>> stationIdMap : list.entrySet()) {
                 log.info("**********************************************************************************************************************************");
-                log.info("* Stattion ID: " + collect2Tmp.getKey());
+                log.info("* Stattion ID: " + stationIdMap.getKey());
 
-                for (Map.Entry<String, DayCounts> collect3Tmp : collect2Tmp.getValue().entrySet()) {
+                for (Map.Entry<String, DayCounts> monthMap : stationIdMap.getValue().entrySet()) {
 
-                    log.info("* Month: " + collect3Tmp.getKey());
-                    log.info("* Counts per hour: " + collect3Tmp.getValue().getCounts());
+                    log.info("* Month: " + monthMap.getKey());
+                    log.info("* Counts per hour: " + monthMap.getValue().getCountsToString());
                 }
                 log.info("**********************************************************************************************************************************");
             }
@@ -81,9 +80,15 @@ public class CreateCityCounts implements Callable<Integer> {
                 if (entry.isDirectory())
                     continue;
 
-                // String id = entry.getName().split("_")[2].substring(0, 15);
+                // Chose definition of station id
                 String id = entry.getName().split("_")[2];
-                String monthNumber = entry.getName().split("19")[1].split("01_")[0];
+                if (true) {
+                    id = id.substring(0, id.length() - 4);
+                } else {
+                    id = id.substring(0, 15);
+                }
+
+                String monthNumber = entry.getName().split("-19")[1].split("01_")[0];
 
                 Map<String, DayCounts> month = readCsvCounts(in, monthNumber);
 
@@ -160,14 +165,14 @@ public class CreateCityCounts implements Callable<Integer> {
             this.counts = counts;
         }
 
-        public String getCounts() {
-            String ret = "[";
+        public String getCountsToString() {
+            StringBuilder ret = new StringBuilder("[");
             for (Integer count : counts) {
-                ret = ret + count.toString() + ", ";
+                ret.append(count.toString()).append(", ");
             }
-            ret = ret.substring(0, ret.length() - 2);
-            ret = ret + "]";
-            return ret;
+            ret = new StringBuilder(ret.substring(0, ret.length() - 2));
+            ret.append("]");
+            return ret.toString();
         }
     }
 }
