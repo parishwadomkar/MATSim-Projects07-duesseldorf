@@ -19,6 +19,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -42,36 +43,39 @@ public class CreateCityCounts implements Callable<Integer> {
     @Override
     public Integer call() throws Exception {
 
-        List<Map<String, Map<String, DayCounts>>> collect = Files.list(input)
+        // map of month to counts
+        Map<String, Counts<Link>> collect = Files.list(input)
                 .filter(f -> f.getFileName().toString().endsWith(".zip"))
                 .collect(Collectors.toList()) // need to collect first
                 .parallelStream()
                 .map(this::readCounts)
-                .collect(Collectors.toList());
+                .collect(Collectors.toMap(Counts::getName, Function.identity()));
 
-        for (Map<String, Map<String, DayCounts>> list : collect) {
-            for (Map.Entry<String, Map<String, DayCounts>> stationIdMap : list.entrySet()) {
-                log.info("**********************************************************************************************************************************");
-                log.info("* Stattion ID: " + stationIdMap.getKey());
+        for (var counts : collect.entrySet()) {
+            log.info("**********************************************************************************************************************************");
+            log.info("* Month: " + counts.getKey());
 
-                for (Map.Entry<String, DayCounts> monthMap : stationIdMap.getValue().entrySet()) {
-
-                    log.info("* Month: " + monthMap.getKey());
-                    log.info("* Counts per hour: " + monthMap.getValue().getCountsToString());
-                    log.info("* Counts per hour: " + monthMap.getValue().count.getVolumes());
-                }
-                log.info("**********************************************************************************************************************************");
+            for (Count<Link> value : counts.getValue().getCounts().values()) {
+                log.info("LinkId : {}", value.getId());
+                log.info("* Counts per hour: {}", value.getVolumes());
             }
+
+            log.info("**********************************************************************************************************************************");
         }
+
         return 0;
     }
 
     /**
      * Read one month of count data from for all sensors for zip file.
      */
-    private Map<String, Map<String, DayCounts>> readCounts(Path zip) {
+    private Counts<Link> readCounts(Path zip) {
 
-        Map<String, Map<String, DayCounts>> result = new HashMap<>();
+        Counts<Link> counts = new Counts<>();
+        counts.setYear(2019);
+        // TODO: get month from zip filename
+        String monthNumber = zip.getFileName().toString().split("-19")[1].split("01_")[0];
+        counts.setName(monthNumber);
 
         try (ZipInputStream in = new ZipInputStream(Files.newInputStream(zip))) {
 
@@ -80,34 +84,33 @@ public class CreateCityCounts implements Callable<Integer> {
                 if (entry.isDirectory())
                     continue;
 
-                // Chose definition of station id
-                String id = entry.getName().split("_")[2];
+                // Chose definition of stationId
+                String stationId = entry.getName().split("_")[2];
 
-                id = id.substring(0, id.length() - 4);
-                // id = id.substring(0, 15);
+                stationId = stationId.substring(0, stationId.length() - 4);
+                // stationId = stationId.substring(0, 15);
 
-                String monthNumber = entry.getName().split("-19")[1].split("01_")[0];
+                // TODO: lookup map matched link id
+                readCsvCounts(in, counts.createAndAddCount(Id.createLinkId(stationId), stationId));
 
-                Map<String, DayCounts> month = readCsvCounts(in, monthNumber, id);
-
-                result.put(id, month);
                 log.info("Finished reading {}", entry.getName());
             }
         } catch (IOException e) {
             log.error("Could not read zip file {}", zip, e);
         }
-        return result;
+
+        return counts;
     }
 
     /**
-     * Read counts from CSV data for one station. One month per file.
+     * Read counts from CSV data for one station and aggregate whole month into one count object.
      *
-     * @return map of date to counts for whole day.
+     * @param count count object of the link that must be populated with count data
      */
-    private Map<String, DayCounts> readCsvCounts(ZipInputStream in, String monthNumber, String id) throws IOException {
+    private void readCsvCounts(ZipInputStream in, Count<Link> count) throws IOException {
 
         Map<Integer, List<Double>> tempCountSum = new HashMap<>();
-        Map<String, DayCounts> result = new HashMap<>();
+        Map<String, Count<Link>> result = new HashMap<>();
         List<String> holidays2019 = Arrays.asList("01.01.2019", "19.04.2019", "22.04.2019", "01.05.2019",
                 "30.05.2019", "10.06.2019", "20.06.2019", "03.10.2019", "01.11.2019", "25.12.2019",
                 "26.12.2019");
@@ -115,9 +118,6 @@ public class CreateCityCounts implements Callable<Integer> {
         List<Integer> weekendDaysList = Arrays.asList(1, 5, 6, 7);
         Integer[] hourCountsTmp = new Integer[24];
         Double countMean;
-        var counts = new Counts<Link>();
-        counts.setYear(2019);
-        var count = counts.createAndAddCount(Id.createLinkId(""), "");
 
         InputStreamReader reader = new InputStreamReader(in);
 
@@ -144,41 +144,14 @@ public class CreateCityCounts implements Callable<Integer> {
             hourCountsTmp[meanCounts.getKey()] = countMean.intValue();
             count.createVolume(meanCounts.getKey().intValue() + 1, countMean);
         }
-        DayCounts dayCount = new DayCounts(hourCountsTmp, count, id);
-        result.put(monthNumber, dayCount);
-        return result;
+        //DayCounts dayCount = new DayCounts(hourCountsTmp, count, id);
+        //result.put(monthNumber, dayCount);
+        //return result;
+
+        // TODO: use new count format
     }
 
     private boolean isWeekend(LocalDate date, List<Integer> weekendDaysList) {
         return weekendDaysList.contains(date.getDayOfWeek().getValue());
-    }
-
-    /**
-     * Contains counts for one day.
-     */
-    private static class DayCounts {
-
-        /**
-         * Counts for each hour of the day.
-         */
-        Integer[] hourCounts;
-
-        Counts counts = new Counts<Link>();
-        Count count = counts.createAndAddCount(Id.createLinkId(""), "");
-
-        public DayCounts(Integer[] counts, Count count, String id) {
-            this.hourCounts = counts;
-            this.count = count;
-        }
-
-        public String getCountsToString() {
-            StringBuilder ret = new StringBuilder("[");
-            for (Integer count : hourCounts) {
-                ret.append(count.toString()).append(", ");
-            }
-            ret = new StringBuilder(ret.substring(0, ret.length() - 2));
-            ret.append("]");
-            return ret.toString();
-        }
     }
 }
