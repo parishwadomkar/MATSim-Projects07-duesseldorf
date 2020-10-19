@@ -97,7 +97,7 @@ public class AnalyzeTakeovers implements Callable<Integer>, LinkEnterEventHandle
         Map<Id<Link>, List<Event>> laneEvents = new HashMap<>();
 
         // maximum time for one vehicle on a link
-        double timeThreshold = 400;
+        double timeThreshold = 300;
 
         for (Event value : events) {
 
