@@ -39,7 +39,7 @@ The Düsseldorf scenario has a command line interface providing the following op
 
 It can be used by using either of these methods:
 
-##### ... using an IDE, e.g. Eclipse, IntelliJ - Alternative 1: use cloned/downloaded matsim-berlin repository
+##### ... using an IDE, e.g. Eclipse, IntelliJ - Alternative 1: use cloned/downloaded matsim-duesseldorf repository
 (Requires either cloning or downloading the repository.)
 
 1. Set up the project in your IDE.
