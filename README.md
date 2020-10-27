@@ -33,6 +33,12 @@ Handling of large files within git is not without problems (git lfs files are no
 ----
 ### Run the MATSim Düsseldorf scenario
 
+The Düsseldorf scenario has a command line interface providing the following options:
+
+![Düsseldorf Scenario CLI](scenarios/cli.png "Düsseldorf Scenario CLI")
+
+It can be used by using either of these methods:
+
 ##### ... using an IDE, e.g. Eclipse, IntelliJ - Alternative 1: use cloned/downloaded matsim-berlin repository
 (Requires either cloning or downloading the repository.)
 
