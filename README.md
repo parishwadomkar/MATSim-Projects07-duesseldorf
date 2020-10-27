@@ -48,5 +48,6 @@ Handling of large files within git is not without problems (git lfs files are no
 1. Build the scenario using `mvn package`
 1. There should be a file directly in the `matsim-duesseldorf` directory with name approximately as `matsim-duesseldorf-1.0.jar`.
 1. Run this file from the command line using `java -jar matsim-duesseldorf-1.0.jar --help` to see all possible options.
+    1. For example, one can disable lanes or run the 25pct scenario using the available options
 1. Start this scenario using the default config by running `java -jar matsim-duesseldorf-1.0.jar`
 1. "Open" the output directory.  You can drag files into VIA as was already done above.
