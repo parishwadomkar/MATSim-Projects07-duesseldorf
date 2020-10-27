@@ -1,5 +1,9 @@
 # The MATSim Open Düsseldorf Scenario
 
+[![Build Status](https://travis-ci.org/matsim-scenarios/matsim-duesseldorf.svg?branch=master)](https://travis-ci.org/matsim-scenarios/matsim-duesseldorf)
+![license](https://img.shields.io/github/license/matsim-scenarios/matsim-duesseldorf.svg)
+![JDK](https://img.shields.io/badge/JDK-11+-green.svg)
+
 ### About this project
 
 This repository provides an open MATSim transport model for Düsseldorf, provided by the [Transport Systems Planning and Transport Telematics group](https://www.vsp.tu-berlin.de) of [Technische Universität Berlin](http://www.tu-berlin.de).
