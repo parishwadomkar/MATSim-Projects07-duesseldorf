@@ -37,6 +37,7 @@ public class CreateCityCounts implements Callable<Integer> {
     private Path input;
 
     public static void main(String[] args) throws IOException {
+
         System.exit(new CommandLine(new CreateCityCounts()).execute(args));
     }
 
@@ -73,8 +74,7 @@ public class CreateCityCounts implements Callable<Integer> {
 
         Counts<Link> counts = new Counts<>();
         counts.setYear(2019);
-        // TODO: get month from zip filename
-        String monthNumber = zip.getFileName().toString().split("-19")[1].split("01_")[0];
+        String monthNumber = zip.getFileName().toString().split("-")[0];
         counts.setName(monthNumber);
 
         try (ZipInputStream in = new ZipInputStream(Files.newInputStream(zip))) {
@@ -84,11 +84,8 @@ public class CreateCityCounts implements Callable<Integer> {
                 if (entry.isDirectory())
                     continue;
 
-                // Chose definition of stationId
                 String stationId = entry.getName().split("_")[2];
-
                 stationId = stationId.substring(0, stationId.length() - 4);
-                // stationId = stationId.substring(0, 15);
 
                 // TODO: lookup map matched link id
                 readCsvCounts(in, counts.createAndAddCount(Id.createLinkId(stationId), stationId));
@@ -144,11 +141,6 @@ public class CreateCityCounts implements Callable<Integer> {
             hourCountsTmp[meanCounts.getKey()] = countMean.intValue();
             count.createVolume(meanCounts.getKey().intValue() + 1, countMean);
         }
-        //DayCounts dayCount = new DayCounts(hourCountsTmp, count, id);
-        //result.put(monthNumber, dayCount);
-        //return result;
-
-        // TODO: use new count format
     }
 
     private boolean isWeekend(LocalDate date, List<Integer> weekendDaysList) {
