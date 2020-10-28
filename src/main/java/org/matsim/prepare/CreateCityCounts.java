@@ -41,6 +41,10 @@ public class CreateCityCounts implements Callable<Integer> {
             defaultValue = "../../shared-svn/komodnext/data/counts")
     private Path input;
 
+    @CommandLine.Option(names = {"--output"}, description = "Output counts.xml.gz",
+            defaultValue = ".../.../public-svn/matsim/scenarios/countries/de/duesseldorf/duesseldorf-v1.0/matsim-input-files/output.xml.gz")
+    private String output;
+
     public static void main(String[] args) throws IOException {
 
         System.exit(new CommandLine(new CreateCityCounts()).execute(args));
@@ -73,7 +77,7 @@ public class CreateCityCounts implements Callable<Integer> {
 
         finalCounts = aggregateCounts(collect);
         finalCounts.setYear(2019);
-        new CountsWriter(finalCounts).write("/Users/friedrich/SVN/public-svn/matsim/scenarios/countries/de/duesseldorf/duesseldorf-v1.0/matsim-input-files/output.xml.gz");
+        new CountsWriter(finalCounts).write(output);
 
         return 0;
     }
