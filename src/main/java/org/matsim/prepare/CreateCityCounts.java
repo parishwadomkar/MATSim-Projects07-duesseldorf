@@ -9,6 +9,7 @@ import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.counts.Count;
 import org.matsim.counts.Counts;
+import org.matsim.counts.CountsWriter;
 import picocli.CommandLine;
 
 import java.io.IOException;
@@ -31,6 +32,10 @@ import java.util.zip.ZipInputStream;
 public class CreateCityCounts implements Callable<Integer> {
 
     private static final Logger log = LogManager.getLogger(CreateCityCounts.class);
+
+    // is the declaration later possible?
+    Set<String> allStations = new HashSet<>();
+    Counts<Link> finalCounts = new Counts<>();
 
     @CommandLine.Option(names = {"--input"}, description = "Input folder with zip files",
             defaultValue = "../../shared-svn/komodnext/data/counts")
@@ -64,6 +69,12 @@ public class CreateCityCounts implements Callable<Integer> {
             log.info("**********************************************************************************************************************************");
         }
 
+        //TODO: Delete empty counts
+
+        finalCounts = aggregateCounts(collect);
+        finalCounts.setYear(2019);
+        new CountsWriter(finalCounts).write("/Users/friedrich/SVN/public-svn/matsim/scenarios/countries/de/duesseldorf/duesseldorf-v1.0/matsim-input-files/output.xml.gz");
+
         return 0;
     }
 
@@ -86,6 +97,8 @@ public class CreateCityCounts implements Callable<Integer> {
 
                 String stationId = entry.getName().split("_")[2];
                 stationId = stationId.substring(0, stationId.length() - 4);
+
+                allStations.add(stationId);
 
                 // TODO: lookup map matched link id
                 readCsvCounts(in, counts.createAndAddCount(Id.createLinkId(stationId), stationId));
@@ -115,6 +128,7 @@ public class CreateCityCounts implements Callable<Integer> {
         List<Integer> weekendDaysList = Arrays.asList(1, 5, 6, 7);
         Integer[] hourCountsTmp = new Integer[24];
         Double countMean;
+        double sum = 0D;
 
         InputStreamReader reader = new InputStreamReader(in);
 
@@ -127,23 +141,65 @@ public class CreateCityCounts implements Callable<Integer> {
             if (!isWeekend(LocalDate.parse(record.get("Time").split(" ")[0], formatter), weekendDaysList) || !holidays2019.contains(record.get("Time").split(" ")[0])) {
 
                 Integer hour = Integer.parseInt(record.get("Time").split(" ")[1].split(":")[0]);
-                Double value = Double.valueOf(record.get("processed_all_vol").replaceAll(",", "."));
+                double value = Double.parseDouble(record.get("processed_all_vol").replaceAll(",", "."));
                 tempCountSum.computeIfAbsent(hour, k -> new ArrayList<>()).add(value);
+                sum += value;
             }
         }
 
-        for (Map.Entry<Integer, List<Double>> meanCounts : tempCountSum.entrySet()) {
-            countMean = 0.0;
-            for (Double value : meanCounts.getValue()) {
-                countMean += value;
+        if (sum == 0) {
+
+            allStations.remove(count.getId().toString());
+
+        } else {
+
+            for (Map.Entry<Integer, List<Double>> meanCounts : tempCountSum.entrySet()) {
+                countMean = 0.0;
+                for (Double value : meanCounts.getValue()) {
+                    countMean += value;
+                }
+                countMean = countMean / (meanCounts.getValue().size());
+                hourCountsTmp[meanCounts.getKey()] = countMean.intValue();
+                count.createVolume(meanCounts.getKey() + 1, countMean);
             }
-            countMean = countMean/(meanCounts.getValue().size());
-            hourCountsTmp[meanCounts.getKey()] = countMean.intValue();
-            count.createVolume(meanCounts.getKey().intValue() + 1, countMean);
+
         }
     }
 
     private boolean isWeekend(LocalDate date, List<Integer> weekendDaysList) {
         return weekendDaysList.contains(date.getDayOfWeek().getValue());
     }
+
+    private Counts<Link> aggregateCounts(Map<String, Counts<Link>> collect) {
+
+        Counts<Link> counts = new Counts<>();
+        double[] averageCounts;
+
+        // all stations
+        for(String id : allStations) {
+
+            averageCounts = new double[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+            // each month
+            for (Map.Entry<String, Counts<Link>> countMap : collect.entrySet()) {
+
+                for (int i = 0; i < 24; i++) {
+
+                    averageCounts[i] = averageCounts[i] + countMap.getValue().getCount(Id.createLinkId(id)).getVolume(i + 1).getValue();
+
+                }
+            }
+
+            for (int i = 0; i < 24; i++) {
+                averageCounts[i] = averageCounts[i]/12;
+            }
+
+            System.out.println("ID: " + id + "\t" + Arrays.toString(averageCounts));
+
+        }
+
+        return counts;
+
+    }
+
 }
