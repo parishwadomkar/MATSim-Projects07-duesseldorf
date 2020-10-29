@@ -1,7 +1,5 @@
 package org.matsim.prepare;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
@@ -54,13 +52,17 @@ public class NodeMatcher {
         return result;
     }
 
-    @Getter
-    @RequiredArgsConstructor
     static class MatchedLinkID {
 
         private final String fromID;
         private final String toID;
         private final String linkID;
+
+        public MatchedLinkID(String fromID, String toID, String linkID) {
+            this.fromID = fromID;
+            this.toID = toID;
+            this.linkID = linkID;
+        }
 
         public String getLinkID() {
             return linkID;

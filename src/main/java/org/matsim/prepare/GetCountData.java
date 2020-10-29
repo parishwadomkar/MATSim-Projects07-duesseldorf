@@ -1,8 +1,5 @@
 package org.matsim.prepare;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.ToString;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.log4j.Logger;
@@ -149,9 +146,6 @@ public class GetCountData {
 
 	}
 
-	@Getter
-	@RequiredArgsConstructor
-	@ToString
 	static class CountingData {
 
 		private final String stationId;
@@ -160,6 +154,13 @@ public class GetCountData {
 		private final Id<Node> toId;
 		private final Map<String, List<Integer>> values = new HashMap<>();
 		private final Map<String, Integer> result = new HashMap<>();
+
+		public CountingData(String stationId, Id<Link> linkId, Id<Node> fromId, Id<Node> toId) {
+			this.stationId = stationId;
+			this.linkId = linkId;
+			this.fromId = fromId;
+			this.toId = toId;
+		}
 
 		void addValue(String hour, int value) {
 			values.computeIfAbsent(hour, k -> new ArrayList<>()).add(value);
@@ -174,6 +175,34 @@ public class GetCountData {
 			}
 
 			return sum / values.get(hour).size();
+		}
+
+		public String getStationId() {
+			return this.stationId;
+		}
+
+		public Id<Link> getLinkId() {
+			return this.linkId;
+		}
+
+		public Id<Node> getFromId() {
+			return this.fromId;
+		}
+
+		public Id<Node> getToId() {
+			return this.toId;
+		}
+
+		public Map<String, List<Integer>> getValues() {
+			return this.values;
+		}
+
+		public Map<String, Integer> getResult() {
+			return this.result;
+		}
+
+		public String toString() {
+			return "GetCountData.CountingData(stationId=" + this.getStationId() + ", linkId=" + this.getLinkId() + ", fromId=" + this.getFromId() + ", toId=" + this.getToId() + ", values=" + this.getValues() + ", result=" + this.getResult() + ")";
 		}
 	}
 }
