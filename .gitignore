@@ -5,6 +5,8 @@ scenarios/output
 *.gz
 *.pbf
 
+.classpath
+.project
 
 # Created by https://www.toptal.com/developers/gitignore/api/osx,java,maven,linux,windows,intellij,eclipse
 # Edit at https://www.toptal.com/developers/gitignore?templates=osx,java,maven,linux,windows,intellij,eclipse
