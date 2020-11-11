@@ -19,7 +19,7 @@ import org.matsim.core.utils.geometry.transformations.TransformationFactory;
 public class RunTravelTimeAnalysis {
 
 	/**
-	 * 
+	 *
 	 * @param args Arguments to pass:
 	 *             <ol type="1">
 	 *             <li>A MATSim Plans file</li>
@@ -30,11 +30,11 @@ public class RunTravelTimeAnalysis {
 	 *             <li>Output folder location</li>
 	 *             <li>The date to validate travel times for, format:
 	 *             YYYY-MM-DD</li>
-	 * 
+	 *
 	 *             <li>(Optional: The number of trips to validate)</li>
-	 * 
+	 *
 	 *             </ol>
-	 * 
+	 *
 	 */
 	public static void main(String[] args) {
 		String plans = args[0];
@@ -59,6 +59,10 @@ public class RunTravelTimeAnalysis {
 
 		CoordinateTransformation transformation = TransformationFactory.getCoordinateTransformation(epsg,
 				TransformationFactory.WGS84);
+		/*
+
+		TODO: not compiling!!
+
 		HereMapsRouteValidator validator = new HereMapsRouteValidator(outputfolder, apiAccessKey, date, transformation);
 		// Setting this to true will write out the raw JSON files for each calculated
 		// route
@@ -74,6 +78,8 @@ public class RunTravelTimeAnalysis {
 		}
 
 		runner.run();
+
+		 */
 	}
 
 }
