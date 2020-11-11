@@ -53,19 +53,13 @@ public class RunTravelTimeAnalysis {
 		Scenario scenario = ScenarioUtils.createScenario(ConfigUtils.createConfig());
 		new MatsimNetworkReader(scenario.getNetwork()).readFile(network);
 		StreamingPopulationReader spr = new StreamingPopulationReader(scenario);
-		spr.addAlgorithm(new PersonAlgorithm() {
-			@Override
-			public void run(Person person) {
-				populationIds.add(person.getId());
-			}
-		});
+		spr.addAlgorithm(person -> populationIds.add(person.getId()));
 		spr.readFile(plans);
 		System.out.println("populationId Size is " + populationIds.size());
 
 		CoordinateTransformation transformation = TransformationFactory.getCoordinateTransformation(epsg,
 				TransformationFactory.WGS84);
-		HereMapsRouteValidator validator = new HereMapsRouteValidator(outputfolder, apiAccessKey, date,
-				transformation);
+		HereMapsRouteValidator validator = new HereMapsRouteValidator(outputfolder, apiAccessKey, date, transformation);
 		// Setting this to true will write out the raw JSON files for each calculated
 		// route
 		validator.setWriteDetailedFiles(false);

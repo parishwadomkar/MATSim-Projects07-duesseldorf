@@ -1,11 +1,5 @@
 package org.matsim.analyze;
 
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-
 import org.apache.log4j.Logger;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Point;
@@ -18,11 +12,17 @@ import org.matsim.core.utils.geometry.geotools.MGC;
 import org.matsim.core.utils.gis.ShapeFileReader;
 import org.opengis.feature.simple.SimpleFeature;
 
-public class HomeLocationFilter implements AgentFilter {
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
+
+class HomeLocationFilter implements AgentFilter {
 	private static final Logger log = Logger.getLogger(HomeLocationFilter.class);
 
-	private Set<Person> personsToRemove = new HashSet<>();
-	private String homeActivityTypePrefix = "home";
+	private final Set<Person> personsToRemove = new HashSet<>();
+	private static final String HOME_ACTIVITY_TYPE_PREFIX = "home";
 	private final Geometry analysisArea;
 
 	public HomeLocationFilter(String analysisAreaShapeFile) {
@@ -64,14 +64,14 @@ public class HomeLocationFilter implements AgentFilter {
 				// (Note: If the first activity is not home activity, we also don't consider
 				// that person)
 				Point point = MGC.coord2Point(homeCoord);
-				if (!point.within(analysisArea) || !firstActivity.getType().startsWith(homeActivityTypePrefix)) {
+				if (!point.within(analysisArea) || !firstActivity.getType().startsWith(HOME_ACTIVITY_TYPE_PREFIX)) {
 					personsToRemove.add(person);
 				}
 			}
-			
+
 			log.info("There are " + personsToRemove.size() + " persons to be removed from analysis");
 			log.info("The total population size is " + scenario.getPopulation().getPersons().values().size());
-			
+
 		} else {
 			throw new RuntimeException("The scenario does not exist. Aborting...");
 		}
