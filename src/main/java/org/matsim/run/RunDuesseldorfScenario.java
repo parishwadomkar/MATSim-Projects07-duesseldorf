@@ -8,10 +8,7 @@ import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ActivityParams;
 import org.matsim.core.config.groups.PlansConfigGroup;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
-import org.matsim.prepare.CreateNetwork;
-import org.matsim.prepare.CreateTransitSchedule;
-import org.matsim.prepare.ExtractEvents;
-import org.matsim.prepare.PreparePopulation;
+import org.matsim.prepare.*;
 import picocli.CommandLine;
 
 import java.util.List;
@@ -20,7 +17,8 @@ import java.util.List;
         header = ":: Open Düsseldorf Scenario ::",
         version = RunDuesseldorfScenario.VERSION
 )
-@MATSimApplication.Prepare({CreateNetwork.class, CreateTransitSchedule.class, PreparePopulation.class, ExtractEvents.class})
+@MATSimApplication.Prepare({CreateNetwork.class, CreateTransitSchedule.class, PreparePopulation.class, CreateCityCounts.class,
+		ExtractEvents.class, CreateBAStCounts.class})
 public class RunDuesseldorfScenario extends MATSimApplication {
 
     /**
