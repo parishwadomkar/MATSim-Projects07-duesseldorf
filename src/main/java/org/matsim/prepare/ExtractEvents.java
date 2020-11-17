@@ -8,6 +8,8 @@ import org.matsim.api.core.v01.events.LinkEnterEvent;
 import org.matsim.api.core.v01.events.LinkLeaveEvent;
 import org.matsim.api.core.v01.events.handler.LinkEnterEventHandler;
 import org.matsim.api.core.v01.events.handler.LinkLeaveEventHandler;
+import org.matsim.contrib.sumo.SumoNetworkConverter;
+import org.matsim.contrib.sumo.SumoNetworkHandler;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.api.experimental.events.LaneEnterEvent;
 import org.matsim.core.api.experimental.events.LaneLeaveEvent;
@@ -60,7 +62,7 @@ public class ExtractEvents implements Callable<Integer>, LinkEnterEventHandler, 
     @Override
     public Integer call() throws Exception {
 
-        sumo = SumoNetworkHandler.read(network.toFile());
+        sumo = SumoNetworkConverter.readNetwork(network.toFile());
         events = new ArrayList<>();
 
         EventsManager manager = new EventsManagerImpl();
@@ -111,25 +113,25 @@ public class ExtractEvents implements Callable<Integer>, LinkEnterEventHandler, 
 
     @Override
     public void handleEvent(LinkEnterEvent event) {
-        if (sumo.edges.containsKey(event.getLinkId().toString()))
+        if (sumo.getEdges().containsKey(event.getLinkId().toString()))
             events.add(event);
     }
 
     @Override
     public void handleEvent(LinkLeaveEvent event) {
-        if (sumo.edges.containsKey(event.getLinkId().toString()))
+        if (sumo.getEdges().containsKey(event.getLinkId().toString()))
             events.add(event);
     }
 
     @Override
     public void handleEvent(LaneEnterEvent event) {
-        if (sumo.edges.containsKey(event.getLinkId().toString()) || sumo.lanes.containsKey(event.getLaneId().toString()))
+        if (sumo.getEdges().containsKey(event.getLinkId().toString()) || sumo.getLanes().containsKey(event.getLaneId().toString()))
             events.add(event);
     }
 
     @Override
     public void handleEvent(LaneLeaveEvent event) {
-        if (sumo.edges.containsKey(event.getLinkId().toString()) || sumo.lanes.containsKey(event.getLaneId().toString()))
+        if (sumo.getEdges().containsKey(event.getLinkId().toString()) || sumo.getLanes().containsKey(event.getLaneId().toString()))
             events.add(event);
     }
 }

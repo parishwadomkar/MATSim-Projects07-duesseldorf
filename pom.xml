@@ -68,6 +68,13 @@
 
         <dependency>
             <groupId>org.matsim.contrib</groupId>
+            <artifactId>sumo</artifactId>
+            <version>${matsim.version}</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.matsim.contrib</groupId>
             <artifactId>dvrp</artifactId>
             <version>${matsim.version}</version>
             <scope>compile</scope>
@@ -107,14 +114,6 @@
             <version>${matsim.version}</version>
             <scope>compile</scope>
         </dependency>
-
-        <dependency>
-            <groupId>org.matsim.contrib</groupId>
-            <artifactId>osm</artifactId>
-            <version>${matsim.version}</version>
-            <scope>compile</scope>
-        </dependency>
-
 
         <!-- Include the JUnit testing library.  Not transitive. -->
         <dependency>

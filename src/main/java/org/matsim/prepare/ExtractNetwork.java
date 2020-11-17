@@ -9,6 +9,8 @@ import org.matsim.api.core.v01.events.Event;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.network.Node;
+import org.matsim.contrib.sumo.SumoNetworkConverter;
+import org.matsim.contrib.sumo.SumoNetworkHandler;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.scenario.ScenarioUtils;
@@ -46,7 +48,6 @@ public class ExtractNetwork implements Callable<Integer> {
     @CommandLine.Option(names = "--output", description = "Path to output file", required = true)
     private Path output;
 
-
     private SumoNetworkHandler sumo;
     private List<Event> events;
 
@@ -57,7 +58,7 @@ public class ExtractNetwork implements Callable<Integer> {
     @Override
     public Integer call() throws Exception {
 
-        sumo = SumoNetworkHandler.read(sumoNetwork.toFile());
+        sumo = SumoNetworkConverter.readNetwork(sumoNetwork.toFile());
 
         Network network = NetworkUtils.readNetwork(this.network.toString());
 
@@ -69,7 +70,7 @@ public class ExtractNetwork implements Callable<Integer> {
         log.info("Read {} links and {} lanes", network.getLinks().size(), scenario.getLanes().getLanesToLinkAssignments().size());
 
         for (Node node : Lists.newArrayList(network.getNodes().values())) {
-            if (!sumo.junctions.containsKey(node.getId().toString()))
+            if (!sumo.getJunctions().containsKey(node.getId().toString()))
                 network.removeNode(node.getId());
         }
 
