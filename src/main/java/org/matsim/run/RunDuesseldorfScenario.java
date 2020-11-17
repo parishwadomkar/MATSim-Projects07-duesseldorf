@@ -1,6 +1,7 @@
 package org.matsim.run;
 
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
+import org.matsim.api.core.v01.Scenario;
 import org.matsim.contrib.signals.otfvis.OTFVisWithSignalsLiveModule;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.groups.ControlerConfigGroup;
@@ -8,6 +9,8 @@ import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ActivityParams;
 import org.matsim.core.config.groups.PlansConfigGroup;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
+import org.matsim.lanes.Lane;
+import org.matsim.lanes.LanesToLinkAssignment;
 import org.matsim.prepare.*;
 import picocli.CommandLine;
 
@@ -48,6 +51,9 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 
     @CommandLine.Option(names = {"--no-lanes"}, defaultValue = "false", description = "Deactivate the use of lane information")
     private boolean noLanes;
+
+	@CommandLine.Option(names = {"--lane-capacity"}, defaultValue = "1", description = "Scale lane capacity by this factor.")
+	private double laneCapacity;
 
     public RunDuesseldorfScenario() {
         super(String.format("scenarios/input/duesseldorf-%s-1pct.config.xml", VERSION));
@@ -95,7 +101,11 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 
             config.controler().setRoutingAlgorithmType(ControlerConfigGroup.RoutingAlgorithmType.FastAStarLandmarks);
 
-        }
+        } else {
+
+			config.controler().setOutputDirectory(config.controler().getOutputDirectory() + "-cap_" + laneCapacity);
+
+		}
 
         // config.planCalcScore().addActivityParams(new ActivityParams("freight").setTypicalDuration(12. * 3600.));
         config.planCalcScore().addActivityParams(new ActivityParams("car interaction").setTypicalDuration(60));
@@ -105,7 +115,17 @@ public class RunDuesseldorfScenario extends MATSimApplication {
         return config;
     }
 
-    @Override
+	@Override
+	protected void prepareScenario(Scenario scenario) {
+
+		for (LanesToLinkAssignment l2l : scenario.getLanes().getLanesToLinkAssignments().values()) {
+			for (Lane lane : l2l.getLanes().values()) {
+				lane.setCapacityVehiclesPerHour(lane.getCapacityVehiclesPerHour() * laneCapacity);
+			}
+		}
+	}
+
+	@Override
     protected void prepareControler(Controler controler) {
 
         if (otfvis)
