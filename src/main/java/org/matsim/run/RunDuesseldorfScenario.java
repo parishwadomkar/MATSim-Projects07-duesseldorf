@@ -2,6 +2,7 @@ package org.matsim.run;
 
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 import org.matsim.api.core.v01.Scenario;
+import org.matsim.api.core.v01.network.Link;
 import org.matsim.contrib.signals.otfvis.OTFVisWithSignalsLiveModule;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.groups.ControlerConfigGroup;
@@ -55,6 +56,9 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 	@CommandLine.Option(names = {"--lane-capacity"}, defaultValue = "1", description = "Scale lane capacity by this factor.")
 	private double laneCapacity;
 
+	@CommandLine.Option(names = {"--free-flow"}, defaultValue = "1", description = "Scale up free flow speed of slow links.")
+	private double freeFlowFactor;
+
     public RunDuesseldorfScenario() {
         super(String.format("scenarios/input/duesseldorf-%s-1pct.config.xml", VERSION));
     }
@@ -103,9 +107,14 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 
         } else {
 
-			config.controler().setOutputDirectory(config.controler().getOutputDirectory() + "-cap_" + laneCapacity);
+        	if (laneCapacity != 1.0)
+				config.controler().setOutputDirectory(config.controler().getOutputDirectory() + "-cap_" + laneCapacity);
 
 		}
+
+
+        if (freeFlowFactor != 1)
+			config.controler().setOutputDirectory(config.controler().getOutputDirectory() + "-ff_" + freeFlowFactor);
 
         // config.planCalcScore().addActivityParams(new ActivityParams("freight").setTypicalDuration(12. * 3600.));
         config.planCalcScore().addActivityParams(new ActivityParams("car interaction").setTypicalDuration(60));
@@ -118,9 +127,17 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 	@Override
 	protected void prepareScenario(Scenario scenario) {
 
+    	// scale lane capacities
 		for (LanesToLinkAssignment l2l : scenario.getLanes().getLanesToLinkAssignments().values()) {
 			for (Lane lane : l2l.getLanes().values()) {
 				lane.setCapacityVehiclesPerHour(lane.getCapacityVehiclesPerHour() * laneCapacity);
+			}
+		}
+
+		// scale free flow speed
+		for (Link link : scenario.getNetwork().getLinks().values()) {
+			if (link.getFreespeed() < 25.5 / 3.6) {
+				link.setFreespeed(link.getFreespeed() * freeFlowFactor);
 			}
 		}
 	}
