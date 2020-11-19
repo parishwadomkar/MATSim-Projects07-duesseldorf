@@ -110,7 +110,7 @@ public class CreateCityCounts implements Callable<Integer> {
 
 			CSVParser csv = new CSVParser(in, CSVFormat.DEFAULT.withFirstRecordAsHeader().withDelimiter(';'));
 			for (CSVRecord record : csv) {
-				mapping.put(record.get("Link-Id"), Id.createLinkId(record.get(0)));
+				mapping.put(record.get(0), Id.createLinkId(record.get("Link-Id")));
 			}
 		}
 	}
@@ -132,6 +132,7 @@ public class CreateCityCounts implements Callable<Integer> {
 				if (entry.isDirectory())
 					continue;
 
+				// TODO: catch exception
 				String stationId = entry.getName().split("_")[2];
 				stationId = stationId.substring(0, stationId.length() - 4);
 
@@ -141,7 +142,15 @@ public class CreateCityCounts implements Callable<Integer> {
 					log.warn("No mapping for station {}", stationId);
 
 				else {
-					readCsvCounts(in, counts.createAndAddCount(Id.createLinkId(stationId), stationId));
+					Id<Link> linkId = Id.createLinkId(stationId);
+					Count<Link> count;
+					if (counts.getCounts().containsKey(linkId)) {
+						count = counts.getCount(linkId);
+					} else {
+						count = counts.createAndAddCount(linkId, stationId);
+					}
+
+					readCsvCounts(in, count);
 					log.info("Finished reading {}", entry.getName());
 				}
 
@@ -167,7 +176,6 @@ public class CreateCityCounts implements Callable<Integer> {
 				"26.12.2019");
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
 		List<Integer> weekendDaysList = Arrays.asList(1, 5, 6, 7);
-		Integer[] hourCountsTmp = new Integer[24];
 		Double countMean;
 		double sum = 0D;
 
@@ -199,8 +207,13 @@ public class CreateCityCounts implements Callable<Integer> {
 					countMean += value;
 				}
 				countMean = countMean / (meanCounts.getValue().size());
-				hourCountsTmp[meanCounts.getKey()] = countMean.intValue();
-				count.createVolume(meanCounts.getKey() + 1, countMean);
+
+				// TODO: add volumes if already existing
+				int key = meanCounts.getKey() + 1;
+				if (count.getVolumes().containsKey(key))
+					count.createVolume(key, count.getVolume(key).getValue() + countMean);
+				else
+					count.createVolume(key, countMean);
 			}
 
 		}
