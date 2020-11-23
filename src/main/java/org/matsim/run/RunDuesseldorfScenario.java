@@ -1,6 +1,8 @@
 package org.matsim.run;
 
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
+import org.matsim.api.core.v01.Scenario;
+import org.matsim.api.core.v01.network.Link;
 import org.matsim.contrib.signals.otfvis.OTFVisWithSignalsLiveModule;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.groups.ControlerConfigGroup;
@@ -8,10 +10,9 @@ import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ActivityParams;
 import org.matsim.core.config.groups.PlansConfigGroup;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
-import org.matsim.prepare.CreateNetwork;
-import org.matsim.prepare.CreateTransitSchedule;
-import org.matsim.prepare.ExtractEvents;
-import org.matsim.prepare.PreparePopulation;
+import org.matsim.lanes.Lane;
+import org.matsim.lanes.LanesToLinkAssignment;
+import org.matsim.prepare.*;
 import picocli.CommandLine;
 
 import java.util.List;
@@ -20,7 +21,8 @@ import java.util.List;
         header = ":: Open Düsseldorf Scenario ::",
         version = RunDuesseldorfScenario.VERSION
 )
-@MATSimApplication.Prepare({CreateNetwork.class, CreateTransitSchedule.class, PreparePopulation.class, ExtractEvents.class})
+@MATSimApplication.Prepare({CreateNetwork.class, CreateTransitSchedule.class, PreparePopulation.class, CreateCityCounts.class,
+		ExtractEvents.class, CreateBAStCounts.class})
 public class RunDuesseldorfScenario extends MATSimApplication {
 
     /**
@@ -50,6 +52,12 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 
     @CommandLine.Option(names = {"--no-lanes"}, defaultValue = "false", description = "Deactivate the use of lane information")
     private boolean noLanes;
+
+	@CommandLine.Option(names = {"--lane-capacity"}, defaultValue = "1", description = "Scale lane capacity by this factor.")
+	private double laneCapacity;
+
+	@CommandLine.Option(names = {"--free-flow"}, defaultValue = "1", description = "Scale up free flow speed of slow links.")
+	private double freeFlowFactor;
 
     public RunDuesseldorfScenario() {
         super(String.format("scenarios/input/duesseldorf-%s-1pct.config.xml", VERSION));
@@ -97,7 +105,16 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 
             config.controler().setRoutingAlgorithmType(ControlerConfigGroup.RoutingAlgorithmType.FastAStarLandmarks);
 
-        }
+        } else {
+
+        	if (laneCapacity != 1.0)
+				config.controler().setOutputDirectory(config.controler().getOutputDirectory() + "-cap_" + laneCapacity);
+
+		}
+
+
+        if (freeFlowFactor != 1)
+			config.controler().setOutputDirectory(config.controler().getOutputDirectory() + "-ff_" + freeFlowFactor);
 
         // config.planCalcScore().addActivityParams(new ActivityParams("freight").setTypicalDuration(12. * 3600.));
         config.planCalcScore().addActivityParams(new ActivityParams("car interaction").setTypicalDuration(60));
@@ -107,7 +124,25 @@ public class RunDuesseldorfScenario extends MATSimApplication {
         return config;
     }
 
-    @Override
+	@Override
+	protected void prepareScenario(Scenario scenario) {
+
+    	// scale lane capacities
+		for (LanesToLinkAssignment l2l : scenario.getLanes().getLanesToLinkAssignments().values()) {
+			for (Lane lane : l2l.getLanes().values()) {
+				lane.setCapacityVehiclesPerHour(lane.getCapacityVehiclesPerHour() * laneCapacity);
+			}
+		}
+
+		// scale free flow speed
+		for (Link link : scenario.getNetwork().getLinks().values()) {
+			if (link.getFreespeed() < 25.5 / 3.6) {
+				link.setFreespeed(link.getFreespeed() * freeFlowFactor);
+			}
+		}
+	}
+
+	@Override
     protected void prepareControler(Controler controler) {
 
         if (otfvis)

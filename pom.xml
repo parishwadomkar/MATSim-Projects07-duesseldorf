@@ -6,8 +6,8 @@
     <artifactId>matsim-duesseldorf</artifactId>
     <version>1.0-SNAPSHOT</version>
 
-    <name>MATSim Open Düsseldorf scenario project</name>
-    <description>MATSim Open Düsseldorf scenario project</description>
+    <name>MATSim Open Düsseldorf Scenario</name>
+    <description>MATSim Open Düsseldorf Scenario</description>
 
     <properties>
         <!-- <matsim.version>12.0</matsim.version> -->
@@ -55,6 +55,12 @@
             <url>https://mvn.slimjars.com</url>
         </repository>
 
+        <!-- Needed by DVRP -->
+        <repository>
+            <id>SBB</id>
+            <url>https://schweizerischebundesbahnen.bintray.com/simba.mvn</url>
+        </repository>
+
     </repositories>
 
     <dependencies>
@@ -64,6 +70,13 @@
             <groupId>org.matsim</groupId>
             <artifactId>matsim</artifactId>
             <version>${matsim.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.matsim.contrib</groupId>
+            <artifactId>sumo</artifactId>
+            <version>${matsim.version}</version>
+            <scope>compile</scope>
         </dependency>
 
         <dependency>
@@ -107,14 +120,6 @@
             <version>${matsim.version}</version>
             <scope>compile</scope>
         </dependency>
-
-        <dependency>
-            <groupId>org.matsim.contrib</groupId>
-            <artifactId>osm</artifactId>
-            <version>${matsim.version}</version>
-            <scope>compile</scope>
-        </dependency>
-
 
         <!-- Include the JUnit testing library.  Not transitive. -->
         <dependency>
