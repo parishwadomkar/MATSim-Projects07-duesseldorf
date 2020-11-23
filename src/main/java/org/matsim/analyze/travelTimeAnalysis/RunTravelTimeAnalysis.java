@@ -10,9 +10,9 @@ import org.matsim.contrib.analysis.vsp.traveltimedistance.HereMapsRouteValidator
 import org.matsim.contrib.analysis.vsp.traveltimedistance.TravelTimeValidationRunner;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.network.io.MatsimNetworkReader;
-import org.matsim.core.population.algorithms.PersonAlgorithm;
 import org.matsim.core.population.io.StreamingPopulationReader;
 import org.matsim.core.scenario.ScenarioUtils;
+import org.matsim.core.utils.collections.Tuple;
 import org.matsim.core.utils.geometry.CoordinateTransformation;
 import org.matsim.core.utils.geometry.transformations.TransformationFactory;
 
@@ -45,8 +45,15 @@ public class RunTravelTimeAnalysis {
 		String outputfolder = args[5];
 		String date = args[6];
 		Integer tripsToValidate = null;
+		Double timeWindowStart = null;
+		Double timeWindowEnd = null;
 		if (args.length > 7) {
 			tripsToValidate = Integer.parseInt(args[7]);
+		}
+
+		if (args.length > 8) {
+			timeWindowStart = Double.parseDouble(args[8]);
+			timeWindowEnd = Double.parseDouble(args[9]);
 		}
 
 		Set<Id<Person>> populationIds = new HashSet<>();
@@ -59,10 +66,6 @@ public class RunTravelTimeAnalysis {
 
 		CoordinateTransformation transformation = TransformationFactory.getCoordinateTransformation(epsg,
 				TransformationFactory.WGS84);
-		/*
-
-		TODO: not compiling!!
-
 		HereMapsRouteValidator validator = new HereMapsRouteValidator(outputfolder, apiAccessKey, date, transformation);
 		// Setting this to true will write out the raw JSON files for each calculated
 		// route
@@ -70,8 +73,15 @@ public class RunTravelTimeAnalysis {
 		TravelTimeValidationRunner runner;
 
 		if (tripsToValidate != null) {
-			runner = new TravelTimeValidationRunner(scenario.getNetwork(), populationIds, events, outputfolder,
-					validator, tripsToValidate);
+			if (timeWindowStart != null) {
+				Tuple<Double, Double> timeWindow = new Tuple<Double, Double>((double) timeWindowStart,
+						(double) timeWindowEnd);
+				runner = new TravelTimeValidationRunner(scenario.getNetwork(), populationIds, events, outputfolder,
+						validator, tripsToValidate, timeWindow);
+			} else {
+				runner = new TravelTimeValidationRunner(scenario.getNetwork(), populationIds, events, outputfolder,
+						validator, tripsToValidate);
+			}
 		} else {
 			runner = new TravelTimeValidationRunner(scenario.getNetwork(), populationIds, events, outputfolder,
 					validator);
@@ -79,7 +89,5 @@ public class RunTravelTimeAnalysis {
 
 		runner.run();
 
-		 */
 	}
-
 }
