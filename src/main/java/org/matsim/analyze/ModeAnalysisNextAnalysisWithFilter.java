@@ -22,7 +22,7 @@ public class ModeAnalysisNextAnalysisWithFilter {
 
 	public static void main(String[] args) throws IOException {
 
-		final String runDirectory = "C:/Users/cluac/MATSimScenarios/Dusseldorf/output/S211";
+		final String runDirectory = "C:/Users/cluac/MATSimScenarios/Dusseldorf/output/S302";
 		final String analysisOutputDirectory = runDirectory + "/modeAnalysisResults";
 		final String modesString = "car,pt,walk,bike,ride";
 		final String analysisAreaShapeFile = "C:\\Users\\cluac\\MATSimScenarios\\Dusseldorf\\DusseldorfAreaShapeFile\\duesseldorf-area.shp";
