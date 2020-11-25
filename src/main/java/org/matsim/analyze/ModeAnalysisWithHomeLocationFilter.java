@@ -16,9 +16,9 @@ import org.matsim.core.router.AnalysisMainModeIdentifier;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.collections.Tuple;
 
-public class ModeAnalysisNextAnalysisWithFilter {
+public class ModeAnalysisWithHomeLocationFilter {
 
-	private static final Logger log = Logger.getLogger(ModeAnalysisNextAnalysisWithFilter.class);
+	private static final Logger log = Logger.getLogger(ModeAnalysisWithHomeLocationFilter.class);
 
 	public static void main(String[] args) throws IOException {
 
