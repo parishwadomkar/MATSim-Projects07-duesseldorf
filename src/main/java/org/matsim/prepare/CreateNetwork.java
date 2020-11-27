@@ -1,7 +1,13 @@
 package org.matsim.prepare;
 
+import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
+import it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.network.NetworkWriter;
@@ -11,13 +17,13 @@ import org.matsim.contrib.sumo.SumoNetworkConverter;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.utils.geometry.CoordinateTransformation;
 import org.matsim.core.utils.geometry.transformations.TransformationFactory;
-import org.matsim.lanes.Lanes;
-import org.matsim.lanes.LanesToLinkAssignment;
-import org.matsim.lanes.LanesUtils;
-import org.matsim.lanes.LanesWriter;
+import org.matsim.lanes.*;
 import org.matsim.run.RunDuesseldorfScenario;
 import picocli.CommandLine;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -104,4 +110,28 @@ public class CreateNetwork implements Callable<Integer> {
 
 		return 0;
 	}
+
+	/**
+	 * Read lane capacities from csv file.
+	 */
+	public static Object2DoubleMap<Id<Lane>> readLaneCapacities(Path input) {
+
+		Object2DoubleMap<Id<Lane>> result = new Object2DoubleOpenHashMap<>();
+
+		try (CSVParser parser = new CSVParser(Files.newBufferedReader(input), CSVFormat.DEFAULT.withDelimiter(';').withFirstRecordAsHeader())) {
+
+			for (CSVRecord record : parser) {
+
+				Id<Lane> fromLaneId = Id.create(record.get("fromLaneId"), Lane.class);
+				result.mergeDouble(fromLaneId, Integer.parseInt(record.get("interval_vehicleSum")), Double::sum);
+
+			}
+
+		} catch (IOException e) {
+			throw new UncheckedIOException(e);
+		}
+
+		return result;
+	}
+
 }

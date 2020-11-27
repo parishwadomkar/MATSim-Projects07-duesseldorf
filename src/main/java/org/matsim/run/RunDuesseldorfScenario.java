@@ -1,6 +1,10 @@
 package org.matsim.run;
 
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
+import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.contrib.signals.otfvis.OTFVisWithSignalsLiveModule;
@@ -14,7 +18,10 @@ import org.matsim.lanes.LanesToLinkAssignment;
 import org.matsim.prepare.*;
 import picocli.CommandLine;
 
+import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @CommandLine.Command(
 		header = ":: Open Düsseldorf Scenario ::",
@@ -23,6 +30,8 @@ import java.util.List;
 @MATSimApplication.Prepare({CreateNetwork.class, CreateTransitSchedule.class, PreparePopulation.class, CreateCityCounts.class,
 		ExtractEvents.class, CreateBAStCounts.class})
 public class RunDuesseldorfScenario extends MATSimApplication {
+
+	private static final Logger log = LogManager.getLogger(RunDuesseldorfScenario.class);
 
 	/**
 	 * Current version identifier.
@@ -52,8 +61,11 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 	@CommandLine.Option(names = {"--no-lanes"}, defaultValue = "false", description = "Deactivate the use of lane information")
 	private boolean noLanes;
 
-	@CommandLine.Option(names = {"--lane-capacity"}, defaultValue = "1", description = "Scale lane capacity by this factor.")
-	private double laneCapacity;
+	@CommandLine.Option(names = {"--lane-capacity"}, description = "CSV file with lane capacities", required = false)
+	private Path laneCapacity;
+
+	@CommandLine.Option(names = {"--capacity-factor"}, defaultValue = "1", description = "Scale lane capacity by this factor.")
+	private double capacityFactor;
 
 	@CommandLine.Option(names = {"--free-flow"}, defaultValue = "1", description = "Scale up free flow speed of slow links.")
 	private double freeFlowFactor;
@@ -109,7 +121,7 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 
 		} else {
 
-			if (laneCapacity != 1.0)
+			if (capacityFactor != 1.0)
 				config.controler().setOutputDirectory(config.controler().getOutputDirectory() + "-cap_" + laneCapacity);
 
 		}
@@ -135,11 +147,42 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 	@Override
 	protected void prepareScenario(Scenario scenario) {
 
-		// scale lane capacities
-		for (LanesToLinkAssignment l2l : scenario.getLanes().getLanesToLinkAssignments().values()) {
-			for (Lane lane : l2l.getLanes().values()) {
-				lane.setCapacityVehiclesPerHour(lane.getCapacityVehiclesPerHour() * laneCapacity);
+		if (!noLanes) {
+
+			if (laneCapacity != null) {
+
+				// matched ids in the file
+				Set<Id<Lane>> matched = new HashSet<>();
+				int unmatched = 0;
+				Object2DoubleMap<Id<Lane>> cap = CreateNetwork.readLaneCapacities(laneCapacity);
+
+				log.info("Setting lane capacities from csv file, containing {} lanes", cap.size());
+
+				for (LanesToLinkAssignment l2l : scenario.getLanes().getLanesToLinkAssignments().values()) {
+					for (Lane lane : l2l.getLanes().values()) {
+
+						if (cap.containsKey(lane.getId())) {
+							if (scenario.getNetwork().getLinks().containsKey(Id.createLinkId(lane.getId())))
+								log.warn("Ignored matched link instead of lane: {}", lane.getId());
+
+							matched.add(lane.getId());
+							lane.setCapacityVehiclesPerHour(cap.getDouble(lane.getId()));
+						} else
+							unmatched ++;
+					}
+				}
+
+				cap.keySet().removeAll(matched);
+				log.info("Unmatched lanes in file: {}, in network: {}", cap.size(), unmatched);
 			}
+
+			// scale lane capacities
+			for (LanesToLinkAssignment l2l : scenario.getLanes().getLanesToLinkAssignments().values()) {
+				for (Lane lane : l2l.getLanes().values()) {
+					lane.setCapacityVehiclesPerHour(lane.getCapacityVehiclesPerHour() * capacityFactor);
+				}
+			}
+
 		}
 
 		// scale free flow speed
