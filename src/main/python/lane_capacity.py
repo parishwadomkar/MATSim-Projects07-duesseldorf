@@ -42,9 +42,9 @@ def read_network(sumo_network):
             "toLaneId": toLane["id"],
             "dir": conn["dir"],
             "state": conn["state"],
-            "edgeType": edge["type"],
+            "edgeType": fromEdge["type"],
             "numLanes": len(fromEdge.findAll("lane")),
-            "priority": edge["priority"],
+            "priority": int(fromEdge["priority"]),
             "speed": float(fromLane["speed"]),
             "junctionType": junction["type"],
             "junctionSize": len(junction.findAll("request"))
