@@ -128,7 +128,7 @@
         <param name="fractionOfIterationsToStartScoreMSA" value="1.0"/>
         <parameterset type="scoringParameters">
             <parameterset type="modeParams">
-                <param name="constant" value="-2.4"/>
+                <param name="constant" value="-3.0"/>
                 <param name="marginalUtilityOfTraveling_util_hr" value="0.0"/>
                 <param name="mode" value="car"/>
                 <param name="monetaryDistanceRate" value="-0.0002"/>
@@ -142,18 +142,18 @@
                 <param name="dailyMonetaryConstant" value="-0.0"/>
             </parameterset>
             <parameterset type="modeParams">
-                <param name="constant" value="-0.0"/>
-                <param name="marginalUtilityOfTraveling_util_hr" value="-9.0"/>
+                <param name="constant" value="-1.0"/>
+                <param name="marginalUtilityOfTraveling_util_hr" value="-5.3"/>
                 <param name="mode" value="pt"/>
                 <param name="dailyMonetaryConstant" value="-2.3"/>
             </parameterset>
             <parameterset type="modeParams">
-                <param name="constant" value="-0.85"/>
-                <param name="marginalUtilityOfTraveling_util_hr" value="-8.0"/>
+                <param name="constant" value="-1.2"/>
+                <param name="marginalUtilityOfTraveling_util_hr" value="-8.5"/>
                 <param name="mode" value="bike"/>
             </parameterset>
             <parameterset type="modeParams">
-                <param name="marginalUtilityOfTraveling_util_hr" value="0.0"/>
+                <param name="marginalUtilityOfTraveling_util_hr" value="-0.6"/>
                 <param name="mode" value="walk"/>
             </parameterset>
         </parameterset>
