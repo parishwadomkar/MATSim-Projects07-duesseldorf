@@ -1,7 +1,7 @@
 package org.matsim.prepare;
 
-import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
-import it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap;
+import it.unimi.dsi.fastutil.Pair;
+import it.unimi.dsi.fastutil.objects.*;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
@@ -9,6 +9,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.TransportMode;
+import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.network.NetworkWriter;
 import org.matsim.contrib.osm.networkReader.LinkProperties;
@@ -113,17 +114,22 @@ public class CreateNetwork implements Callable<Integer> {
 
 	/**
 	 * Read lane capacities from csv file.
+	 * @return
 	 */
-	public static Object2DoubleMap<Id<Lane>> readLaneCapacities(Path input) {
+	public static Object2DoubleMap<Pair<Id<Link>, Id<Lane>>> readLaneCapacities(Path input) {
 
-		Object2DoubleMap<Id<Lane>> result = new Object2DoubleOpenHashMap<>();
+		Object2DoubleMap<Pair<Id<Link>, Id<Lane>>> result = new Object2DoubleOpenHashMap<>();
 
 		try (CSVParser parser = new CSVParser(Files.newBufferedReader(input), CSVFormat.DEFAULT.withDelimiter(';').withFirstRecordAsHeader())) {
 
 			for (CSVRecord record : parser) {
 
+				Id<Link> fromLinkId = Id.create(record.get("fromEdgeId"), Link.class);
 				Id<Lane> fromLaneId = Id.create(record.get("fromLaneId"), Lane.class);
-				result.mergeDouble(fromLaneId, Integer.parseInt(record.get("interval_vehicleSum")), Double::sum);
+
+				Pair<Id<Link>, Id<Lane>> key = ObjectReferencePair.of(fromLinkId, fromLaneId);
+
+				result.mergeDouble(key, Integer.parseInt(record.get("intervalVehicleSum")), Double::sum);
 
 			}
 

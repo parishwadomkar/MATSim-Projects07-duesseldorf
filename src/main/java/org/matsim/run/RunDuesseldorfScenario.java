@@ -1,7 +1,9 @@
 package org.matsim.run;
 
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
+import it.unimi.dsi.fastutil.Pair;
 import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
+import it.unimi.dsi.fastutil.objects.ObjectReferencePair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Id;
@@ -152,20 +154,22 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 			if (laneCapacity != null) {
 
 				// matched ids in the file
-				Set<Id<Lane>> matched = new HashSet<>();
+				Set<Pair<Id<Link>, Id<Lane>>> matched = new HashSet<>();
 				int unmatched = 0;
-				Object2DoubleMap<Id<Lane>> cap = CreateNetwork.readLaneCapacities(laneCapacity);
+				Object2DoubleMap<Pair<Id<Link>, Id<Lane>>> cap = CreateNetwork.readLaneCapacities(laneCapacity);
 
 				log.info("Setting lane capacities from csv file, containing {} lanes", cap.size());
 
 				for (LanesToLinkAssignment l2l : scenario.getLanes().getLanesToLinkAssignments().values()) {
 					for (Lane lane : l2l.getLanes().values()) {
 
-						if (cap.containsKey(lane.getId())) {
+						Pair<Id<Link>, Id<Lane>> key = ObjectReferencePair.of(l2l.getLinkId(), lane.getId());
+
+						if (cap.containsKey(key)) {
 							if (scenario.getNetwork().getLinks().containsKey(Id.createLinkId(lane.getId())))
 								log.warn("Ignored matched link instead of lane: {}", lane.getId());
 
-							matched.add(lane.getId());
+							matched.add(key);
 							lane.setCapacityVehiclesPerHour(cap.getDouble(lane.getId()));
 						} else
 							unmatched ++;
@@ -173,6 +177,15 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 				}
 
 				cap.keySet().removeAll(matched);
+
+				for (Object2DoubleMap.Entry<Pair<Id<Link>, Id<Lane>>> e : cap.object2DoubleEntrySet()) {
+
+					if (!scenario.getNetwork().getLinks().containsKey(e.getKey().key())) {
+						log.warn("Link {} with lane {} not in network", e.getKey().first(), e.getKey().value());
+					}
+				}
+
+
 				log.info("Unmatched lanes in file: {}, in network: {}", cap.size(), unmatched);
 			}
 
