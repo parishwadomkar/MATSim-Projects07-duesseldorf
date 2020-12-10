@@ -12,7 +12,7 @@ $(JAR):
 
 # Required files
 scenarios/input/network.osm.pbf:
-	curl https://download.geofabrik.de/europe/germany/nordrhein-westfalen-latest.osm.pbf\
+	curl https://download.geofabrik.de/europe/germany/nordrhein-westfalen-201209.osm.pbf\
 	  -o scenarios/input/network.osm.pbf
 
 scenarios/input/gtfs-vrr.zip:
