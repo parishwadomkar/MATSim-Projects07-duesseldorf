@@ -15,6 +15,7 @@ import org.matsim.api.core.v01.network.NetworkWriter;
 import org.matsim.contrib.osm.networkReader.LinkProperties;
 import org.matsim.contrib.osm.networkReader.SupersonicOsmNetworkReader;
 import org.matsim.contrib.sumo.SumoNetworkConverter;
+import org.matsim.contrib.sumo.SumoNetworkHandler;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.utils.geometry.CoordinateTransformation;
 import org.matsim.core.utils.geometry.transformations.TransformationFactory;
@@ -95,7 +96,7 @@ public class CreateNetwork implements Callable<Integer> {
 		Network network = NetworkUtils.createNetwork();
 		Lanes lanes = LanesUtils.createLanesContainer();
 
-		converter.convert(network, lanes);
+		SumoNetworkHandler handler = converter.convert(network, lanes);
 
 		converter.calculateLaneCapacities(network, lanes);
 
@@ -108,6 +109,8 @@ public class CreateNetwork implements Callable<Integer> {
 
 		new NetworkWriter(network).write(output.toAbsolutePath().toString());
 		new LanesWriter(lanes).write(output.toAbsolutePath().toString().replace(".xml", "-lanes.xml"));
+
+		converter.writeGeometry(handler, output.toAbsolutePath().toString().replace(".xml", "-linkGeometries.csv").replace(".gz", ""));
 
 		return 0;
 	}
@@ -129,7 +132,7 @@ public class CreateNetwork implements Callable<Integer> {
 
 				Pair<Id<Link>, Id<Lane>> key = ObjectReferencePair.of(fromLinkId, fromLaneId);
 
-				result.mergeDouble(key, Integer.parseInt(record.get("intervalVehicleSum")), Double::sum);
+				result.mergeDouble(key, Integer.parseInt(record.get("intervalVehicleSum")), Double::max);
 
 			}
 

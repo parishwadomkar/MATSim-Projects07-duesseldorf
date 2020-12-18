@@ -160,6 +160,8 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 
 				log.info("Setting lane capacities from csv file, containing {} lanes", cap.size());
 
+				// TODO: ignore cap < 200
+
 				for (LanesToLinkAssignment l2l : scenario.getLanes().getLanesToLinkAssignments().values()) {
 					for (Lane lane : l2l.getLanes().values()) {
 
@@ -180,8 +182,10 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 
 				for (Object2DoubleMap.Entry<Pair<Id<Link>, Id<Lane>>> e : cap.object2DoubleEntrySet()) {
 
-					if (!scenario.getNetwork().getLinks().containsKey(e.getKey().key())) {
-						log.warn("Link {} with lane {} not in network", e.getKey().first(), e.getKey().value());
+					Pair<Id<Link>, Id<Lane>> key = e.getKey();
+					if (!scenario.getNetwork().getLinks().containsKey(key.key())) {
+
+						log.warn("Link {} with lane {} not in network", key.first(), key.value());
 					}
 				}
 
