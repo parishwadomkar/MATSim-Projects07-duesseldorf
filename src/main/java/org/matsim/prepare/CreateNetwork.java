@@ -1,7 +1,9 @@
 package org.matsim.prepare;
 
 import it.unimi.dsi.fastutil.Pair;
-import it.unimi.dsi.fastutil.objects.*;
+import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
+import it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectReferencePair;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
@@ -19,17 +21,18 @@ import org.matsim.contrib.sumo.SumoNetworkHandler;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.utils.geometry.CoordinateTransformation;
 import org.matsim.core.utils.geometry.transformations.TransformationFactory;
+import org.matsim.core.utils.io.IOUtils;
 import org.matsim.lanes.*;
 import org.matsim.run.RunDuesseldorfScenario;
 import picocli.CommandLine;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.SortedMap;
 import java.util.concurrent.Callable;
 
 import static org.matsim.run.RunDuesseldorfScenario.VERSION;
@@ -46,9 +49,14 @@ import static org.matsim.run.RunDuesseldorfScenario.VERSION;
 		description = "Create MATSim network from OSM data",
 		showDefaultValues = true
 )
-public class CreateNetwork implements Callable<Integer> {
+public final class CreateNetwork implements Callable<Integer> {
 
 	private static final Logger log = LogManager.getLogger(CreateNetwork.class);
+
+	/**
+	 * Capacities below this threshold are unplausible and ignored.
+	 */
+	private static final double CAPACITY_THRESHOLD = 300;
 
 	@CommandLine.Parameters(arity = "1..*", paramLabel = "INPUT", description = "Input file", defaultValue = "scenarios/input/sumo.net.xml")
 	private List<Path> input;
@@ -62,6 +70,9 @@ public class CreateNetwork implements Callable<Integer> {
 
 	@CommandLine.Option(names = "--from-osm", description = "Import from OSM without lane information", defaultValue = "false")
 	private boolean fromOSM;
+
+	@CommandLine.Option(names = {"--capacities"}, description = "CSV file with lane capacities", required = false)
+	private Path capacities;
 
 	public static void main(String[] args) {
 		System.exit(new CommandLine(new CreateNetwork()).execute(args));
@@ -107,6 +118,19 @@ public class CreateNetwork implements Callable<Integer> {
 				LanesUtils.createLanes(link, l2l);
 		});
 
+		if (capacities != null) {
+
+			Object2DoubleMap<Pair<Id<Link>, Id<Lane>>> map = readLaneCapacities(capacities);
+
+			log.info("Read lane capacities from {}, containing {} lanes", capacities, map.size());
+
+			int n = setLinkCapacities(network, map);
+			int n2 = setLaneCapacities(lanes, map);
+
+			log.info("Unmatched links: {}, lanes: {}", n, n2);
+
+		}
+
 		new NetworkWriter(network).write(output.toAbsolutePath().toString());
 		new LanesWriter(lanes).write(output.toAbsolutePath().toString().replace(".xml", "-lanes.xml"));
 
@@ -117,13 +141,13 @@ public class CreateNetwork implements Callable<Integer> {
 
 	/**
 	 * Read lane capacities from csv file.
-	 * @return
 	 */
 	public static Object2DoubleMap<Pair<Id<Link>, Id<Lane>>> readLaneCapacities(Path input) {
 
 		Object2DoubleMap<Pair<Id<Link>, Id<Lane>>> result = new Object2DoubleOpenHashMap<>();
 
-		try (CSVParser parser = new CSVParser(Files.newBufferedReader(input), CSVFormat.DEFAULT.withDelimiter(';').withFirstRecordAsHeader())) {
+		try (CSVParser parser = new CSVParser(IOUtils.getBufferedReader(input.toString()),
+				CSVFormat.DEFAULT.withDelimiter(';').withFirstRecordAsHeader())) {
 
 			for (CSVRecord record : parser) {
 
@@ -141,6 +165,78 @@ public class CreateNetwork implements Callable<Integer> {
 		}
 
 		return result;
+	}
+
+	/**
+	 * Use provided lane capacities, to calculate aggregated capacities for all links.
+	 * This does not modify lane capacities.
+	 *
+	 * @return number of links from file that are not in the network.
+	 */
+	public static int setLinkCapacities(Network network, Object2DoubleMap<Pair<Id<Link>, Id<Lane>>> map) {
+
+		Object2DoubleMap<Id<Link>> linkCapacities = new Object2DoubleOpenHashMap<>();
+
+		// sum for each link
+		for (Object2DoubleMap.Entry<Pair<Id<Link>, Id<Lane>>> e : map.object2DoubleEntrySet()) {
+			linkCapacities.mergeDouble(e.getKey().key(), e.getDoubleValue(), Double::sum);
+		}
+
+		int unmatched = 0;
+
+		for (Object2DoubleMap.Entry<Id<Link>> e : linkCapacities.object2DoubleEntrySet()) {
+
+			Link link = network.getLinks().get(e.getKey());
+
+			// ignore unplausible capacities
+			if (e.getDoubleValue() < CAPACITY_THRESHOLD)
+				continue;
+
+			if (link != null) {
+				link.setCapacity(e.getDoubleValue());
+			} else {
+				unmatched++;
+			}
+		}
+
+		return unmatched;
+	}
+
+	/**
+	 * Use provided lane capacities and apply them in the network.
+	 *
+	 * @return number of lanes in file, but not in the network.
+	 */
+	public static int setLaneCapacities(Lanes lanes, Object2DoubleMap<Pair<Id<Link>, Id<Lane>>> map) {
+
+		int unmatched = 0;
+
+		SortedMap<Id<Link>, LanesToLinkAssignment> l2ls = lanes.getLanesToLinkAssignments();
+
+		for (Object2DoubleMap.Entry<Pair<Id<Link>, Id<Lane>>> e : map.object2DoubleEntrySet()) {
+
+			LanesToLinkAssignment l2l = l2ls.get(e.getKey().key());
+
+			if (l2l == null) {
+				unmatched++;
+				continue;
+			}
+
+			Lane lane = l2l.getLanes().get(e.getKey().right());
+
+			if (lane == null) {
+				unmatched++;
+				continue;
+			}
+
+			// ignore unplausible capacities
+			if (e.getDoubleValue() < CAPACITY_THRESHOLD)
+				continue;
+
+			lane.setCapacityVehiclesPerHour(e.getDoubleValue());
+		}
+
+		return unmatched;
 	}
 
 }

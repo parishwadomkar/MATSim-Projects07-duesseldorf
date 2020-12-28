@@ -62,6 +62,7 @@ scenarios/input/sumo.net.xml: scenarios/input/network.osm
 
 scenarios/input/duesseldorf-$V-network.xml.gz: scenarios/input/sumo.net.xml
 	java -jar $(JAR) prepare network $< scenarios/input/herzogstrasse.net.xml\
+	 --capacities KoMoDnext_Q_at_LSA_SUMO-TUB_20201228.csv.gz\
 	 --output $@
 
 scenarios/input/duesseldorf-$V-network-with-pt.xml.gz: scenarios/input/duesseldorf-$V-network.xml.gz scenarios/input/gtfs-vrs.zip scenarios/input/gtfs-vrr.zip scenarios/input/gtfs-avv.zip

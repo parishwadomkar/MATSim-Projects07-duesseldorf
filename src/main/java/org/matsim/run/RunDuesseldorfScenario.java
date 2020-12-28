@@ -3,7 +3,6 @@ package org.matsim.run;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 import it.unimi.dsi.fastutil.Pair;
 import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
-import it.unimi.dsi.fastutil.objects.ObjectReferencePair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Id;
@@ -21,9 +20,7 @@ import org.matsim.prepare.*;
 import picocli.CommandLine;
 
 import java.nio.file.Path;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 @CommandLine.Command(
 		header = ":: Open Düsseldorf Scenario ::",
@@ -102,7 +99,7 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 
 			String postfix = "-" + sample.getSize() + "pct";
 
-			config.plans().setInputFile(config.plans().getInputFile().replace("-1pct",  postfix));
+			config.plans().setInputFile(config.plans().getInputFile().replace("-1pct", postfix));
 			config.controler().setRunId(config.controler().getRunId().replace("-1pct", postfix));
 			config.controler().setOutputDirectory(config.controler().getOutputDirectory().replace("-1pct", postfix));
 
@@ -136,10 +133,10 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 		config.planCalcScore().addActivityParams(new ActivityParams("car interaction").setTypicalDuration(60));
 
 		// vsp defaults
-		config.vspExperimental().setVspDefaultsCheckingLevel( VspExperimentalConfigGroup.VspDefaultsCheckingLevel.info );
+		config.vspExperimental().setVspDefaultsCheckingLevel(VspExperimentalConfigGroup.VspDefaultsCheckingLevel.info);
 		config.plansCalcRoute().setAccessEgressType(PlansCalcRouteConfigGroup.AccessEgressType.accessEgressModeToLink);
-		config.qsim().setUsingTravelTimeCheckInTeleportation( true );
-		config.qsim().setTrafficDynamics( QSimConfigGroup.TrafficDynamics.kinematicWaves );
+		config.qsim().setUsingTravelTimeCheckInTeleportation(true);
+		config.qsim().setTrafficDynamics(QSimConfigGroup.TrafficDynamics.kinematicWaves);
 
 		config.plans().setHandlingOfPlansWithoutRoutingMode(PlansConfigGroup.HandlingOfPlansWithoutRoutingMode.useMainModeIdentifier);
 
@@ -153,44 +150,14 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 
 			if (laneCapacity != null) {
 
-				// matched ids in the file
-				Set<Pair<Id<Link>, Id<Lane>>> matched = new HashSet<>();
-				int unmatched = 0;
-				Object2DoubleMap<Pair<Id<Link>, Id<Lane>>> cap = CreateNetwork.readLaneCapacities(laneCapacity);
+				Object2DoubleMap<Pair<Id<Link>, Id<Lane>>> map = CreateNetwork.readLaneCapacities(laneCapacity);
 
-				log.info("Setting lane capacities from csv file, containing {} lanes", cap.size());
+				log.info("Overwrite capacities from {}, containing {} lanes", laneCapacity, map.size());
 
-				// TODO: ignore cap < 200
+				int n = CreateNetwork.setLinkCapacities(scenario.getNetwork(), map);
+				int n2 = CreateNetwork.setLaneCapacities(scenario.getLanes(), map);
 
-				for (LanesToLinkAssignment l2l : scenario.getLanes().getLanesToLinkAssignments().values()) {
-					for (Lane lane : l2l.getLanes().values()) {
-
-						Pair<Id<Link>, Id<Lane>> key = ObjectReferencePair.of(l2l.getLinkId(), lane.getId());
-
-						if (cap.containsKey(key)) {
-							if (scenario.getNetwork().getLinks().containsKey(Id.createLinkId(lane.getId())))
-								log.warn("Ignored matched link instead of lane: {}", lane.getId());
-
-							matched.add(key);
-							lane.setCapacityVehiclesPerHour(cap.getDouble(lane.getId()));
-						} else
-							unmatched ++;
-					}
-				}
-
-				cap.keySet().removeAll(matched);
-
-				for (Object2DoubleMap.Entry<Pair<Id<Link>, Id<Lane>>> e : cap.object2DoubleEntrySet()) {
-
-					Pair<Id<Link>, Id<Lane>> key = e.getKey();
-					if (!scenario.getNetwork().getLinks().containsKey(key.key())) {
-
-						log.warn("Link {} with lane {} not in network", key.first(), key.value());
-					}
-				}
-
-
-				log.info("Unmatched lanes in file: {}, in network: {}", cap.size(), unmatched);
+				log.info("Unmatched links: {}, lanes: {}", n, n2);
 			}
 
 			// scale lane capacities
@@ -200,6 +167,9 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 				}
 			}
 
+			for (Link link : scenario.getNetwork().getLinks().values()) {
+				link.setCapacity(link.getCapacity() * capacityFactor);
+			}
 		}
 
 		// scale free flow speed
