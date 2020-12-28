@@ -121,7 +121,7 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 		} else {
 
 			if (capacityFactor != 1.0)
-				config.controler().setOutputDirectory(config.controler().getOutputDirectory() + "-cap_" + laneCapacity);
+				config.controler().setOutputDirectory(config.controler().getOutputDirectory() + "-cap_" + capacityFactor);
 
 		}
 
