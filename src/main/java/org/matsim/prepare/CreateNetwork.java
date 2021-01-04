@@ -7,6 +7,7 @@ import it.unimi.dsi.fastutil.objects.ObjectReferencePair;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
+import org.apache.commons.lang3.tuple.Triple;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Id;
@@ -24,18 +25,17 @@ import org.matsim.core.utils.geometry.transformations.TransformationFactory;
 import org.matsim.core.utils.io.IOUtils;
 import org.matsim.lanes.*;
 import org.matsim.run.RunDuesseldorfScenario;
+import org.matsim.utils.objectattributes.attributable.Attributable;
 import picocli.CommandLine;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.SortedMap;
+import java.util.*;
 import java.util.concurrent.Callable;
 
 import static org.matsim.run.RunDuesseldorfScenario.VERSION;
+import static org.matsim.run.TurnDependentFlowEfficiencyCalculator.ATTR_TURN_EFFICIENCY;
 
 /**
  * Creates the road network layer.
@@ -120,7 +120,7 @@ public final class CreateNetwork implements Callable<Integer> {
 
 		if (capacities != null) {
 
-			Object2DoubleMap<Pair<Id<Link>, Id<Lane>>> map = readLaneCapacities(capacities);
+			Object2DoubleMap<Triple<Id<Link>, Id<Link>, Id<Lane>>> map = readLaneCapacities(capacities);
 
 			log.info("Read lane capacities from {}, containing {} lanes", capacities, map.size());
 
@@ -141,10 +141,12 @@ public final class CreateNetwork implements Callable<Integer> {
 
 	/**
 	 * Read lane capacities from csv file.
+	 *
+	 * @return triples of fromLink, toLink, fromLane
 	 */
-	public static Object2DoubleMap<Pair<Id<Link>, Id<Lane>>> readLaneCapacities(Path input) {
+	public static Object2DoubleMap<Triple<Id<Link>, Id<Link>, Id<Lane>>> readLaneCapacities(Path input) {
 
-		Object2DoubleMap<Pair<Id<Link>, Id<Lane>>> result = new Object2DoubleOpenHashMap<>();
+		Object2DoubleMap<Triple<Id<Link>, Id<Link>, Id<Lane>>> result = new Object2DoubleOpenHashMap<>();
 
 		try (CSVParser parser = new CSVParser(IOUtils.getBufferedReader(input.toString()),
 				CSVFormat.DEFAULT.withDelimiter(';').withFirstRecordAsHeader())) {
@@ -152,11 +154,12 @@ public final class CreateNetwork implements Callable<Integer> {
 			for (CSVRecord record : parser) {
 
 				Id<Link> fromLinkId = Id.create(record.get("fromEdgeId"), Link.class);
+				Id<Link> toLinkId = Id.create(record.get("toEdgeId"), Link.class);
 				Id<Lane> fromLaneId = Id.create(record.get("fromLaneId"), Lane.class);
 
-				Pair<Id<Link>, Id<Lane>> key = ObjectReferencePair.of(fromLinkId, fromLaneId);
+				Triple<Id<Link>, Id<Link>, Id<Lane>> key = Triple.of(fromLinkId, toLinkId, fromLaneId);
 
-				result.mergeDouble(key, Integer.parseInt(record.get("intervalVehicleSum")), Double::max);
+				result.mergeDouble(key, Integer.parseInt(record.get("intervalVehicleSum")), Double::sum);
 
 			}
 
@@ -168,17 +171,33 @@ public final class CreateNetwork implements Callable<Integer> {
 	}
 
 	/**
+	 * Aggregate maximum lane capacities, independent of turning direction.
+	 */
+	public static Object2DoubleMap<Pair<Id<Link>, Id<Lane>>> calcMaxLaneCapacities(Object2DoubleMap<Triple<Id<Link>, Id<Link>, Id<Lane>>> map) {
+
+		Object2DoubleMap<Pair<Id<Link>, Id<Lane>>> laneCapacities = new Object2DoubleOpenHashMap<>();
+
+		// sum for each link
+		for (Object2DoubleMap.Entry<Triple<Id<Link>, Id<Link>, Id<Lane>>> e : map.object2DoubleEntrySet()) {
+			laneCapacities.mergeDouble(ObjectReferencePair.of(e.getKey().getLeft(), e.getKey().getRight()), e.getDoubleValue(), Double::max);
+		}
+
+		return laneCapacities;
+	}
+
+	/**
 	 * Use provided lane capacities, to calculate aggregated capacities for all links.
 	 * This does not modify lane capacities.
 	 *
 	 * @return number of links from file that are not in the network.
 	 */
-	public static int setLinkCapacities(Network network, Object2DoubleMap<Pair<Id<Link>, Id<Lane>>> map) {
+	public static int setLinkCapacities(Network network, Object2DoubleMap<Triple<Id<Link>, Id<Link>, Id<Lane>>> map) {
 
 		Object2DoubleMap<Id<Link>> linkCapacities = new Object2DoubleOpenHashMap<>();
+		Object2DoubleMap<Pair<Id<Link>, Id<Lane>>> laneCapacities = calcMaxLaneCapacities(map);
 
 		// sum for each link
-		for (Object2DoubleMap.Entry<Pair<Id<Link>, Id<Lane>>> e : map.object2DoubleEntrySet()) {
+		for (Object2DoubleMap.Entry<Pair<Id<Link>, Id<Lane>>> e : laneCapacities.object2DoubleEntrySet()) {
 			linkCapacities.mergeDouble(e.getKey().key(), e.getDoubleValue(), Double::sum);
 		}
 
@@ -194,10 +213,32 @@ public final class CreateNetwork implements Callable<Integer> {
 
 			if (link != null) {
 				link.setCapacity(e.getDoubleValue());
+				link.getAttributes().putAttribute("junction", true);
 			} else {
 				unmatched++;
 			}
 		}
+
+		Object2DoubleMap<Pair<Id<Link>, Id<Link>>> turnCapacities = new Object2DoubleOpenHashMap<>();
+
+		for (Object2DoubleMap.Entry<Triple<Id<Link>, Id<Link>, Id<Lane>>> e : map.object2DoubleEntrySet()) {
+			turnCapacities.mergeDouble(Pair.of(e.getKey().getLeft(), e.getKey().getMiddle()), e.getDoubleValue(), Double::sum);
+		}
+
+		// set turn capacities relative to whole link capacity
+		for (Object2DoubleMap.Entry<Pair<Id<Link>, Id<Link>>> e : turnCapacities.object2DoubleEntrySet()) {
+
+			Id<Link> fromLink = e.getKey().left();
+			Id<Link> toLink = e.getKey().right();
+
+			Link link = network.getLinks().get(fromLink);
+
+			if (link == null)
+				continue;
+
+			getTurnEfficiencyMap(link).put(toLink.toString(), String.valueOf(e.getDoubleValue() / link.getCapacity()));
+		}
+
 
 		return unmatched;
 	}
@@ -207,13 +248,15 @@ public final class CreateNetwork implements Callable<Integer> {
 	 *
 	 * @return number of lanes in file, but not in the network.
 	 */
-	public static int setLaneCapacities(Lanes lanes, Object2DoubleMap<Pair<Id<Link>, Id<Lane>>> map) {
+	public static int setLaneCapacities(Lanes lanes, Object2DoubleMap<Triple<Id<Link>, Id<Link>, Id<Lane>>> map) {
+
+		Object2DoubleMap<Pair<Id<Link>, Id<Lane>>> laneCapacities = calcMaxLaneCapacities(map);
 
 		int unmatched = 0;
 
 		SortedMap<Id<Link>, LanesToLinkAssignment> l2ls = lanes.getLanesToLinkAssignments();
 
-		for (Object2DoubleMap.Entry<Pair<Id<Link>, Id<Lane>>> e : map.object2DoubleEntrySet()) {
+		for (Object2DoubleMap.Entry<Pair<Id<Link>, Id<Lane>>> e : laneCapacities.object2DoubleEntrySet()) {
 
 			LanesToLinkAssignment l2l = l2ls.get(e.getKey().key());
 
@@ -236,7 +279,34 @@ public final class CreateNetwork implements Callable<Integer> {
 			lane.setCapacityVehiclesPerHour(e.getDoubleValue());
 		}
 
+		// set turn efficiency depending on to link
+		for (Object2DoubleMap.Entry<Triple<Id<Link>, Id<Link>, Id<Lane>>> e : map.object2DoubleEntrySet()) {
+
+			LanesToLinkAssignment l2l = l2ls.get(e.getKey().getLeft());
+			if (l2l == null) continue;
+
+			Lane lane = l2l.getLanes().get(e.getKey().getRight());
+			if (lane == null) continue;
+
+			Id<Link> toLink = e.getKey().getMiddle();
+			getTurnEfficiencyMap(lane).put(toLink.toString(), String.valueOf(e.getDoubleValue() / lane.getCapacityVehiclesPerHour()));
+		}
+
+
 		return unmatched;
+	}
+
+	/**
+	 * Retrieves turn efficiency from attributes.
+	 */
+	private static Map<String, String> getTurnEfficiencyMap(Attributable obj) {
+		Map<String, String> cap = (Map<String, String>) obj.getAttributes().getAttribute(ATTR_TURN_EFFICIENCY);
+		if (cap == null) {
+			cap = new HashMap<>();
+			obj.getAttributes().putAttribute(ATTR_TURN_EFFICIENCY, cap);
+		}
+
+		return cap;
 	}
 
 }

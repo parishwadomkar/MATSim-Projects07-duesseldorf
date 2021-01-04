@@ -1,19 +1,25 @@
 package org.matsim.run;
 
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
-import it.unimi.dsi.fastutil.Pair;
+import com.google.inject.Provides;
 import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
+import org.apache.commons.lang3.tuple.Triple;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.contrib.signals.otfvis.OTFVisWithSignalsLiveModule;
+import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.groups.*;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ActivityParams;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
+import org.matsim.core.mobsim.qsim.AbstractQSimModule;
+import org.matsim.core.mobsim.qsim.qnetsimengine.ConfigurableQNetworkFactory;
+import org.matsim.core.mobsim.qsim.qnetsimengine.QLanesNetworkFactory;
+import org.matsim.core.mobsim.qsim.qnetsimengine.QNetworkFactory;
 import org.matsim.lanes.Lane;
 import org.matsim.lanes.LanesToLinkAssignment;
 import org.matsim.prepare.*;
@@ -109,6 +115,7 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 
 		if (noLanes) {
 
+			config.qsim().setUseLanes(false);
 			config.controler().setLinkToLinkRoutingEnabled(false);
 			config.network().setLaneDefinitionsFile(null);
 			config.travelTimeCalculator().setCalculateLinkToLinkTravelTimes(false);
@@ -150,7 +157,7 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 
 			if (laneCapacity != null) {
 
-				Object2DoubleMap<Pair<Id<Link>, Id<Lane>>> map = CreateNetwork.readLaneCapacities(laneCapacity);
+				Object2DoubleMap<Triple<Id<Link>, Id<Link>, Id<Lane>>> map = CreateNetwork.readLaneCapacities(laneCapacity);
 
 				log.info("Overwrite capacities from {}, containing {} lanes", laneCapacity, map.size());
 
@@ -166,10 +173,6 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 					lane.setCapacityVehiclesPerHour(lane.getCapacityVehiclesPerHour() * capacityFactor);
 				}
 			}
-
-			for (Link link : scenario.getNetwork().getLinks().values()) {
-				link.setCapacity(link.getCapacity() * capacityFactor);
-			}
 		}
 
 		// scale free flow speed
@@ -178,6 +181,14 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 				link.setFreespeed(link.getFreespeed() * freeFlowFactor);
 			}
 		}
+
+		for (Link link : scenario.getNetwork().getLinks().values()) {
+
+			// might be null, so avoid unboxing
+			if (link.getAttributes().getAttribute("junction") == Boolean.TRUE)
+				link.setCapacity(link.getCapacity() * capacityFactor);
+		}
+
 	}
 
 	@Override
@@ -192,6 +203,29 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 				install(new SwissRailRaptorModule());
 			}
 		});
+
+		controler.addOverridingQSimModule(new AbstractQSimModule() {
+			@Override
+			protected void configureQSim() {
+			}
+
+			@Provides
+			QNetworkFactory provideQNetworkFactory(EventsManager eventsManager, Scenario scenario) {
+				ConfigurableQNetworkFactory factory = new ConfigurableQNetworkFactory(eventsManager, scenario);
+				TurnDependentFlowEfficiencyCalculator fe = new TurnDependentFlowEfficiencyCalculator(scenario);
+				factory.setFlowEfficiencyCalculator(fe);
+
+				if (noLanes)
+					return factory;
+				else {
+					QLanesNetworkFactory wrapper = new QLanesNetworkFactory(eventsManager, scenario);
+					wrapper.setDelegate(factory);
+					wrapper.setFlowEfficiencyCalculator(fe);
+					return wrapper;
+				}
+			}
+		});
+
 	}
 
 	/**
