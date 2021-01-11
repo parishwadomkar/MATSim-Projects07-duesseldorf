@@ -125,13 +125,10 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 
 			config.controler().setRoutingAlgorithmType(ControlerConfigGroup.RoutingAlgorithmType.FastAStarLandmarks);
 
-		} else {
-
-			if (capacityFactor != 1.0)
-				config.controler().setOutputDirectory(config.controler().getOutputDirectory() + "-cap_" + capacityFactor);
-
 		}
 
+		if (capacityFactor != 1.0)
+			config.controler().setOutputDirectory(config.controler().getOutputDirectory() + "-cap_" + capacityFactor);
 
 		if (freeFlowFactor != 1)
 			config.controler().setOutputDirectory(config.controler().getOutputDirectory() + "-ff_" + freeFlowFactor);
@@ -185,7 +182,9 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 		for (Link link : scenario.getNetwork().getLinks().values()) {
 
 			// might be null, so avoid unboxing
-			if (link.getAttributes().getAttribute("junction") == Boolean.TRUE)
+			if (link.getAttributes().getAttribute("junction") == Boolean.TRUE ||
+					"traffic_light".equals(link.getToNode().getAttributes().getAttribute("type"))
+			)
 				link.setCapacity(link.getCapacity() * capacityFactor);
 		}
 

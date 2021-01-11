@@ -35,7 +35,7 @@ def read_network(sumo_network):
         junction = junctions[fromEdge["to"]]
             
         d = {
-            "junction": junction["id"],
+            "junctionId": junction["id"],
             "fromEdgeId": fromEdge["id"],
             "toEdgeId": toEdge["id"],
             "fromLaneId":fromLane["id"],
@@ -62,4 +62,4 @@ network = read_network("../../../scenarios/input/sumo.net.xml")
 
 #%%
 
-network.to_csv("lanes.csv.gz")
+network.to_csv("lanes.csv.gz", index=False)

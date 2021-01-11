@@ -1,12 +1,7 @@
 package org.matsim.analyze;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.apache.log4j.Logger;
-import org.matsim.analysis.AgentFilter;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.matsim.analysis.DefaultAnalysisMainModeIdentifier;
 import org.matsim.analysis.modalSplitUserType.ModeAnalysis;
 import org.matsim.api.core.v01.Scenario;
@@ -15,70 +10,89 @@ import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.router.AnalysisMainModeIdentifier;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.collections.Tuple;
+import org.matsim.run.RunDuesseldorfScenario;
+import picocli.CommandLine;
 
-public class ModeAnalysisWithHomeLocationFilter {
+import java.io.IOException;
+import java.nio.file.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.Callable;
 
-	private static final Logger log = Logger.getLogger(ModeAnalysisWithHomeLocationFilter.class);
+@CommandLine.Command(
+		name = "modeAnalysis",
+		description = "Run mode analysis on a specific run."
+)
+public class ModeAnalysisWithHomeLocationFilter implements Callable<Integer> {
 
-	public static void main(String[] args) throws IOException {
+	private static final Logger log = LogManager.getLogger(ModeAnalysisWithHomeLocationFilter.class);
 
-		final String runDirectory = "C:/Users/cluac/MATSimScenarios/Dusseldorf/output/S510";
-		final String analysisOutputDirectory = runDirectory + "/modeAnalysisResults";
-		final String modesString = "car,pt,walk,bike,ride";
-		final String analysisAreaShapeFile = "C:\\Users\\cluac\\MATSimScenarios\\Dusseldorf\\DusseldorfAreaShapeFile\\duesseldorf-area.shp";
-		final String scenarioCRS = "EPSG:25832";
+	@CommandLine.Parameters(arity = "0..1", paramLabel = "INPUT", description = "Input run directory",
+			defaultValue = "C:/Users/cluac/MATSimScenarios/Dusseldorf/output/S510")
+	private Path runDirectory;
+
+	@CommandLine.Option(names = "--output", defaultValue = "modeAnalysisResults", required = true)
+	private String output;
+
+	@CommandLine.Option(names = "--shp", required = true,
+			defaultValue = "../public-svn/matsim/scenarios/countries/de/duesseldorf/duesseldorf-v1.0/original-data/duesseldorf-area-shp/duesseldorf-area.shp")
+	private Path shapeFile;
+
+	public static void main(String[] args) {
+		System.exit(new CommandLine(new ModeAnalysisWithHomeLocationFilter()).execute(args));
+	}
+
+	private static Optional<Path> glob(Path path, String pattern) throws IOException {
+		PathMatcher m = path.getFileSystem().getPathMatcher("glob:" + pattern);
+		return Files.list(path).filter(p -> m.matches(p.getFileName())).findFirst();
+	}
+
+	@Override
+	public Integer call() throws Exception {
 		final AnalysisMainModeIdentifier mainModeIdentifier = new DefaultAnalysisMainModeIdentifier();
 
-		Scenario scenario = loadScenario(runDirectory, scenarioCRS);
-
-		List<AgentFilter> filters = new ArrayList<>();
-		HomeLocationFilter homeLocationFilter = new HomeLocationFilter(analysisAreaShapeFile);
-
-		filters.add(homeLocationFilter);
-		homeLocationFilter.analyzePopulation(scenario);
-
-		List<String> modes = new ArrayList<>();
-		for (String mode : modesString.split(",")) {
-			modes.add(mode);
+		if (!Files.exists(runDirectory)) {
+			log.error("Run directory {} does not exists.", runDirectory);
+			return 1;
 		}
+
+		Scenario scenario = loadScenario(runDirectory, RunDuesseldorfScenario.COORDINATE_SYSTEM);
+
+		HomeLocationFilter homeLocationFilter = new HomeLocationFilter(shapeFile.toString());
+		homeLocationFilter.analyzePopulation(scenario);
 
 		ModeAnalysis modeAnalysis = new ModeAnalysis(scenario, homeLocationFilter, mainModeIdentifier);
 
 		modeAnalysis.run();
-		writeResults(analysisOutputDirectory, scenario, modeAnalysis);
+		writeResults(runDirectory.resolve(output), modeAnalysis);
 
+		return 0;
 	}
 
-	private static Scenario loadScenario(String runDirectory, String scenarioCRS) {
+	private static Scenario loadScenario(Path runDirectory, String scenarioCRS) throws IOException {
 		log.info("Loading scenario...");
 
-		String networkFile;
-		String populationFile;
-		String facilitiesFile;
-
-		networkFile = runDirectory + "/output_network.xml.gz";
-		populationFile = runDirectory + "/output_plans.xml.gz";
-		facilitiesFile = runDirectory + "/output_facilities.xml.gz";
+		Path populationFile = glob(runDirectory,  "*.output_plans.*").orElseThrow(() -> new IllegalStateException("No plans file found."));
+		Path networkFile = glob(runDirectory,  "*.output_network.*").orElseThrow(() -> new IllegalStateException("No network file found."));
+		Path facilitiesFile = glob(runDirectory, "*.output_facilities.*").orElseThrow(() -> new IllegalStateException("No facilities found."));
 
 		Config config = ConfigUtils.createConfig();
 		config.global().setCoordinateSystem(scenarioCRS);
-		config.controler().setOutputDirectory(runDirectory);
+		config.controler().setOutputDirectory(runDirectory.toString());
 
-		config.plans().setInputFile(populationFile);
-		config.network().setInputFile(networkFile);
-		config.facilities().setInputFile(facilitiesFile);
+		config.plans().setInputFile(populationFile.toString());
+		config.network().setInputFile(networkFile.toString());
+		config.facilities().setInputFile(facilitiesFile.toString());
 
 		return ScenarioUtils.loadScenario(config);
 	}
 
-	private static void createDirectory(String directory) {
-		File file = new File(directory);
-		file.mkdirs();
-	}
+	private static void writeResults(Path analysisOutputDirectory, ModeAnalysis modeAnalysis) throws IOException {
 
-	private static void writeResults(String analysisOutputDirectory, Scenario scenario, ModeAnalysis modeAnalysis) {
-		String modeAnalysisOutputDirectory = analysisOutputDirectory + "/";
-		createDirectory(modeAnalysisOutputDirectory);
+		Files.createDirectories(analysisOutputDirectory);
+
+		String modeAnalysisOutputDirectory = analysisOutputDirectory.toString() + "/";
 
 		modeAnalysis.writeModeShares(modeAnalysisOutputDirectory);
 		modeAnalysis.writeTripRouteDistances(modeAnalysisOutputDirectory);
@@ -111,5 +125,4 @@ public class ModeAnalysisWithHomeLocationFilter {
 				distanceGroups2);
 
 	}
-
 }
