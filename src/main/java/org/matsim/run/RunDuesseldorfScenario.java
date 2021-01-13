@@ -27,6 +27,7 @@ import picocli.CommandLine;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @CommandLine.Command(
 		header = ":: Open Düsseldorf Scenario ::",
@@ -74,6 +75,9 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 
 	@CommandLine.Option(names = {"--free-flow"}, defaultValue = "1", description = "Scale up free flow speed of slow links.")
 	private double freeFlowFactor;
+
+	@CommandLine.Option(names = "--no-mc", defaultValue = "false", description = "Disable mode choice as replanning strategy.")
+	private boolean noModeChoice;
 
 	public RunDuesseldorfScenario() {
 		super(String.format("scenarios/input/duesseldorf-%s-1pct.config.xml", VERSION));
@@ -132,6 +136,18 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 
 		if (freeFlowFactor != 1)
 			config.controler().setOutputDirectory(config.controler().getOutputDirectory() + "-ff_" + freeFlowFactor);
+
+		if (noModeChoice) {
+
+			List<StrategyConfigGroup.StrategySettings> strategies = config.strategy().getStrategySettings().stream()
+					.filter(s -> !s.getStrategyName().equals("SubtourModeChoice"))
+					.collect(Collectors.toList());
+
+			config.strategy().clearStrategySettings();
+			strategies.forEach(s -> config.strategy().addStrategySettings(s));
+
+			config.controler().setOutputDirectory(config.controler().getOutputDirectory() + "-noMC");
+		}
 
 		// config.planCalcScore().addActivityParams(new ActivityParams("freight").setTypicalDuration(12. * 3600.));
 		config.planCalcScore().addActivityParams(new ActivityParams("car interaction").setTypicalDuration(60));

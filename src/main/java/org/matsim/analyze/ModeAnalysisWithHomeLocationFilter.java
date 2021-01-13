@@ -32,6 +32,9 @@ public class ModeAnalysisWithHomeLocationFilter implements Callable<Integer> {
 			defaultValue = "C:/Users/cluac/MATSimScenarios/Dusseldorf/output/S510")
 	private Path runDirectory;
 
+	@CommandLine.Option(names = "--run-id", defaultValue = "*", description = "Pattern used to match runId", required = true)
+	private String runId;
+
 	@CommandLine.Option(names = "--output", defaultValue = "modeAnalysisResults", required = true)
 	private String output;
 
@@ -45,7 +48,13 @@ public class ModeAnalysisWithHomeLocationFilter implements Callable<Integer> {
 
 	private static Optional<Path> glob(Path path, String pattern) throws IOException {
 		PathMatcher m = path.getFileSystem().getPathMatcher("glob:" + pattern);
-		return Files.list(path).filter(p -> m.matches(p.getFileName())).findFirst();
+		Optional<Path> match = Files.list(path).filter(p -> m.matches(p.getFileName())).findFirst();
+
+		// Look one directory higher for required file
+		if (match.isEmpty())
+			return Files.list(path.getParent()).filter(p -> m.matches(p.getFileName())).findFirst();
+
+		return match;
 	}
 
 	@Override
@@ -57,7 +66,7 @@ public class ModeAnalysisWithHomeLocationFilter implements Callable<Integer> {
 			return 1;
 		}
 
-		Scenario scenario = loadScenario(runDirectory, RunDuesseldorfScenario.COORDINATE_SYSTEM);
+		Scenario scenario = loadScenario(runDirectory);
 
 		HomeLocationFilter homeLocationFilter = new HomeLocationFilter(shapeFile.toString());
 		homeLocationFilter.analyzePopulation(scenario);
@@ -70,15 +79,20 @@ public class ModeAnalysisWithHomeLocationFilter implements Callable<Integer> {
 		return 0;
 	}
 
-	private static Scenario loadScenario(Path runDirectory, String scenarioCRS) throws IOException {
+	private Scenario loadScenario(Path runDirectory) throws IOException {
 		log.info("Loading scenario...");
 
-		Path populationFile = glob(runDirectory,  "*.output_plans.*").orElseThrow(() -> new IllegalStateException("No plans file found."));
-		Path networkFile = glob(runDirectory,  "*.output_network.*").orElseThrow(() -> new IllegalStateException("No network file found."));
-		Path facilitiesFile = glob(runDirectory, "*.output_facilities.*").orElseThrow(() -> new IllegalStateException("No facilities found."));
+		Path populationFile = glob(runDirectory,  runId+".*plans.*").orElseThrow(() -> new IllegalStateException("No plans file found."));
+		log.info("Using population {}", populationFile);
+
+		Path networkFile = glob(runDirectory,  runId + ".*network.*").orElseThrow(() -> new IllegalStateException("No network file found."));
+		log.info("Using network {}", networkFile);
+
+		Path facilitiesFile = glob(runDirectory, runId + ".*facilities.*").orElseThrow(() -> new IllegalStateException("No facilities found."));
+		log.info("Using facilities {}", facilitiesFile);
 
 		Config config = ConfigUtils.createConfig();
-		config.global().setCoordinateSystem(scenarioCRS);
+		config.global().setCoordinateSystem(RunDuesseldorfScenario.COORDINATE_SYSTEM);
 		config.controler().setOutputDirectory(runDirectory.toString());
 
 		config.plans().setInputFile(populationFile.toString());
