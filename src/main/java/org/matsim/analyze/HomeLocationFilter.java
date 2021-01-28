@@ -71,7 +71,8 @@ class HomeLocationFilter implements AgentFilter {
 
 			log.info("There are " + personsToRemove.size() + " persons to be removed from analysis");
 			log.info("The total population size is " + scenario.getPopulation().getPersons().values().size());
-
+			int cityPopulationSize = scenario.getPopulation().getPersons().values().size() - personsToRemove.size();
+			log.info("The population size inside the city for this simulation setup is " + cityPopulationSize);
 		} else {
 			throw new RuntimeException("The scenario does not exist. Aborting...");
 		}
