@@ -73,11 +73,15 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 	@CommandLine.Option(names = {"--capacity-factor"}, defaultValue = "1", description = "Scale lane capacity by this factor.")
 	private double capacityFactor;
 
+	@CommandLine.Option(names = {"--no-capacity-reduction"}, defaultValue = "false", description = "Disable reduction of flow capacity for taking turns")
+	private boolean noCapacityReduction;
+
 	@CommandLine.Option(names = {"--free-flow"}, defaultValue = "1", description = "Scale up free flow speed of slow links.")
 	private double freeFlowFactor;
 
 	@CommandLine.Option(names = "--no-mc", defaultValue = "false", description = "Disable mode choice as replanning strategy.")
 	private boolean noModeChoice;
+
 
 	public RunDuesseldorfScenario() {
 		super(String.format("scenarios/input/duesseldorf-%s-1pct.config.xml", VERSION));
@@ -148,6 +152,9 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 
 			config.controler().setOutputDirectory(config.controler().getOutputDirectory() + "-noMC");
 		}
+
+		if (noCapacityReduction)
+			config.controler().setOutputDirectory(config.controler().getOutputDirectory() + "-no-cap-red");
 
 		// config.planCalcScore().addActivityParams(new ActivityParams("freight").setTypicalDuration(12. * 3600.));
 		config.planCalcScore().addActivityParams(new ActivityParams("car interaction").setTypicalDuration(60));
@@ -227,15 +234,21 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 			@Provides
 			QNetworkFactory provideQNetworkFactory(EventsManager eventsManager, Scenario scenario) {
 				ConfigurableQNetworkFactory factory = new ConfigurableQNetworkFactory(eventsManager, scenario);
-				TurnDependentFlowEfficiencyCalculator fe = new TurnDependentFlowEfficiencyCalculator(scenario);
-				factory.setFlowEfficiencyCalculator(fe);
+
+				TurnDependentFlowEfficiencyCalculator fe = null;
+				if (!noCapacityReduction) {
+					fe = new TurnDependentFlowEfficiencyCalculator(scenario);
+					factory.setFlowEfficiencyCalculator(fe);
+				}
 
 				if (noLanes)
 					return factory;
 				else {
 					QLanesNetworkFactory wrapper = new QLanesNetworkFactory(eventsManager, scenario);
 					wrapper.setDelegate(factory);
-					wrapper.setFlowEfficiencyCalculator(fe);
+					if (fe != null)
+						wrapper.setFlowEfficiencyCalculator(fe);
+
 					return wrapper;
 				}
 			}

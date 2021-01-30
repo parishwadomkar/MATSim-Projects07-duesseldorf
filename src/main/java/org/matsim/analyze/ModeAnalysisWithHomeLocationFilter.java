@@ -14,7 +14,9 @@ import org.matsim.run.RunDuesseldorfScenario;
 import picocli.CommandLine;
 
 import java.io.IOException;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.PathMatcher;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -46,7 +48,7 @@ public class ModeAnalysisWithHomeLocationFilter implements Callable<Integer> {
 		System.exit(new CommandLine(new ModeAnalysisWithHomeLocationFilter()).execute(args));
 	}
 
-	private static Optional<Path> glob(Path path, String pattern) throws IOException {
+	static Optional<Path> glob(Path path, String pattern) throws IOException {
 		PathMatcher m = path.getFileSystem().getPathMatcher("glob:" + pattern);
 		Optional<Path> match = Files.list(path).filter(p -> m.matches(p.getFileName())).findFirst();
 
@@ -66,7 +68,7 @@ public class ModeAnalysisWithHomeLocationFilter implements Callable<Integer> {
 			return 1;
 		}
 
-		Scenario scenario = loadScenario(runDirectory);
+		Scenario scenario = loadScenario(runId, runDirectory);
 
 		HomeLocationFilter homeLocationFilter = new HomeLocationFilter(shapeFile.toString());
 		homeLocationFilter.analyzePopulation(scenario);
@@ -79,7 +81,7 @@ public class ModeAnalysisWithHomeLocationFilter implements Callable<Integer> {
 		return 0;
 	}
 
-	private Scenario loadScenario(Path runDirectory) throws IOException {
+	static Scenario loadScenario(String runId, Path runDirectory) throws IOException {
 		log.info("Loading scenario...");
 
 		Path populationFile = glob(runDirectory,  runId+".*plans.*").orElseThrow(() -> new IllegalStateException("No plans file found."));
@@ -88,7 +90,7 @@ public class ModeAnalysisWithHomeLocationFilter implements Callable<Integer> {
 		Path networkFile = glob(runDirectory,  runId + ".*network.*").orElseThrow(() -> new IllegalStateException("No network file found."));
 		log.info("Using network {}", networkFile);
 
-		Path facilitiesFile = glob(runDirectory, runId + ".*facilities.*").orElseThrow(() -> new IllegalStateException("No facilities found."));
+		String facilitiesFile = glob(runDirectory, runId + ".*facilities.*").map(Path::toString).orElse(null);
 		log.info("Using facilities {}", facilitiesFile);
 
 		Config config = ConfigUtils.createConfig();
@@ -97,7 +99,7 @@ public class ModeAnalysisWithHomeLocationFilter implements Callable<Integer> {
 
 		config.plans().setInputFile(populationFile.toString());
 		config.network().setInputFile(networkFile.toString());
-		config.facilities().setInputFile(facilitiesFile.toString());
+		config.facilities().setInputFile(facilitiesFile);
 
 		return ScenarioUtils.loadScenario(config);
 	}
