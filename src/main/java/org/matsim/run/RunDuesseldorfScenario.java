@@ -117,6 +117,7 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 			config.controler().setRunId(config.controler().getRunId().replace("-1pct", postfix));
 			config.controler().setOutputDirectory(config.controler().getOutputDirectory().replace("-1pct", postfix));
 
+			// Further reduction of flow capacity because of difference in the absolute number of trips by 1.78x XXX
 			config.qsim().setFlowCapFactor(sample.getSize() / 100.0);
 			config.qsim().setStorageCapFactor(sample.getSize() / 100.0);
 		}
