@@ -29,12 +29,9 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@CommandLine.Command(
-		header = ":: Open Düsseldorf Scenario ::",
-		version = RunDuesseldorfScenario.VERSION
-)
-@MATSimApplication.Prepare({CreateNetwork.class, CreateTransitSchedule.class, PreparePopulation.class, CreateCityCounts.class,
-		ExtractEvents.class, CreateBAStCounts.class})
+@CommandLine.Command(header = ":: Open Düsseldorf Scenario ::", version = RunDuesseldorfScenario.VERSION)
+@MATSimApplication.Prepare({ CreateNetwork.class, CreateTransitSchedule.class, PreparePopulation.class,
+		CreateCityCounts.class, ExtractEvents.class, CreateBAStCounts.class })
 public class RunDuesseldorfScenario extends MATSimApplication {
 
 	private static final Logger log = LogManager.getLogger(RunDuesseldorfScenario.class);
@@ -52,11 +49,11 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 	/**
 	 * 6.00° - 7.56°
 	 */
-	public static final double[] X_EXTENT = new double[]{290_000.00, 400_000.0};
+	public static final double[] X_EXTENT = new double[] { 290_000.00, 400_000.0 };
 	/**
 	 * 50.60 - 51.65°
 	 */
-	public static final double[] Y_EXTENT = new double[]{5_610_000.00, 5_722_000.00};
+	public static final double[] Y_EXTENT = new double[] { 5_610_000.00, 5_722_000.00 };
 
 	@CommandLine.Option(names = "--otfvis", defaultValue = "false", description = "Enable OTFVis live view")
 	private boolean otfvis;
@@ -64,19 +61,22 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 	@CommandLine.ArgGroup(exclusive = true, multiplicity = "*..1")
 	private Sample sample = new Sample();
 
-	@CommandLine.Option(names = {"--no-lanes"}, defaultValue = "false", description = "Deactivate the use of lane information")
+	@CommandLine.Option(names = {
+			"--no-lanes" }, defaultValue = "false", description = "Deactivate the use of lane information")
 	private boolean noLanes;
 
-	@CommandLine.Option(names = {"--lane-capacity"}, description = "CSV file with lane capacities", required = false)
+	@CommandLine.Option(names = { "--lane-capacity" }, description = "CSV file with lane capacities", required = false)
 	private Path laneCapacity;
 
-	@CommandLine.Option(names = {"--capacity-factor"}, defaultValue = "1", description = "Scale lane capacity by this factor.")
+	@CommandLine.Option(names = {
+			"--capacity-factor" }, defaultValue = "1", description = "Scale lane capacity by this factor.")
 	private double capacityFactor;
 
 	@CommandLine.Option(names = {"--no-capacity-reduction"}, defaultValue = "false", description = "Disable reduction of flow capacity for taking turns")
 	private boolean noCapacityReduction;
 
 	@CommandLine.Option(names = {"--free-flow"}, defaultValue = "1", description = "Scale up free flow speed of slow links.")
+
 	private double freeFlowFactor;
 
 	@CommandLine.Option(names = "--no-mc", defaultValue = "false", description = "Disable mode choice as replanning strategy.")
@@ -94,18 +94,24 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 	@Override
 	protected Config prepareConfig(Config config) {
 
-		//addDefaultActivityParams(config);
+		// addDefaultActivityParams(config);
 
 		for (long ii = 600; ii <= 97200; ii += 600) {
 
-			for (String act : List.of("home", "restaurant", "other", "visit", "errands", "educ_higher", "educ_secondary")) {
-				config.planCalcScore().addActivityParams(new ActivityParams(act + "_" + ii + ".0").setTypicalDuration(ii));
+			for (String act : List.of("home", "restaurant", "other", "visit", "errands", "educ_higher",
+					"educ_secondary")) {
+				config.planCalcScore()
+						.addActivityParams(new ActivityParams(act + "_" + ii + ".0").setTypicalDuration(ii));
 			}
 
-			config.planCalcScore().addActivityParams(new ActivityParams("work_" + ii + ".0").setTypicalDuration(ii).setOpeningTime(6. * 3600.).setClosingTime(20. * 3600.));
-			config.planCalcScore().addActivityParams(new ActivityParams("business_" + ii + ".0").setTypicalDuration(ii).setOpeningTime(6. * 3600.).setClosingTime(20. * 3600.));
-			config.planCalcScore().addActivityParams(new ActivityParams("leisure_" + ii + ".0").setTypicalDuration(ii).setOpeningTime(9. * 3600.).setClosingTime(27. * 3600.));
-			config.planCalcScore().addActivityParams(new ActivityParams("shopping_" + ii + ".0").setTypicalDuration(ii).setOpeningTime(8. * 3600.).setClosingTime(20. * 3600.));
+			config.planCalcScore().addActivityParams(new ActivityParams("work_" + ii + ".0").setTypicalDuration(ii)
+					.setOpeningTime(6. * 3600.).setClosingTime(20. * 3600.));
+			config.planCalcScore().addActivityParams(new ActivityParams("business_" + ii + ".0").setTypicalDuration(ii)
+					.setOpeningTime(6. * 3600.).setClosingTime(20. * 3600.));
+			config.planCalcScore().addActivityParams(new ActivityParams("leisure_" + ii + ".0").setTypicalDuration(ii)
+					.setOpeningTime(9. * 3600.).setClosingTime(27. * 3600.));
+			config.planCalcScore().addActivityParams(new ActivityParams("shopping_" + ii + ".0").setTypicalDuration(ii)
+					.setOpeningTime(8. * 3600.).setClosingTime(20. * 3600.));
 		}
 
 		// Config changes for larger samples
@@ -145,8 +151,7 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 		if (noModeChoice) {
 
 			List<StrategyConfigGroup.StrategySettings> strategies = config.strategy().getStrategySettings().stream()
-					.filter(s -> !s.getStrategyName().equals("SubtourModeChoice"))
-					.collect(Collectors.toList());
+					.filter(s -> !s.getStrategyName().equals("SubtourModeChoice")).collect(Collectors.toList());
 
 			config.strategy().clearStrategySettings();
 			strategies.forEach(s -> config.strategy().addStrategySettings(s));
@@ -156,7 +161,6 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 
 		if (noCapacityReduction)
 			config.controler().setOutputDirectory(config.controler().getOutputDirectory() + "-no-cap-red");
-
 		// config.planCalcScore().addActivityParams(new ActivityParams("freight").setTypicalDuration(12. * 3600.));
 		config.planCalcScore().addActivityParams(new ActivityParams("car interaction").setTypicalDuration(60));
 
@@ -166,7 +170,8 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 		config.qsim().setUsingTravelTimeCheckInTeleportation(true);
 		config.qsim().setTrafficDynamics(QSimConfigGroup.TrafficDynamics.kinematicWaves);
 
-		config.plans().setHandlingOfPlansWithoutRoutingMode(PlansConfigGroup.HandlingOfPlansWithoutRoutingMode.useMainModeIdentifier);
+		config.plans().setHandlingOfPlansWithoutRoutingMode(
+				PlansConfigGroup.HandlingOfPlansWithoutRoutingMode.useMainModeIdentifier);
 
 		return config;
 	}
@@ -178,7 +183,8 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 
 			if (laneCapacity != null) {
 
-				Object2DoubleMap<Triple<Id<Link>, Id<Link>, Id<Lane>>> map = CreateNetwork.readLaneCapacities(laneCapacity);
+				Object2DoubleMap<Triple<Id<Link>, Id<Link>, Id<Lane>>> map = CreateNetwork
+						.readLaneCapacities(laneCapacity);
 
 				log.info("Overwrite capacities from {}, containing {} lanes", laneCapacity, map.size());
 
@@ -206,10 +212,21 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 		for (Link link : scenario.getNetwork().getLinks().values()) {
 
 			// might be null, so avoid unboxing
-			if (link.getAttributes().getAttribute("junction") == Boolean.TRUE ||
-					"traffic_light".equals(link.getToNode().getAttributes().getAttribute("type"))
-			)
+			if (link.getAttributes().getAttribute("junction") == Boolean.TRUE
+					|| "traffic_light".equals(link.getToNode().getAttributes().getAttribute("type")))
 				link.setCapacity(link.getCapacity() * capacityFactor);
+
+			// Enlarge the storage capcity of short link to at least 1 (by adding more
+			// lanes)
+			// TODO length of vehicle is set manualy here (it is not a big problem as the
+			// whole thing here a temporary solution anyway)
+			double originalStorageCapacity = link.getLength() / 7.5 * link.getNumberOfLanes() * sample.getSize()
+					/ 100.0;
+
+			int minimumLaneRequred = (int) (1 / originalStorageCapacity + 1);
+			if (originalStorageCapacity < 1) {
+				link.setNumberOfLanes(minimumLaneRequred);
+			}
 		}
 
 	}
@@ -262,22 +279,26 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 	 */
 	static final class Sample {
 
-		@CommandLine.Option(names = {"--25pct", "--prod"}, defaultValue = "false", description = "Use the 25pct scenario")
+		@CommandLine.Option(names = { "--25pct",
+				"--prod" }, defaultValue = "false", description = "Use the 25pct scenario")
 		private boolean p25;
 
-		@CommandLine.Option(names = {"--10pct"}, defaultValue = "false", description = "Use the 10pct sample")
+		@CommandLine.Option(names = { "--10pct" }, defaultValue = "false", description = "Use the 10pct sample")
 		private boolean p10;
 
-		@CommandLine.Option(names = {"--1pct"}, defaultValue = "true", description = "Use the 1pct sample")
+		@CommandLine.Option(names = { "--1pct" }, defaultValue = "true", description = "Use the 1pct sample")
 		private boolean p1 = true;
 
 		/**
 		 * Get configured sample size.
 		 */
 		int getSize() {
-			if (p25) return 25;
-			if (p10) return 10;
-			if (p1) return 1;
+			if (p25)
+				return 25;
+			if (p10)
+				return 10;
+			if (p1)
+				return 1;
 			throw new IllegalStateException("No sample size defined");
 		}
 

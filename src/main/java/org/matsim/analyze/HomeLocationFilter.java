@@ -1,24 +1,24 @@
 package org.matsim.analyze;
 
-import org.apache.log4j.Logger;
-import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.geom.Point;
-import org.matsim.analysis.AgentFilter;
-import org.matsim.api.core.v01.Coord;
-import org.matsim.api.core.v01.Scenario;
-import org.matsim.api.core.v01.population.Activity;
-import org.matsim.api.core.v01.population.Person;
-import org.matsim.core.utils.geometry.geotools.MGC;
-import org.matsim.core.utils.gis.ShapeFileReader;
-import org.opengis.feature.simple.SimpleFeature;
-
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-class HomeLocationFilter implements AgentFilter {
+import org.apache.log4j.Logger;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.Point;
+import org.matsim.analysis.AgentFilter;
+import org.matsim.api.core.v01.Coord;
+import org.matsim.api.core.v01.population.Activity;
+import org.matsim.api.core.v01.population.Person;
+import org.matsim.api.core.v01.population.Population;
+import org.matsim.core.utils.geometry.geotools.MGC;
+import org.matsim.core.utils.gis.ShapeFileReader;
+import org.opengis.feature.simple.SimpleFeature;
+
+public class HomeLocationFilter implements AgentFilter {
 	private static final Logger log = Logger.getLogger(HomeLocationFilter.class);
 
 	private final Set<Person> personsToRemove = new HashSet<>();
@@ -53,9 +53,9 @@ class HomeLocationFilter implements AgentFilter {
 		return "homeLocationFilter";
 	}
 
-	public void analyzePopulation(Scenario scenario) {
-		if (scenario != null) {
-			for (Person person : scenario.getPopulation().getPersons().values()) {
+	public void analyzePopulation(Population population) {
+		if (population != null) {
+			for (Person person : population.getPersons().values()) {
 				// identify home location (usually the first activity)
 				Activity firstActivity = (Activity) person.getSelectedPlan().getPlanElements().get(0);
 				Coord homeCoord = firstActivity.getCoord();
@@ -70,8 +70,8 @@ class HomeLocationFilter implements AgentFilter {
 			}
 
 			log.info("There are " + personsToRemove.size() + " persons to be removed from analysis");
-			log.info("The total population size is " + scenario.getPopulation().getPersons().values().size());
-			int cityPopulationSize = scenario.getPopulation().getPersons().values().size() - personsToRemove.size();
+			log.info("The total population size is " + population.getPersons().values().size());
+			int cityPopulationSize = population.getPersons().values().size() - personsToRemove.size();
 			log.info("The population size inside the city for this simulation setup is " + cityPopulationSize);
 		} else {
 			throw new RuntimeException("The scenario does not exist. Aborting...");

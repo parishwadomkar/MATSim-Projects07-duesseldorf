@@ -71,7 +71,7 @@ public class ModeAnalysisWithHomeLocationFilter implements Callable<Integer> {
 		Scenario scenario = loadScenario(runId, runDirectory);
 
 		HomeLocationFilter homeLocationFilter = new HomeLocationFilter(shapeFile.toString());
-		homeLocationFilter.analyzePopulation(scenario);
+		homeLocationFilter.analyzePopulation(scenario.getPopulation());
 
 		ModeAnalysis modeAnalysis = new ModeAnalysis(scenario, homeLocationFilter, mainModeIdentifier);
 
