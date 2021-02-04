@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * A helper class to execute MATSim scenarios. This class provides a common scenario setup procedure and command line parsing.
@@ -230,13 +231,20 @@ public class MATSimApplication implements Callable<Integer>, CommandLine.IDefaul
 			return;
 		}
 
-		run(app, args);
+		CommandLine cli = prepare(app);
+
+		int code = cli.execute(args);
+
+		// Exit on error codes
+		if (code > 0)
+			System.exit(code);
+
 	}
 
 	/**
-	 * Run application class with a specific config.
+	 * Calls an application class and forwards any exceptions.
 	 */
-	public static void run(Class<? extends MATSimApplication> clazz, Config config, String[] args) {
+	public static int call(Class<? extends MATSimApplication> clazz, Config config, String[] args) {
 		MATSimApplication app;
 		try {
 			app = clazz.getConstructor(Config.class).newInstance(config);
@@ -244,13 +252,31 @@ public class MATSimApplication implements Callable<Integer>, CommandLine.IDefaul
 			System.err.println("Could not instantiate the application class");
 			e.printStackTrace();
 			System.exit(1);
-			return;
+			return 1;
 		}
 
-		run(app, args);
+		CommandLine cli = prepare(app);
+		AtomicReference<Exception> exc = new AtomicReference<>();
+		cli.setExecutionExceptionHandler((ex, commandLine, parseResult) -> {
+			exc.set(ex);
+			return 2;
+		});
+
+		int code = cli.execute(args);
+
+		if (code > 0) {
+			Exception e = exc.get();
+			if (e instanceof RuntimeException)
+				throw (RuntimeException) e;
+			else
+				throw new RuntimeException("Application exited with error", e);
+
+		}
+
+		return code;
 	}
 
-	private static void run(MATSimApplication app, String[] args) {
+	private static CommandLine prepare(MATSimApplication app) {
 		CommandLine cli = new CommandLine(app);
 
 		if (cli.getCommandName().equals(DEFAULT_NAME))
@@ -266,12 +292,7 @@ public class MATSimApplication implements Callable<Integer>, CommandLine.IDefaul
 		modules.addAll(app.getCustomModules());
 
 		// setupConfig(cli, modules);
-
-		int code = cli.execute(args);
-
-		// Exit on error codes
-		if (code > 0)
-			System.exit(code);
+		return cli;
 	}
 
 	private static void setupOptions(CommandLine cli, MATSimApplication app) {

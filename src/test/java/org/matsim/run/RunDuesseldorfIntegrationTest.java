@@ -21,7 +21,7 @@ public class RunDuesseldorfIntegrationTest {
 		config.controler().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
 		config.controler().setOutputDirectory(utils.getOutputDirectory());
 
-		MATSimApplication.run(RunDuesseldorfScenario.class, config, new String[]{
+		MATSimApplication.call(RunDuesseldorfScenario.class, config, new String[]{
 				"--no-lanes"
 		});
 
@@ -37,7 +37,7 @@ public class RunDuesseldorfIntegrationTest {
 		config.controler().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
 		config.controler().setOutputDirectory(utils.getOutputDirectory());
 
-		MATSimApplication.run(RunDuesseldorfScenario.class, config, new String[]{
+		MATSimApplication.call(RunDuesseldorfScenario.class, config, new String[]{
 				"--no-lanes"
 		});
 	}
@@ -53,7 +53,7 @@ public class RunDuesseldorfIntegrationTest {
 		config.controler().setOutputDirectory(utils.getOutputDirectory());
 
 		// default options
-		MATSimApplication.run(RunDuesseldorfScenario.class, config, new String[]{});
+		MATSimApplication.call(RunDuesseldorfScenario.class, config, new String[]{});
 
 	}
 
