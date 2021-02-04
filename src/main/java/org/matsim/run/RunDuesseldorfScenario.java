@@ -214,9 +214,6 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 			if (link.getFreespeed() < 25.5 / 3.6) {
 				link.setFreespeed(link.getFreespeed() * freeFlowFactor);
 			}
-		}
-
-		for (Link link : scenario.getNetwork().getLinks().values()) {
 
 			// might be null, so avoid unboxing
 			if (link.getAttributes().getAttribute("junction") == Boolean.TRUE
