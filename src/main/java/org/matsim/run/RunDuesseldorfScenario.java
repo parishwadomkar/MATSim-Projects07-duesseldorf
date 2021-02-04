@@ -25,6 +25,7 @@ import org.matsim.lanes.LanesToLinkAssignment;
 import org.matsim.prepare.*;
 import picocli.CommandLine;
 
+import javax.annotation.Nullable;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -90,6 +91,10 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 
 	public RunDuesseldorfScenario() {
 		super(String.format("scenarios/input/duesseldorf-%s-1pct.config.xml", VERSION));
+	}
+
+	public RunDuesseldorfScenario(@Nullable Config config) {
+		super(config);
 	}
 
 	public static void main(String[] args) {
