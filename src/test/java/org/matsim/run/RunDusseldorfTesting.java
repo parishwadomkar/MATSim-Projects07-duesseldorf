@@ -15,11 +15,46 @@ import org.matsim.testcases.MatsimTestUtils;
 public class RunDusseldorfTesting {
 	@Rule
 	public MatsimTestUtils utils = new MatsimTestUtils();
+	
+	@Test
+	public final void runOneAgentTest() {
+		try {
+			final String[] args = { "scenarios/input/test.config.xml" };
+
+			Config config = ConfigUtils.loadConfig(args[0]);
+			config.plans().setInputFile("scenarios/input/test-plans.xml");
+			config.controler().setLastIteration(1);
+			config.strategy().setFractionOfIterationsToDisableInnovation(1);
+			config.controler()
+					.setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
+			config.controler().setOutputDirectory(utils.getOutputDirectory());
+			addDefaultActivityParams(config);
+			
+			// No lane setting Start
+			config.qsim().setUseLanes(false);
+			config.controler().setLinkToLinkRoutingEnabled(false);
+			config.network().setLaneDefinitionsFile(null);
+			config.travelTimeCalculator().setCalculateLinkToLinkTravelTimes(false);
+			config.controler().setRunId(config.controler().getRunId() + "-no-lanes");
+			config.controler().setOutputDirectory(config.controler().getOutputDirectory() + "-no-lanes");
+			config.controler().setRoutingAlgorithmType(ControlerConfigGroup.RoutingAlgorithmType.FastAStarLandmarks);
+			// End
+			
+			Scenario scenario = ScenarioUtils.loadScenario(config);
+			Controler controler = new Controler(scenario);
+			controler.run();
+
+		} catch (Exception ee) {
+			throw new RuntimeException(ee);
+		}
+	}
+	
+	
 
 	@Test
 	public final void runNoLaneTest() {
 		try {
-			final String[] args = { "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/duesseldorf/duesseldorf-v1.0/input/test.config.xml" };
+			final String[] args = { "scenarios/input/test.config.xml" };
 
 			Config config = ConfigUtils.loadConfig(args[0]);
 			config.controler().setLastIteration(1);
@@ -52,8 +87,7 @@ public class RunDusseldorfTesting {
 	@Test
 	public final void runWithLaneTest() {
 		try {
-			final String[] args = { "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/duesseldorf/duesseldorf-v1.0/input/test.config.xml" }; // TODO config file path
-
+			final String[] args = { "scenarios/input/test.config.xml" };
 			Config config = ConfigUtils.loadConfig(args[0]);
 			config.controler().setLastIteration(1);
 			config.strategy().setFractionOfIterationsToDisableInnovation(1);
