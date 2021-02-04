@@ -72,16 +72,21 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 			"--capacity-factor" }, defaultValue = "1", description = "Scale lane capacity by this factor.")
 	private double capacityFactor;
 
-	@CommandLine.Option(names = {"--no-capacity-reduction"}, defaultValue = "false", description = "Disable reduction of flow capacity for taking turns")
+	@CommandLine.Option(names = {
+			"--no-capacity-reduction" }, defaultValue = "false", description = "Disable reduction of flow capacity for taking turns")
 	private boolean noCapacityReduction;
 
-	@CommandLine.Option(names = {"--free-flow"}, defaultValue = "1", description = "Scale up free flow speed of slow links.")
+	@CommandLine.Option(names = {
+			"--free-flow" }, defaultValue = "1", description = "Scale up free flow speed of slow links.")
 
 	private double freeFlowFactor;
 
 	@CommandLine.Option(names = "--no-mc", defaultValue = "false", description = "Disable mode choice as replanning strategy.")
 	private boolean noModeChoice;
 
+	@CommandLine.Option(names = {
+			"--increase-storage-capacity" }, defaultValue = "false", description = "Increase the storage capcity of short links to at least 1")
+	private boolean increaseStorageCapacity;
 
 	public RunDuesseldorfScenario() {
 		super(String.format("scenarios/input/duesseldorf-%s-1pct.config.xml", VERSION));
@@ -123,7 +128,8 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 			config.controler().setRunId(config.controler().getRunId().replace("-1pct", postfix));
 			config.controler().setOutputDirectory(config.controler().getOutputDirectory().replace("-1pct", postfix));
 
-			// Further reduction of flow capacity because of difference in the absolute number of trips by 1.78x XXX
+			// Further reduction of flow capacity because of difference in the absolute
+			// number of trips by 1.78x XXX
 			config.qsim().setFlowCapFactor(sample.getSize() / 100.0);
 			config.qsim().setStorageCapFactor(sample.getSize() / 100.0);
 		}
@@ -161,7 +167,8 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 
 		if (noCapacityReduction)
 			config.controler().setOutputDirectory(config.controler().getOutputDirectory() + "-no-cap-red");
-		// config.planCalcScore().addActivityParams(new ActivityParams("freight").setTypicalDuration(12. * 3600.));
+		// config.planCalcScore().addActivityParams(new
+		// ActivityParams("freight").setTypicalDuration(12. * 3600.));
 		config.planCalcScore().addActivityParams(new ActivityParams("car interaction").setTypicalDuration(60));
 
 		// vsp defaults
@@ -216,16 +223,17 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 					|| "traffic_light".equals(link.getToNode().getAttributes().getAttribute("type")))
 				link.setCapacity(link.getCapacity() * capacityFactor);
 
-			// Enlarge the storage capcity of short link to at least 1 (by adding more
-			// lanes)
-			// TODO length of vehicle is set manualy here (it is not a big problem as the
-			// whole thing here a temporary solution anyway)
-			double originalStorageCapacity = link.getLength() / 7.5 * link.getNumberOfLanes() * sample.getSize()
-					/ 100.0;
-
-			int minimumLaneRequred = (int) (1 / originalStorageCapacity + 1);
-			if (originalStorageCapacity < 1) {
-				link.setNumberOfLanes(minimumLaneRequred);
+			if (increaseStorageCapacity) {
+				// Enlarge the storage capcity of short link to at least 1 (by adding more
+				// lanes)
+				// TODO length of vehicle is set manualy here (it is not a big problem as the
+				// whole thing here a temporary solution anyway)
+				double originalStorageCapacity = link.getLength() / 7.5 * link.getNumberOfLanes() * sample.getSize()
+						/ 100.0;
+				int minimumLaneRequred = (int) (1 / originalStorageCapacity + 1);
+				if (originalStorageCapacity < 1) {
+					link.setNumberOfLanes(minimumLaneRequred);
+				}
 			}
 		}
 
