@@ -31,7 +31,7 @@ public class ModeAnalysisWithHomeLocationFilter implements Callable<Integer> {
 	private static final Logger log = LogManager.getLogger(ModeAnalysisWithHomeLocationFilter.class);
 
 	@CommandLine.Parameters(arity = "0..1", paramLabel = "INPUT", description = "Input run directory",
-			defaultValue = "C:/Users/cluac/MATSimScenarios/Dusseldorf/output/S510")
+			defaultValue = "C:/Users/cluac/MATSimScenarios/Dusseldorf/output/sc14")
 	private Path runDirectory;
 
 	@CommandLine.Option(names = "--run-id", defaultValue = "*", description = "Pattern used to match runId", required = true)
