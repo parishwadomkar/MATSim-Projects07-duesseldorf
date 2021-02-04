@@ -19,7 +19,7 @@ public class RunDusseldorfTesting {
 	@Test
 	public final void runNoLaneTest() {
 		try {
-			final String[] args = { "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/duesseldorf/duesseldorf-v1.0/input/duesseldorf-v1.0-1pct.config.xml" }; // TODO config file path
+			final String[] args = { "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/duesseldorf/duesseldorf-v1.0/input/test.config.xml" };
 
 			Config config = ConfigUtils.loadConfig(args[0]);
 			config.controler().setLastIteration(1);
@@ -52,7 +52,7 @@ public class RunDusseldorfTesting {
 	@Test
 	public final void runWithLaneTest() {
 		try {
-			final String[] args = { "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/duesseldorf/duesseldorf-v1.0/input/duesseldorf-v1.0-1pct.config.xml" }; // TODO config file path
+			final String[] args = { "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/duesseldorf/duesseldorf-v1.0/input/test.config.xml" }; // TODO config file path
 
 			Config config = ConfigUtils.loadConfig(args[0]);
 			config.controler().setLastIteration(1);
