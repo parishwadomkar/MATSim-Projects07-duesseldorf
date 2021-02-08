@@ -88,6 +88,10 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 	@CommandLine.Option(names = {
 			"--increase-storage-capacity" }, defaultValue = "false", description = "Increase the storage capcity of short links to at least 1")
 	private boolean increaseStorageCapacity;
+	
+	@CommandLine.Option(names = {
+	"--infiniteCapacity" }, defaultValue = "false", description = "Testing the network under inf flow and storage capcity")
+	private boolean infiniteCapacity;
 
 	public RunDuesseldorfScenario() {
 		super(String.format("scenarios/input/duesseldorf-%s-1pct.config.xml", VERSION));
@@ -185,6 +189,12 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 		config.plans().setHandlingOfPlansWithoutRoutingMode(
 				PlansConfigGroup.HandlingOfPlansWithoutRoutingMode.useMainModeIdentifier);
 
+		if (infiniteCapacity) {
+			config.qsim().setFlowCapFactor(100000);
+			config.qsim().setStorageCapFactor(100000);
+			config.controler().setOutputDirectory(config.controler().getOutputDirectory() + "infiniteCapacity");
+		}
+		
 		return config;
 	}
 
