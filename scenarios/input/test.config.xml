@@ -62,11 +62,11 @@
 
     <module name="qsim">
         <param name="endTime" value="36:00:00"/>
-        <param name="flowCapacityFactor" value="0.015"/>
+        <param name="flowCapacityFactor" value="100000"/>
         <param name="mainMode" value="car"/>
         <param name="numberOfThreads" value="8"/>
         <param name="startTime" value="00:00:00"/>
-        <param name="storageCapacityFactor" value="0.015"/>
+        <param name="storageCapacityFactor" value="100000"/>
         <param name="stuckTime" value="30.0"/>
         <param name="trafficDynamics" value="kinematicWaves"/>
         <param name="useLanes" value="true" />
