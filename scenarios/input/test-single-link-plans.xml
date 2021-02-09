@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE population SYSTEM "http://www.matsim.org/files/dtd/population_v6.dtd">
+
+<population>
+
+    <attributes>
+        <attribute name="coordinateReferenceSystem" class="java.lang.String">EPSG:25832</attribute>
+    </attributes>
+
+
+    <!-- ====================================================================== -->
+
+    <person id="1">
+        <attributes>
+            <attribute name="subpopulation" class="java.lang.String">person</attribute>
+        </attributes>
+
+        <plan score="80.11179641489682" selected="yes">
+            <activity type="home_46200.0" link="292007368" x="344299.8126858568" y="5675402.628115339" end_time="00:01:00"/>
+
+            <activity type="car interaction" link="292007368" x="344299.8126858568" y="5675402.628115339" max_dur="00:01:00"/>
+
+            <leg mode="car" dep_time="00:02:00">
+                <attributes>
+                    <attribute name="routingMode" class="java.lang.String">car</attribute>
+                </attributes>
+                <route type="links" start_link="292007368" end_link="-292007372#2" trav_time="00:02:07" distance="609.2" vehicleRefId="1">
+                    292007368 292007367 314656075 314656074 -292007372#2
+                </route>
+            </leg>
+
+            <activity type="car interaction" link="-292007372#2" x="344515.9594858251" y="5675801.578152071" max_dur="00:00:00"/>
+
+        </plan>
+    </person>
+
+
+    <person id="2">
+        <attributes>
+            <attribute name="subpopulation" class="java.lang.String">person</attribute>
+        </attributes>
+
+        <plan score="80.11179641489682" selected="yes">
+            <activity type="home_46200.0" link="292007368" x="344299.8126858568" y="5675402.628115339" end_time="00:02:00"/>
+
+            <activity type="car interaction" link="292007368" x="344299.8126858568" y="5675402.628115339" max_dur="00:02:00"/>
+
+            <leg mode="car" dep_time="00:03:00">
+                <attributes>
+                    <attribute name="routingMode" class="java.lang.String">car</attribute>
+                </attributes>
+                <route type="links" start_link="292007368" end_link="-292007372#2" trav_time="00:02:07" distance="609.2" vehicleRefId="1">
+                    292007368 292007367 314656075 314656074 -292007372#2
+                </route>
+            </leg>
+
+            <activity type="car interaction" link="-292007372#2" x="344515.9594858251" y="5675801.578152071" max_dur="00:00:00"/>
+
+        </plan>
+    </person>
+
+    <person id="3">
+        <attributes>
+            <attribute name="subpopulation" class="java.lang.String">person</attribute>
+        </attributes>
+
+        <plan score="80.11179641489682" selected="yes">
+            <activity type="home_46200.0" link="292007368" x="344299.8126858568" y="5675402.628115339" end_time="00:03:00"/>
+
+            <activity type="car interaction" link="292007368" x="344299.8126858568" y="5675402.628115339" max_dur="00:03:00"/>
+
+            <leg mode="car" dep_time="00:04:00">
+                <attributes>
+                    <attribute name="routingMode" class="java.lang.String">car</attribute>
+                </attributes>
+                <route type="links" start_link="292007368" end_link="-292007372#2" trav_time="00:02:07" distance="609.2" vehicleRefId="1">
+                    292007368 292007367 314656075 314656074 -292007372#2
+                </route>
+            </leg>
+
+            <activity type="car interaction" link="-292007372#2" x="344515.9594858251" y="5675801.578152071" max_dur="00:00:00"/>
+
+        </plan>
+    </person>
+
+</population>

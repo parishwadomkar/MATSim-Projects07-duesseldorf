@@ -116,8 +116,13 @@ public class MATSimApplication implements Callable<Integer>, CommandLine.IDefaul
 	public Integer call() throws Exception {
 
 		// load config if not present yet.
-		if (config == null)
+		if (config == null) {
 			config = loadConfig(scenario.getAbsolutePath());
+		}
+		else {
+			Config tmp = prepareConfig(config);
+			config = tmp != null ? tmp: config;
+		}
 
 		Objects.requireNonNull(config);
 

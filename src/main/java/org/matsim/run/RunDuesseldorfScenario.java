@@ -25,7 +25,6 @@ import org.matsim.lanes.LanesToLinkAssignment;
 import org.matsim.prepare.*;
 import picocli.CommandLine;
 
-import javax.annotation.Nullable;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -62,33 +61,30 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 	@CommandLine.ArgGroup(exclusive = true, multiplicity = "*..1")
 	private Sample sample = new Sample();
 
-	@CommandLine.Option(names = {
-			"--no-lanes" }, defaultValue = "false", description = "Deactivate the use of lane information")
+	@CommandLine.Option(names = {"--dc" }, defaultValue = "1", description = "Correct demand by downscaling links")
+	private double demandCorrection;
+
+	@CommandLine.Option(names = {"--no-lanes" }, defaultValue = "false", description = "Deactivate the use of lane information")
 	private boolean noLanes;
 
 	@CommandLine.Option(names = { "--lane-capacity" }, description = "CSV file with lane capacities", required = false)
 	private Path laneCapacity;
 
-	@CommandLine.Option(names = {
-			"--capacity-factor" }, defaultValue = "1", description = "Scale lane capacity by this factor.")
+	@CommandLine.Option(names = {"--capacity-factor" }, defaultValue = "1", description = "Scale lane capacity by this factor.")
 	private double capacityFactor;
 
-	@CommandLine.Option(names = {
-			"--no-capacity-reduction" }, defaultValue = "false", description = "Disable reduction of flow capacity for taking turns")
+	@CommandLine.Option(names = {"--no-capacity-reduction" }, defaultValue = "false", description = "Disable reduction of flow capacity for taking turns")
 	private boolean noCapacityReduction;
 
-	@CommandLine.Option(names = {
-			"--free-flow" }, defaultValue = "1", description = "Scale up free flow speed of slow links.")
-
+	@CommandLine.Option(names = {"--free-flow" }, defaultValue = "1", description = "Scale up free flow speed of slow links.")
 	private double freeFlowFactor;
 
 	@CommandLine.Option(names = "--no-mc", defaultValue = "false", description = "Disable mode choice as replanning strategy.")
 	private boolean noModeChoice;
 
-	@CommandLine.Option(names = {
-			"--increase-storage-capacity" }, defaultValue = "false", description = "Increase the storage capcity of short links to at least 1")
+	@CommandLine.Option(names = {"--increase-storage-capacity" }, defaultValue = "false", description = "Increase the storage capcity of short links to at least 1")
 	private boolean increaseStorageCapacity;
-	
+
 	@CommandLine.Option(names = {
 	"--infiniteCapacity" }, defaultValue = "false", description = "Testing the network under inf flow and storage capcity")
 	private boolean infiniteCapacity;
@@ -97,7 +93,7 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 		super(String.format("scenarios/input/duesseldorf-%s-1pct.config.xml", VERSION));
 	}
 
-	public RunDuesseldorfScenario(@Nullable Config config) {
+	public RunDuesseldorfScenario(Config config) {
 		super(config);
 	}
 
@@ -137,11 +133,13 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 			config.controler().setRunId(config.controler().getRunId().replace("-1pct", postfix));
 			config.controler().setOutputDirectory(config.controler().getOutputDirectory().replace("-1pct", postfix));
 
-			// Further reduction of flow capacity because of difference in the absolute
-			// number of trips by 1.78x XXX
-			config.qsim().setFlowCapFactor(sample.getSize() / 100.0);
-			config.qsim().setStorageCapFactor(sample.getSize() / 100.0);
+			// Further reduction of flow capacity because of difference in the absolute, number of trips by 1.78x
+			config.qsim().setFlowCapFactor(sample.getSize() / (100.0 * demandCorrection));
+			config.qsim().setStorageCapFactor(sample.getSize() / (100.0 * demandCorrection));
 		}
+
+		if (demandCorrection != 1.0)
+			config.controler().setOutputDirectory(config.controler().getOutputDirectory() + "-dc_" + demandCorrection);
 
 		if (noLanes) {
 
@@ -179,6 +177,7 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 		// config.planCalcScore().addActivityParams(new
 		// ActivityParams("freight").setTypicalDuration(12. * 3600.));
 		config.planCalcScore().addActivityParams(new ActivityParams("car interaction").setTypicalDuration(60));
+		config.planCalcScore().addActivityParams(new ActivityParams("other").setTypicalDuration(600 * 3));
 
 		// vsp defaults
 		config.vspExperimental().setVspDefaultsCheckingLevel(VspExperimentalConfigGroup.VspDefaultsCheckingLevel.info);
@@ -194,7 +193,7 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 			config.qsim().setStorageCapFactor(100000);
 			config.controler().setOutputDirectory(config.controler().getOutputDirectory() + "infiniteCapacity");
 		}
-		
+
 		return config;
 	}
 
