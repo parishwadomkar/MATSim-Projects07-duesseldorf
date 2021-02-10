@@ -255,9 +255,7 @@ public class MATSimApplication implements Callable<Integer>, CommandLine.IDefaul
 			app = clazz.getConstructor(Config.class).newInstance(config);
 		} catch (ReflectiveOperationException e) {
 			System.err.println("Could not instantiate the application class");
-			e.printStackTrace();
-			System.exit(1);
-			return 1;
+			throw new RuntimeException(e);
 		}
 
 		CommandLine cli = prepare(app);
@@ -279,6 +277,38 @@ public class MATSimApplication implements Callable<Integer>, CommandLine.IDefaul
 		}
 
 		return code;
+	}
+
+	/**
+	 * Prepare and return controller without running the scenario.
+	 * This allows to configure the controller after setup has been run.
+	 */
+	public static Controler prepare(Class<? extends MATSimApplication> clazz, Config config, String[] args) {
+
+		MATSimApplication app;
+		try {
+			app = clazz.getConstructor(Config.class).newInstance(config);
+		} catch (ReflectiveOperationException e) {
+			System.err.println("Could not instantiate the application class");
+			throw new RuntimeException(e);
+		}
+
+		CommandLine cli = prepare(app);
+		CommandLine.ParseResult parseResult = cli.parseArgs(args);
+
+		if (parseResult.errors().size() > 0)
+			throw new RuntimeException(parseResult.errors().get(0));
+
+		Config tmp = app.prepareConfig(config);
+		config = tmp != null ? tmp: config;
+
+		final Scenario scenario = ScenarioUtils.loadScenario(config);
+		app.prepareScenario(scenario);
+
+		final Controler controler = new Controler(scenario);
+		app.prepareControler(controler);
+
+		return controler;
 	}
 
 	private static CommandLine prepare(MATSimApplication app) {
