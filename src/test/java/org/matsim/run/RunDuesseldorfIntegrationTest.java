@@ -81,8 +81,8 @@ public class RunDuesseldorfIntegrationTest {
 	@Test
 	public void singleLink() {
 
-		Config config = ConfigUtils.loadConfig("scenarios/input/test.config.xml");
-		config.plans().setInputFile("test-single-link-plans.xml");
+		Config config = ConfigUtils.loadConfig("scenarios/input/duesseldorf-v1.0-1pct.config.xml");
+		config.plans().setInputFile("test/input/test-single-link-plans.xml");
 		// run for only 20 minutes
 		config.qsim().setEndTime(20 * 60);
 		config.controler().setLastIteration(0);
