@@ -38,6 +38,31 @@ public class RunDuesseldorfIntegrationTest {
 
 		MATSimApplication.call(RunDuesseldorfScenario.class, config, new String[] { "--no-lanes" });
 	}
+	
+	@Test
+	public final void runNoLaneTestNormalCapacity() {
+
+		Config config = ConfigUtils.loadConfig("scenarios/input/duesseldorf-v1.0-1pct.config.xml");
+		config.controler().setLastIteration(0);
+		config.strategy().setFractionOfIterationsToDisableInnovation(1);
+		config.controler()
+				.setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
+		config.controler().setOutputDirectory(utils.getOutputDirectory());
+		MATSimApplication.call(RunDuesseldorfScenario.class, config, new String[] { "--no-lanes" });
+	}
+	
+	@Test
+	public final void runNoLaneTestIncreasedCapacity() {
+
+		Config config = ConfigUtils.loadConfig("scenarios/input/duesseldorf-v1.0-1pct.config.xml");
+		config.controler().setLastIteration(0);
+		config.strategy().setFractionOfIterationsToDisableInnovation(1);
+		config.controler()
+				.setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
+		config.controler().setOutputDirectory(utils.getOutputDirectory());		
+		
+		MATSimApplication.call(RunDuesseldorfScenario.class, config, new String[] { "--no-lanes", "--infiniteCapacity" });
+	}
 
 	@Test
 	public final void runWithLaneTest() {
