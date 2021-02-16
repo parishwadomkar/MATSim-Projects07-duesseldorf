@@ -6,6 +6,7 @@ import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.matsim.analysis.RunSuite;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
@@ -30,8 +31,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @CommandLine.Command(header = ":: Open Düsseldorf Scenario ::", version = RunDuesseldorfScenario.VERSION)
-@MATSimApplication.Prepare({ CreateNetwork.class, CreateTransitSchedule.class, PreparePopulation.class,
-		CreateCityCounts.class, ExtractEvents.class, CreateBAStCounts.class })
+@MATSimApplication.Prepare({CreateNetwork.class, CreateTransitSchedule.class, PreparePopulation.class,
+		CreateCityCounts.class, ExtractEvents.class, CreateBAStCounts.class})
+@MATSimApplication.Analysis({RunSuite.class})
 public class RunDuesseldorfScenario extends MATSimApplication {
 
 	private static final Logger log = LogManager.getLogger(RunDuesseldorfScenario.class);
@@ -49,11 +51,11 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 	/**
 	 * 6.00° - 7.56°
 	 */
-	public static final double[] X_EXTENT = new double[] { 290_000.00, 400_000.0 };
+	public static final double[] X_EXTENT = new double[]{290_000.00, 400_000.0};
 	/**
 	 * 50.60 - 51.65°
 	 */
-	public static final double[] Y_EXTENT = new double[] { 5_610_000.00, 5_722_000.00 };
+	public static final double[] Y_EXTENT = new double[]{5_610_000.00, 5_722_000.00};
 
 	@CommandLine.Option(names = "--otfvis", defaultValue = "false", description = "Enable OTFVis live view")
 	private boolean otfvis;
@@ -61,32 +63,32 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 	@CommandLine.ArgGroup(exclusive = true, multiplicity = "*..1")
 	private Sample sample = new Sample();
 
-	@CommandLine.Option(names = {"--dc" }, defaultValue = "1", description = "Correct demand by downscaling links")
+	@CommandLine.Option(names = {"--dc"}, defaultValue = "1", description = "Correct demand by downscaling links")
 	private double demandCorrection;
 
-	@CommandLine.Option(names = {"--no-lanes" }, defaultValue = "false", description = "Deactivate the use of lane information")
+	@CommandLine.Option(names = {"--no-lanes"}, defaultValue = "false", description = "Deactivate the use of lane information")
 	private boolean noLanes;
 
-	@CommandLine.Option(names = { "--lane-capacity" }, description = "CSV file with lane capacities", required = false)
+	@CommandLine.Option(names = {"--lane-capacity"}, description = "CSV file with lane capacities", required = false)
 	private Path laneCapacity;
 
-	@CommandLine.Option(names = {"--capacity-factor" }, defaultValue = "1", description = "Scale lane capacity by this factor.")
+	@CommandLine.Option(names = {"--capacity-factor"}, defaultValue = "1", description = "Scale lane capacity by this factor.")
 	private double capacityFactor;
 
-	@CommandLine.Option(names = {"--no-capacity-reduction" }, defaultValue = "false", description = "Disable reduction of flow capacity for taking turns")
+	@CommandLine.Option(names = {"--no-capacity-reduction"}, defaultValue = "false", description = "Disable reduction of flow capacity for taking turns")
 	private boolean noCapacityReduction;
 
-	@CommandLine.Option(names = {"--free-flow" }, defaultValue = "1", description = "Scale up free flow speed of slow links.")
+	@CommandLine.Option(names = {"--free-flow"}, defaultValue = "1", description = "Scale up free flow speed of slow links.")
 	private double freeFlowFactor;
 
 	@CommandLine.Option(names = "--no-mc", defaultValue = "false", description = "Disable mode choice as replanning strategy.")
 	private boolean noModeChoice;
 
-	@CommandLine.Option(names = {"--increase-storage-capacity" }, defaultValue = "false", description = "Increase the storage capcity of short links to at least 1")
+	@CommandLine.Option(names = {"--increase-storage-capacity"}, defaultValue = "false", description = "Increase the storage capcity of short links to at least 1")
 	private boolean increaseStorageCapacity;
 
 	@CommandLine.Option(names = {
-	"--infiniteCapacity" }, defaultValue = "false", description = "Testing the network under inf flow and storage capcity")
+			"--infiniteCapacity"}, defaultValue = "false", description = "Testing the network under inf flow and storage capcity")
 	private boolean infiniteCapacity;
 
 	public RunDuesseldorfScenario() {
@@ -298,14 +300,14 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 	 */
 	static final class Sample {
 
-		@CommandLine.Option(names = { "--25pct",
-				"--prod" }, defaultValue = "false", description = "Use the 25pct scenario")
+		@CommandLine.Option(names = {"--25pct",
+				"--prod"}, defaultValue = "false", description = "Use the 25pct scenario")
 		private boolean p25;
 
-		@CommandLine.Option(names = { "--10pct" }, defaultValue = "false", description = "Use the 10pct sample")
+		@CommandLine.Option(names = {"--10pct"}, defaultValue = "false", description = "Use the 10pct sample")
 		private boolean p10;
 
-		@CommandLine.Option(names = { "--1pct" }, defaultValue = "true", description = "Use the 1pct sample")
+		@CommandLine.Option(names = {"--1pct"}, defaultValue = "true", description = "Use the 1pct sample")
 		private boolean p1 = true;
 
 		/**

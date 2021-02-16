@@ -1,4 +1,4 @@
-package org.matsim.analyze;
+package org.matsim.analysis;
 
 import org.junit.Before;
 import org.junit.Test;

@@ -1,12 +1,14 @@
-package org.matsim.analyze;
+package org.matsim.analysis;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.population.Person;
+import org.matsim.api.core.v01.population.Plan;
 import org.matsim.contrib.analysis.vsp.traveltimedistance.HereMapsRouteValidator;
 import org.matsim.contrib.analysis.vsp.traveltimedistance.TravelTimeValidationRunner;
+import org.matsim.core.replanning.selectors.BestPlanSelector;
 import org.matsim.core.utils.collections.Tuple;
 import org.matsim.core.utils.geometry.CoordinateTransformation;
 import org.matsim.core.utils.geometry.transformations.TransformationFactory;
@@ -17,6 +19,9 @@ import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.Set;
 import java.util.concurrent.Callable;
+
+import static org.matsim.analysis.RunSuite.glob;
+import static org.matsim.analysis.RunSuite.loadScenario;
 
 @CommandLine.Command(
 		name = "travelTimeAnalysis",
@@ -61,11 +66,22 @@ public class RunTravelTimeAnalysis implements Callable<Integer> {
 	@Override
 	public Integer call() throws Exception {
 
-		Scenario scenario = ModeAnalysisWithHomeLocationFilter.loadScenario(runId, runDirectory);
-		Path events = ModeAnalysisWithHomeLocationFilter.glob(runDirectory, runId + ".*events.*")
+		Scenario scenario = loadScenario(runId, runDirectory);
+		Path events = glob(runDirectory, runId + ".*events.*")
 				.orElseThrow(() -> new IllegalArgumentException("Could not find events file."));
 
 		Set<Id<Person>> populationIds = scenario.getPopulation().getPersons().keySet();
+
+		BestPlanSelector<Plan, Person> selector = new BestPlanSelector<>();
+
+		int size = populationIds.size();
+
+		populationIds.removeIf(p -> {
+			Person person = scenario.getPopulation().getPersons().get(p);
+			return selector.selectPlan(person) != person.getSelectedPlan();
+		});
+
+		log.info("Removed {} agents not selecting their best plan", size - populationIds.size());
 
 		if (date == null)
 			date = LocalDate.now();

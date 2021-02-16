@@ -348,11 +348,18 @@ public class MATSimApplication implements Callable<Integer>, CommandLine.IDefaul
 	private static void setupSubcommands(CommandLine cli, MATSimApplication app) {
 
 		Prepare prepare = app.getClass().getAnnotation(Prepare.class);
-
 		cli.addSubcommand("prepare", new PrepareCommand());
 		CommandLine subcommand = cli.getSubcommands().get("prepare");
 
 		for (Class<?> aClass : prepare.value()) {
+			subcommand.addSubcommand(aClass);
+		}
+
+		Analysis analysis = app.getClass().getAnnotation(Analysis.class);
+		cli.addSubcommand("analysis", new AnalysisCommand());
+		subcommand = cli.getSubcommands().get("analysis");
+
+		for (Class<?> aClass : analysis.value()) {
 			subcommand.addSubcommand(aClass);
 		}
 	}
@@ -402,12 +409,34 @@ public class MATSimApplication implements Callable<Integer>, CommandLine.IDefaul
 		}
 	}
 
+	@CommandLine.Command(name = "analysis", description = "Contains all commands for analysing the scenario. (See help analysis)")
+	public static class AnalysisCommand implements Callable<Integer> {
+
+		@CommandLine.Spec
+		private CommandLine.Model.CommandSpec spec;
+
+		@Override
+		public Integer call() throws Exception {
+			System.out.printf("No subcommand given. Chose on of: %s", spec.subcommands().keySet());
+			return 0;
+		}
+	}
+
 	/**
 	 * Classes from {@link #value()} will be registered as "prepare" subcommands.
 	 */
 	@Retention(RetentionPolicy.RUNTIME)
 	@Target({ElementType.TYPE})
 	public @interface Prepare {
+		Class<?>[] value() default {};
+	}
+
+	/**
+	 * Classes from {@link #value()} will be registered as "analysis" subcommands.
+	 */
+	@Retention(RetentionPolicy.RUNTIME)
+	@Target({ElementType.TYPE})
+	public @interface Analysis {
 		Class<?>[] value() default {};
 	}
 

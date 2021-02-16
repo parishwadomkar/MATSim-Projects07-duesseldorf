@@ -8,7 +8,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
-import org.matsim.analyze.HomeLocationFilter;
+import org.matsim.analysis.HomeLocationFilter;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
@@ -79,7 +79,7 @@ public class ShortTripsGenerator {
 //                return true;
 //            }
 //        };
-		
+
 		long originalTrips = shortTripsGenerator.population.getPersons().values().stream()
 				.filter(person -> condition.test(person.getId().toString())).map(HasPlansAndId::getSelectedPlan)
 				.map(plan -> TripStructureUtils.getTrips(plan.getPlanElements())).mapToLong(List::size).sum();

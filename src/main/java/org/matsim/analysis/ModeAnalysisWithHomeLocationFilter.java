@@ -1,8 +1,7 @@
-package org.matsim.analyze;
+package org.matsim.analysis;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.matsim.analysis.DefaultAnalysisMainModeIdentifier;
 import org.matsim.analysis.modalSplitUserType.ModeAnalysis;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.Config;
@@ -21,6 +20,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Callable;
+
+import static org.matsim.analysis.RunSuite.loadScenario;
 
 @CommandLine.Command(
 		name = "modeAnalysis",
@@ -48,17 +49,6 @@ public class ModeAnalysisWithHomeLocationFilter implements Callable<Integer> {
 		System.exit(new CommandLine(new ModeAnalysisWithHomeLocationFilter()).execute(args));
 	}
 
-	static Optional<Path> glob(Path path, String pattern) throws IOException {
-		PathMatcher m = path.getFileSystem().getPathMatcher("glob:" + pattern);
-		Optional<Path> match = Files.list(path).filter(p -> m.matches(p.getFileName())).findFirst();
-
-		// Look one directory higher for required file
-		if (match.isEmpty())
-			return Files.list(path.getParent()).filter(p -> m.matches(p.getFileName())).findFirst();
-
-		return match;
-	}
-
 	@Override
 	public Integer call() throws Exception {
 		final AnalysisMainModeIdentifier mainModeIdentifier = new DefaultAnalysisMainModeIdentifier();
@@ -73,35 +63,12 @@ public class ModeAnalysisWithHomeLocationFilter implements Callable<Integer> {
 		HomeLocationFilter homeLocationFilter = new HomeLocationFilter(shapeFile.toString());
 		homeLocationFilter.analyzePopulation(scenario.getPopulation());
 
-		ModeAnalysis modeAnalysis = new ModeAnalysis(scenario, homeLocationFilter, mainModeIdentifier);
+		ModeAnalysis modeAnalysis = new ModeAnalysis(scenario, homeLocationFilter, null, mainModeIdentifier);
 
 		modeAnalysis.run();
 		writeResults(runDirectory.resolve(output), modeAnalysis);
 
 		return 0;
-	}
-
-	static Scenario loadScenario(String runId, Path runDirectory) throws IOException {
-		log.info("Loading scenario...");
-
-		Path populationFile = glob(runDirectory,  runId+".*plans.*").orElseThrow(() -> new IllegalStateException("No plans file found."));
-		log.info("Using population {}", populationFile);
-
-		Path networkFile = glob(runDirectory,  runId + ".*network.*").orElseThrow(() -> new IllegalStateException("No network file found."));
-		log.info("Using network {}", networkFile);
-
-		String facilitiesFile = glob(runDirectory, runId + ".*facilities.*").map(Path::toString).orElse(null);
-		log.info("Using facilities {}", facilitiesFile);
-
-		Config config = ConfigUtils.createConfig();
-		config.global().setCoordinateSystem(RunDuesseldorfScenario.COORDINATE_SYSTEM);
-		config.controler().setOutputDirectory(runDirectory.toString());
-
-		config.plans().setInputFile(populationFile.toString());
-		config.network().setInputFile(networkFile.toString());
-		config.facilities().setInputFile(facilitiesFile);
-
-		return ScenarioUtils.loadScenario(config);
 	}
 
 	private static void writeResults(Path analysisOutputDirectory, ModeAnalysis modeAnalysis) throws IOException {
