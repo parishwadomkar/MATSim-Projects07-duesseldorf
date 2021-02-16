@@ -41,7 +41,7 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 	/**
 	 * Current version identifier.
 	 */
-	public static final String VERSION = "v1.0";
+	public static final String VERSION = "v2.0";
 
 	/**
 	 * Default coordinate system of the scenario.

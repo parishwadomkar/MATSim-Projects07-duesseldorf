@@ -1,0 +1,710 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE population SYSTEM "http://www.matsim.org/files/dtd/population_v6.dtd">
+
+<population>
+
+
+
+<!-- ====================================================================== -->
+
+	<person id="100004">
+		<attributes>
+			<attribute name="PermissibleModesCalculator_carAvailability" class="java.lang.String">never</attribute>
+			<attribute name="subpopulation" class="java.lang.String">person</attribute>
+		</attributes>
+		<plan score="0.0" selected="yes">
+			<activity type="home_70200.0" x="351250.0" y="5668750.0" start_time="00:00:00" end_time="15:41:00" >
+			</activity>
+			<leg mode="ride" trav_time="00:14:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">ride</attribute>
+				</attributes>
+			</leg>
+			<activity type="leisure_14400.0" x="343750.0" y="5676250.0" start_time="15:55:00" end_time="19:58:00" >
+			</activity>
+			<leg mode="ride" trav_time="00:15:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">ride</attribute>
+				</attributes>
+			</leg>
+			<activity type="home_70200.0" x="351250.0" y="5668750.0" start_time="20:13:00" >
+			</activity>
+		</plan>
+
+	</person>
+
+<!-- ====================================================================== -->
+
+	<person id="100007">
+		<attributes>
+			<attribute name="PermissibleModesCalculator_carAvailability" class="java.lang.String">never</attribute>
+			<attribute name="subpopulation" class="java.lang.String">person</attribute>
+		</attributes>
+		<plan score="0.0" selected="yes">
+			<activity type="home_39600.0" x="351250.0" y="5668750.0" start_time="02:00:00" end_time="13:00:00" >
+			</activity>
+			<leg mode="ride" trav_time="00:05:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">ride</attribute>
+				</attributes>
+			</leg>
+			<activity type="leisure_25800.0" x="350750.0" y="5669750.0" start_time="13:05:00" end_time="20:17:00" >
+			</activity>
+			<leg mode="ride" trav_time="00:51:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">ride</attribute>
+				</attributes>
+			</leg>
+			<activity type="leisure_10200.0" x="355250.0" y="5644250.0" start_time="21:08:00" >
+			</activity>
+		</plan>
+
+	</person>
+
+<!-- ====================================================================== -->
+
+	<person id="100015">
+		<attributes>
+			<attribute name="PermissibleModesCalculator_carAvailability" class="java.lang.String">always</attribute>
+			<attribute name="subpopulation" class="java.lang.String">person</attribute>
+		</attributes>
+		<plan score="0.0" selected="yes">
+			<activity type="home_24000.0" x="350750.0" y="5668750.0" start_time="02:00:00" end_time="08:28:00" >
+			</activity>
+			<leg mode="pt" trav_time="00:11:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">pt</attribute>
+				</attributes>
+			</leg>
+			<activity type="errands_4200.0" x="353250.0" y="5667750.0" start_time="08:39:00" end_time="09:45:00" >
+			</activity>
+			<leg mode="pt" trav_time="00:17:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">pt</attribute>
+				</attributes>
+			</leg>
+			<activity type="work_41400.0" x="346750.0" y="5678750.0" start_time="10:02:00" end_time="21:31:00" >
+			</activity>
+			<leg mode="pt" trav_time="00:18:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">pt</attribute>
+				</attributes>
+			</leg>
+			<activity type="leisure_6000.0" x="351250.0" y="5670250.0" start_time="21:49:00" end_time="23:31:00" >
+			</activity>
+			<leg mode="pt" trav_time="00:06:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">pt</attribute>
+				</attributes>
+			</leg>
+			<activity type="leisure_3600.0" x="350250.0" y="5671750.0" start_time="23:37:00" end_time="24:35:00" >
+			</activity>
+			<leg mode="pt" trav_time="00:07:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">pt</attribute>
+				</attributes>
+			</leg>
+			<activity type="home_24000.0" x="350750.0" y="5668750.0" start_time="24:42:00" >
+			</activity>
+		</plan>
+
+	</person>
+
+<!-- ====================================================================== -->
+
+	<person id="100057">
+		<attributes>
+			<attribute name="PermissibleModesCalculator_carAvailability" class="java.lang.String">always</attribute>
+			<attribute name="subpopulation" class="java.lang.String">person</attribute>
+		</attributes>
+		<plan score="0.0" selected="yes">
+			<activity type="home_19200.0" x="351750.0" y="5668750.0" start_time="02:00:00" end_time="07:23:00" >
+			</activity>
+			<leg mode="walk" trav_time="00:05:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">walk</attribute>
+				</attributes>
+			</leg>
+			<activity type="leisure_7200.0" x="351250.0" y="5669750.0" start_time="07:28:00" end_time="09:31:00" >
+			</activity>
+			<leg mode="walk" trav_time="00:08:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">walk</attribute>
+				</attributes>
+			</leg>
+			<activity type="shopping_4800.0" x="351750.0" y="5670250.0" start_time="09:39:00" end_time="10:54:00" >
+			</activity>
+			<leg mode="walk" trav_time="00:04:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">walk</attribute>
+				</attributes>
+			</leg>
+			<activity type="home_4800.0" x="351750.0" y="5668750.0" start_time="10:58:00" end_time="12:20:00" >
+			</activity>
+			<leg mode="bike" trav_time="00:05:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">bike</attribute>
+				</attributes>
+			</leg>
+			<activity type="leisure_3000.0" x="352250.0" y="5668250.0" start_time="12:25:00" end_time="13:13:00" >
+			</activity>
+			<leg mode="bike" trav_time="00:05:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">bike</attribute>
+				</attributes>
+			</leg>
+			<activity type="home_3600.0" x="351750.0" y="5668750.0" start_time="13:18:00" end_time="14:17:00" >
+			</activity>
+			<leg mode="car" trav_time="00:05:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">car</attribute>
+				</attributes>
+			</leg>
+			<activity type="leisure_10800.0" x="350250.0" y="5670250.0" start_time="14:22:00" end_time="17:17:00" >
+			</activity>
+			<leg mode="car" trav_time="00:06:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">car</attribute>
+				</attributes>
+			</leg>
+			<activity type="leisure_24000.0" x="351750.0" y="5669250.0" start_time="17:23:00" >
+			</activity>
+		</plan>
+
+	</person>
+
+<!-- ====================================================================== -->
+
+	<person id="100080">
+		<attributes>
+			<attribute name="PermissibleModesCalculator_carAvailability" class="java.lang.String">never</attribute>
+			<attribute name="subpopulation" class="java.lang.String">person</attribute>
+		</attributes>
+		<plan score="0.0" selected="yes">
+			<activity type="home_46800.0" x="351250.0" y="5668750.0" start_time="02:00:00" end_time="08:48:00" >
+			</activity>
+			<leg mode="pt" trav_time="00:24:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">pt</attribute>
+				</attributes>
+			</leg>
+			<activity type="work_15600.0" x="344750.0" y="5679750.0" start_time="09:12:00" end_time="13:30:00" >
+			</activity>
+			<leg mode="pt" trav_time="00:07:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">pt</attribute>
+				</attributes>
+			</leg>
+			<activity type="shopping_2400.0" x="344750.0" y="5677250.0" start_time="13:37:00" end_time="14:19:00" >
+			</activity>
+			<leg mode="pt" trav_time="00:06:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">pt</attribute>
+				</attributes>
+			</leg>
+			<activity type="educ_secondary_3600.0" x="344750.0" y="5676750.0" start_time="14:25:00" end_time="15:25:00" >
+			</activity>
+			<leg mode="pt" trav_time="00:19:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">pt</attribute>
+				</attributes>
+			</leg>
+			<activity type="leisure_7200.0" x="352750.0" y="5667750.0" start_time="15:44:00" end_time="17:45:00" >
+			</activity>
+			<leg mode="pt" trav_time="00:10:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">pt</attribute>
+				</attributes>
+			</leg>
+			<activity type="home_46800.0" x="351250.0" y="5668750.0" start_time="17:55:00" >
+			</activity>
+		</plan>
+
+	</person>
+
+<!-- ====================================================================== -->
+
+	<person id="100097">
+		<attributes>
+			<attribute name="PermissibleModesCalculator_carAvailability" class="java.lang.String">never</attribute>
+			<attribute name="subpopulation" class="java.lang.String">person</attribute>
+		</attributes>
+		<plan score="0.0" selected="yes">
+			<activity type="home_57600.0" x="351250.0" y="5668750.0" start_time="00:00:00" end_time="09:33:00" >
+			</activity>
+			<leg mode="pt" trav_time="00:29:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">pt</attribute>
+				</attributes>
+			</leg>
+			<activity type="shopping_25200.0" x="356750.0" y="5646750.0" start_time="10:02:00" end_time="17:02:00" >
+			</activity>
+			<leg mode="pt" trav_time="00:29:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">pt</attribute>
+				</attributes>
+			</leg>
+			<activity type="home_57600.0" x="351250.0" y="5668750.0" start_time="17:31:00" >
+			</activity>
+		</plan>
+
+	</person>
+
+<!-- ====================================================================== -->
+
+	<person id="100099">
+		<attributes>
+			<attribute name="PermissibleModesCalculator_carAvailability" class="java.lang.String">always</attribute>
+			<attribute name="subpopulation" class="java.lang.String">person</attribute>
+		</attributes>
+		<plan score="0.0" selected="yes">
+			<activity type="home_57000.0" x="351250.0" y="5668750.0" start_time="00:00:00" end_time="15:35:00" >
+			</activity>
+			<leg mode="car" trav_time="00:15:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">car</attribute>
+				</attributes>
+			</leg>
+			<activity type="leisure_32400.0" x="347250.0" y="5675750.0" start_time="15:50:00" end_time="24:53:00" >
+			</activity>
+			<leg mode="car" trav_time="00:14:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">car</attribute>
+				</attributes>
+			</leg>
+			<activity type="home_57000.0" x="351250.0" y="5668750.0" start_time="25:07:00" >
+			</activity>
+		</plan>
+
+	</person>
+
+<!-- ====================================================================== -->
+
+	<person id="1001">
+		<attributes>
+			<attribute name="PermissibleModesCalculator_carAvailability" class="java.lang.String">always</attribute>
+			<attribute name="subpopulation" class="java.lang.String">person</attribute>
+		</attributes>
+		<plan score="0.0" selected="yes">
+			<activity type="home_43800.0" x="345750.0" y="5677250.0" start_time="00:00:00" end_time="07:04:00" >
+			</activity>
+			<leg mode="pt" trav_time="00:30:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">pt</attribute>
+				</attributes>
+			</leg>
+			<activity type="shopping_39000.0" x="343250.0" y="5676250.0" start_time="07:34:00" end_time="18:26:00" >
+			</activity>
+			<leg mode="pt" trav_time="00:24:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">pt</attribute>
+				</attributes>
+			</leg>
+			<activity type="home_43800.0" x="345750.0" y="5677250.0" start_time="18:50:00" >
+			</activity>
+		</plan>
+
+	</person>
+
+<!-- ====================================================================== -->
+
+	<person id="100114">
+		<attributes>
+			<attribute name="PermissibleModesCalculator_carAvailability" class="java.lang.String">always</attribute>
+			<attribute name="subpopulation" class="java.lang.String">person</attribute>
+		</attributes>
+		<plan score="0.0" selected="yes">
+			<activity type="home_51000.0" x="351250.0" y="5668750.0" start_time="02:00:00" end_time="08:22:00" >
+			</activity>
+			<leg mode="pt" trav_time="00:28:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">pt</attribute>
+				</attributes>
+			</leg>
+			<activity type="shopping_1200.0" x="355750.0" y="5670750.0" start_time="08:50:00" end_time="09:13:00" >
+			</activity>
+			<leg mode="pt" trav_time="00:21:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">pt</attribute>
+				</attributes>
+			</leg>
+			<activity type="home_14400.0" x="351250.0" y="5668750.0" start_time="09:34:00" end_time="13:30:00" >
+			</activity>
+			<leg mode="car" trav_time="00:24:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">car</attribute>
+				</attributes>
+			</leg>
+			<activity type="leisure_4200.0" x="350750.0" y="5672250.0" start_time="13:54:00" end_time="15:01:00" >
+			</activity>
+			<leg mode="car" trav_time="00:04:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">car</attribute>
+				</attributes>
+			</leg>
+			<activity type="leisure_2400.0" x="350250.0" y="5671750.0" start_time="15:05:00" end_time="15:49:00" >
+			</activity>
+			<leg mode="car" trav_time="00:17:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">car</attribute>
+				</attributes>
+			</leg>
+			<activity type="home_51000.0" x="351250.0" y="5668750.0" start_time="16:06:00" >
+			</activity>
+		</plan>
+
+	</person>
+
+<!-- ====================================================================== -->
+
+	<person id="100129">
+		<attributes>
+			<attribute name="PermissibleModesCalculator_carAvailability" class="java.lang.String">always</attribute>
+			<attribute name="subpopulation" class="java.lang.String">person</attribute>
+		</attributes>
+		<plan score="0.0" selected="yes">
+			<activity type="home_64200.0" x="350750.0" y="5668750.0" start_time="00:00:00" end_time="17:49:00" >
+			</activity>
+		</plan>
+
+	</person>
+
+<!-- ====================================================================== -->
+
+	<person id="100136">
+		<attributes>
+			<attribute name="PermissibleModesCalculator_carAvailability" class="java.lang.String">never</attribute>
+			<attribute name="subpopulation" class="java.lang.String">person</attribute>
+		</attributes>
+		<plan score="0.0" selected="yes">
+			<activity type="home_64800.0" x="350750.0" y="5668750.0" start_time="00:00:00" end_time="17:57:00" >
+			</activity>
+			<leg mode="ride" trav_time="00:03:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">ride</attribute>
+				</attributes>
+			</leg>
+			<activity type="leisure_21600.0" x="351250.0" y="5669750.0" start_time="18:00:00" >
+			</activity>
+		</plan>
+
+	</person>
+
+<!-- ====================================================================== -->
+
+	<person id="100186">
+		<attributes>
+			<attribute name="PermissibleModesCalculator_carAvailability" class="java.lang.String">always</attribute>
+			<attribute name="subpopulation" class="java.lang.String">person</attribute>
+		</attributes>
+		<plan score="0.0" selected="yes">
+			<activity type="home_58200.0" x="351250.0" y="5668750.0" start_time="02:00:00" end_time="10:44:00" >
+			</activity>
+			<leg mode="walk" trav_time="00:02:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">walk</attribute>
+				</attributes>
+			</leg>
+			<activity type="shopping_1800.0" x="352750.0" y="5668750.0" start_time="10:46:00" end_time="11:20:00" >
+			</activity>
+			<leg mode="walk" trav_time="00:04:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">walk</attribute>
+				</attributes>
+			</leg>
+			<activity type="home_12600.0" x="351250.0" y="5668750.0" start_time="11:24:00" end_time="14:49:00" >
+			</activity>
+			<leg mode="pt" trav_time="00:05:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">pt</attribute>
+				</attributes>
+			</leg>
+			<activity type="leisure_5400.0" x="351250.0" y="5670250.0" start_time="14:54:00" end_time="16:24:00" >
+			</activity>
+			<leg mode="pt" trav_time="00:04:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">pt</attribute>
+				</attributes>
+			</leg>
+			<activity type="home_58200.0" x="351250.0" y="5668750.0" start_time="16:28:00" >
+			</activity>
+		</plan>
+
+	</person>
+
+<!-- ====================================================================== -->
+
+	<person id="100190">
+		<attributes>
+			<attribute name="PermissibleModesCalculator_carAvailability" class="java.lang.String">always</attribute>
+			<attribute name="subpopulation" class="java.lang.String">person</attribute>
+		</attributes>
+		<plan score="0.0" selected="yes">
+			<activity type="home_600.0" x="351250.0" y="5668250.0" start_time="00:00:00" end_time="00:00:00" >
+			</activity>
+		</plan>
+
+	</person>
+
+<!-- ====================================================================== -->
+
+	<person id="100221">
+		<attributes>
+			<attribute name="PermissibleModesCalculator_carAvailability" class="java.lang.String">never</attribute>
+			<attribute name="subpopulation" class="java.lang.String">person</attribute>
+		</attributes>
+		<plan score="0.0" selected="yes">
+			<activity type="home_17400.0" x="351250.0" y="5668250.0" start_time="02:00:00" end_time="06:24:00" >
+			</activity>
+			<leg mode="walk" trav_time="00:16:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">walk</attribute>
+				</attributes>
+			</leg>
+			<activity type="work_34200.0" x="354250.0" y="5666750.0" start_time="06:40:00" end_time="16:05:00" >
+			</activity>
+			<leg mode="walk" trav_time="00:18:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">walk</attribute>
+				</attributes>
+			</leg>
+			<activity type="work_3600.0" x="350750.0" y="5668250.0" start_time="16:23:00" end_time="17:26:00" >
+			</activity>
+			<leg mode="walk" trav_time="00:03:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">walk</attribute>
+				</attributes>
+			</leg>
+			<activity type="home_5400.0" x="351250.0" y="5668250.0" start_time="17:29:00" end_time="19:00:00" >
+			</activity>
+			<leg mode="walk" trav_time="00:05:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">walk</attribute>
+				</attributes>
+			</leg>
+			<activity type="work_2400.0" x="351750.0" y="5668250.0" start_time="19:05:00" end_time="19:45:00" >
+			</activity>
+			<leg mode="walk" trav_time="00:05:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">walk</attribute>
+				</attributes>
+			</leg>
+			<activity type="home_4800.0" x="351250.0" y="5668250.0" start_time="19:50:00" end_time="21:09:00" >
+			</activity>
+			<leg mode="pt" trav_time="00:08:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">pt</attribute>
+				</attributes>
+			</leg>
+			<activity type="leisure_7200.0" x="350750.0" y="5668750.0" start_time="21:17:00" end_time="23:18:00" >
+			</activity>
+			<leg mode="pt" trav_time="00:08:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">pt</attribute>
+				</attributes>
+			</leg>
+			<activity type="home_17400.0" x="351250.0" y="5668250.0" start_time="23:26:00" >
+			</activity>
+		</plan>
+
+	</person>
+
+<!-- ====================================================================== -->
+
+	<person id="100234">
+		<attributes>
+			<attribute name="PermissibleModesCalculator_carAvailability" class="java.lang.String">always</attribute>
+			<attribute name="subpopulation" class="java.lang.String">person</attribute>
+		</attributes>
+		<plan score="0.0" selected="yes">
+			<activity type="home_21000.0" x="351250.0" y="5668250.0" start_time="02:00:00" end_time="07:50:00" >
+			</activity>
+			<leg mode="ride" trav_time="00:07:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">ride</attribute>
+				</attributes>
+			</leg>
+			<activity type="leisure_4200.0" x="351250.0" y="5669750.0" start_time="07:57:00" end_time="09:05:00" >
+			</activity>
+			<leg mode="ride" trav_time="00:12:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">ride</attribute>
+				</attributes>
+			</leg>
+			<activity type="leisure_28800.0" x="350750.0" y="5672250.0" start_time="09:17:00" end_time="17:14:00" >
+			</activity>
+			<leg mode="ride" trav_time="00:12:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">ride</attribute>
+				</attributes>
+			</leg>
+			<activity type="leisure_4200.0" x="351250.0" y="5670250.0" start_time="17:26:00" end_time="18:34:00" >
+			</activity>
+			<leg mode="ride" trav_time="00:11:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">ride</attribute>
+				</attributes>
+			</leg>
+			<activity type="leisure_10800.0" x="355250.0" y="5671750.0" start_time="18:45:00" end_time="21:43:00" >
+			</activity>
+			<leg mode="ride" trav_time="00:09:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">ride</attribute>
+				</attributes>
+			</leg>
+			<activity type="leisure_7800.0" x="353250.0" y="5670750.0" start_time="21:52:00" >
+			</activity>
+		</plan>
+
+	</person>
+
+<!-- ====================================================================== -->
+
+	<person id="100293">
+		<attributes>
+			<attribute name="PermissibleModesCalculator_carAvailability" class="java.lang.String">never</attribute>
+			<attribute name="subpopulation" class="java.lang.String">person</attribute>
+		</attributes>
+		<plan score="0.0" selected="yes">
+			<activity type="home_18000.0" x="351750.0" y="5668750.0" start_time="02:00:00" end_time="06:58:00" >
+			</activity>
+			<leg mode="pt" trav_time="00:20:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">pt</attribute>
+				</attributes>
+			</leg>
+			<activity type="work_17400.0" x="347250.0" y="5671750.0" start_time="07:18:00" end_time="12:07:00" >
+			</activity>
+			<leg mode="pt" trav_time="00:20:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">pt</attribute>
+				</attributes>
+			</leg>
+			<activity type="home_10200.0" x="351750.0" y="5668750.0" start_time="12:27:00" end_time="15:15:00" >
+			</activity>
+			<leg mode="ride" trav_time="00:06:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">ride</attribute>
+				</attributes>
+			</leg>
+			<activity type="work_31200.0" x="350250.0" y="5669250.0" start_time="15:21:00" >
+			</activity>
+		</plan>
+
+	</person>
+
+<!-- ====================================================================== -->
+
+	<person id="100299">
+		<attributes>
+			<attribute name="PermissibleModesCalculator_carAvailability" class="java.lang.String">never</attribute>
+			<attribute name="subpopulation" class="java.lang.String">person</attribute>
+		</attributes>
+		<plan score="0.0" selected="yes">
+			<activity type="home_47400.0" x="351250.0" y="5668750.0" start_time="00:00:00" end_time="13:08:00" >
+			</activity>
+		</plan>
+
+	</person>
+
+<!-- ====================================================================== -->
+
+	<person id="100322">
+		<attributes>
+			<attribute name="PermissibleModesCalculator_carAvailability" class="java.lang.String">never</attribute>
+			<attribute name="subpopulation" class="java.lang.String">person</attribute>
+		</attributes>
+		<plan score="0.0" selected="yes">
+			<activity type="home_22800.0" x="351250.0" y="5668250.0" start_time="02:00:00" end_time="08:16:00" >
+			</activity>
+			<leg mode="pt" trav_time="00:06:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">pt</attribute>
+				</attributes>
+			</leg>
+			<activity type="work_2400.0" x="350250.0" y="5671250.0" start_time="08:22:00" end_time="08:59:00" >
+			</activity>
+			<leg mode="pt" trav_time="00:04:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">pt</attribute>
+				</attributes>
+			</leg>
+			<activity type="leisure_12000.0" x="348750.0" y="5670250.0" start_time="09:03:00" end_time="12:25:00" >
+			</activity>
+			<leg mode="pt" trav_time="00:06:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">pt</attribute>
+				</attributes>
+			</leg>
+			<activity type="work_25200.0" x="351250.0" y="5671250.0" start_time="12:31:00" end_time="19:33:00" >
+			</activity>
+			<leg mode="pt" trav_time="00:07:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">pt</attribute>
+				</attributes>
+			</leg>
+			<activity type="home_2400.0" x="351250.0" y="5668250.0" start_time="19:40:00" end_time="20:19:00" >
+			</activity>
+			<leg mode="bike" trav_time="00:11:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">bike</attribute>
+				</attributes>
+			</leg>
+			<activity type="leisure_12600.0" x="351750.0" y="5669750.0" start_time="20:30:00" >
+			</activity>
+		</plan>
+
+	</person>
+
+<!-- ====================================================================== -->
+
+	<person id="100336">
+		<attributes>
+			<attribute name="PermissibleModesCalculator_carAvailability" class="java.lang.String">never</attribute>
+			<attribute name="subpopulation" class="java.lang.String">person</attribute>
+		</attributes>
+		<plan score="0.0" selected="yes">
+			<activity type="home_55200.0" x="351250.0" y="5668250.0" start_time="02:00:00" end_time="17:22:00" >
+			</activity>
+			<leg mode="ride" trav_time="00:24:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">ride</attribute>
+				</attributes>
+			</leg>
+			<activity type="shopping_22200.0" x="344250.0" y="5674750.0" start_time="17:46:00" >
+			</activity>
+		</plan>
+
+	</person>
+
+<!-- ====================================================================== -->
+
+	<person id="100356">
+		<attributes>
+			<attribute name="PermissibleModesCalculator_carAvailability" class="java.lang.String">always</attribute>
+			<attribute name="subpopulation" class="java.lang.String">person</attribute>
+		</attributes>
+		<plan score="0.0" selected="yes">
+			<activity type="home_69600.0" x="351250.0" y="5668250.0" start_time="02:00:00" end_time="20:01:00" >
+			</activity>
+			<leg mode="car" trav_time="00:28:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">car</attribute>
+				</attributes>
+			</leg>
+			<activity type="leisure_6000.0" x="349250.0" y="5678250.0" start_time="20:29:00" end_time="22:13:00" >
+			</activity>
+			<leg mode="car" trav_time="00:26:00">
+				<attributes>
+					<attribute name="routingMode" class="java.lang.String">car</attribute>
+				</attributes>
+			</leg>
+			<activity type="home_69600.0" x="351250.0" y="5668250.0" start_time="22:39:00" >
+			</activity>
+		</plan>
+
+	</person>
+
+<!-- ====================================================================== -->
+
+</population>
