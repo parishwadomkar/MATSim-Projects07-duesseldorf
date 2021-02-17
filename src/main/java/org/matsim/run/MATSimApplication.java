@@ -7,7 +7,6 @@ import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.ControlerConfigGroup;
 import org.matsim.core.config.groups.GlobalConfigGroup;
-import org.matsim.core.config.groups.PlanCalcScoreConfigGroup;
 import org.matsim.core.config.groups.QSimConfigGroup;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.scenario.ScenarioUtils;
@@ -118,10 +117,9 @@ public class MATSimApplication implements Callable<Integer>, CommandLine.IDefaul
 		// load config if not present yet.
 		if (config == null) {
 			config = loadConfig(scenario.getAbsolutePath());
-		}
-		else {
+		} else {
 			Config tmp = prepareConfig(config);
-			config = tmp != null ? tmp: config;
+			config = tmp != null ? tmp : config;
 		}
 
 		Objects.requireNonNull(config);
@@ -185,20 +183,27 @@ public class MATSimApplication implements Callable<Integer>, CommandLine.IDefaul
 	}
 
 	/**
-	 * Adds default activity parameter to the plan score calculation.
+	 * Add and an option and value to run id and output folder.
 	 */
-	protected void addDefaultActivityParams(Config config) {
-		for (long ii = 600; ii <= 97200; ii += 600) {
-			config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("home_" + ii + ".0").setTypicalDuration(ii));
-			config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("work_" + ii + ".0").setTypicalDuration(ii).setOpeningTime(6. * 3600.).setClosingTime(20. * 3600.));
-			config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("leisure_" + ii + ".0").setTypicalDuration(ii).setOpeningTime(9. * 3600.).setClosingTime(27. * 3600.));
-			config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("shopping_" + ii + ".0").setTypicalDuration(ii).setOpeningTime(8. * 3600.).setClosingTime(20. * 3600.));
-			config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("other_" + ii + ".0").setTypicalDuration(ii));
-		}
-		config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("freight").setTypicalDuration(12. * 3600.));
-		config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("car interaction").setTypicalDuration(60));
+	protected void addRunOption(Config config, String option, Object value) {
+
+		String postfix = "-" + option + "_" + value;
+
+		String outputDir = config.controler().getOutputDirectory();
+		if (outputDir.endsWith("/")) {
+			config.controler().setOutputDirectory(outputDir.substring(0, outputDir.length() - 1) + postfix + "/");
+		} else
+			config.controler().setOutputDirectory(outputDir + postfix);
+
+		config.controler().setRunId(config.controler().getRunId() + postfix);
 	}
 
+	/**
+	 * Add and an option to run id and output folder, delimited by "_".
+	 */
+	protected void addRunOption(Config config, String option) {
+		addRunOption(config, option, "");
+	}
 
 	private Config loadConfig(String path) {
 		List<ConfigGroup> customModules = getCustomModules();
@@ -300,7 +305,7 @@ public class MATSimApplication implements Callable<Integer>, CommandLine.IDefaul
 			throw new RuntimeException(parseResult.errors().get(0));
 
 		Config tmp = app.prepareConfig(config);
-		config = tmp != null ? tmp: config;
+		config = tmp != null ? tmp : config;
 
 		final Scenario scenario = ScenarioUtils.loadScenario(config);
 		app.prepareScenario(scenario);
