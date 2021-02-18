@@ -141,7 +141,7 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 		}
 
 		if (demandCorrection != 1.0)
-			config.controler().setOutputDirectory(config.controler().getOutputDirectory() + "-dc_" + demandCorrection);
+			addRunOption(config, "dc", demandCorrection);
 
 		if (noLanes) {
 
@@ -150,18 +150,17 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 			config.network().setLaneDefinitionsFile(null);
 			config.travelTimeCalculator().setCalculateLinkToLinkTravelTimes(false);
 
-			config.controler().setRunId(config.controler().getRunId() + "-no-lanes");
-			config.controler().setOutputDirectory(config.controler().getOutputDirectory() + "-no-lanes");
+			addRunOption(config, "no-lanes");
 
 			config.controler().setRoutingAlgorithmType(ControlerConfigGroup.RoutingAlgorithmType.FastAStarLandmarks);
 
 		}
 
 		if (capacityFactor != 1.0)
-			config.controler().setOutputDirectory(config.controler().getOutputDirectory() + "-cap_" + capacityFactor);
+			addRunOption(config, "cap", capacityFactor);
 
 		if (freeFlowFactor != 1)
-			config.controler().setOutputDirectory(config.controler().getOutputDirectory() + "-ff_" + freeFlowFactor);
+			addRunOption(config, "ff", freeFlowFactor);
 
 		if (noModeChoice) {
 
@@ -171,11 +170,12 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 			config.strategy().clearStrategySettings();
 			strategies.forEach(s -> config.strategy().addStrategySettings(s));
 
-			config.controler().setOutputDirectory(config.controler().getOutputDirectory() + "-noMC");
+			addRunOption(config, "noMc");
 		}
 
 		if (noCapacityReduction)
-			config.controler().setOutputDirectory(config.controler().getOutputDirectory() + "-no-cap-red");
+			addRunOption(config, "no-cap-red");
+
 		// config.planCalcScore().addActivityParams(new
 		// ActivityParams("freight").setTypicalDuration(12. * 3600.));
 		config.planCalcScore().addActivityParams(new ActivityParams("car interaction").setTypicalDuration(60));
@@ -193,7 +193,7 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 		if (infiniteCapacity) {
 			config.qsim().setFlowCapFactor(100000);
 			config.qsim().setStorageCapFactor(100000);
-			config.controler().setOutputDirectory(config.controler().getOutputDirectory() + "infiniteCapacity");
+			addRunOption(config, "infiniteCapacity");
 		}
 
 		return config;
