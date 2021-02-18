@@ -1,27 +1,22 @@
 package org.matsim.analysis;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.matsim.analysis.modalSplitUserType.ModeAnalysis;
-import org.matsim.api.core.v01.Scenario;
-import org.matsim.core.config.Config;
-import org.matsim.core.config.ConfigUtils;
-import org.matsim.core.router.AnalysisMainModeIdentifier;
-import org.matsim.core.scenario.ScenarioUtils;
-import org.matsim.core.utils.collections.Tuple;
-import org.matsim.run.RunDuesseldorfScenario;
-import picocli.CommandLine;
+import static org.matsim.analysis.RunSuite.loadScenario;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.PathMatcher;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.Callable;
 
-import static org.matsim.analysis.RunSuite.loadScenario;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.matsim.analysis.modalSplitUserType.ModeAnalysis;
+import org.matsim.api.core.v01.Scenario;
+import org.matsim.core.router.AnalysisMainModeIdentifier;
+import org.matsim.core.utils.collections.Tuple;
+
+import picocli.CommandLine;
 
 @CommandLine.Command(
 		name = "modeAnalysis",

@@ -100,7 +100,11 @@ public class PreparePopulation implements Callable<Integer> {
                     if (durationCategoryNr <= 0) {
                         durationCategoryNr = 1;
                     }
-
+                    
+                    if (durationCategoryNr >= 24) {
+                    	durationCategoryNr = 24;
+                    }
+                    
                     String newType = act.getType() + "_" + (durationCategoryNr * timeBinSize_s);
                     act.setType(newType);
 
