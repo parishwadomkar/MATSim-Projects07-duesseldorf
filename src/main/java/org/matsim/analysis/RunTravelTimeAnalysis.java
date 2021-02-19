@@ -50,7 +50,7 @@ public class RunTravelTimeAnalysis implements Callable<Integer> {
 	@CommandLine.Option(names = "--trips", description = "The number of trips to validate", defaultValue = "500")
 	private int trips;
 
-	@CommandLine.Option(names = "--from", defaultValue = "72000", description = "From time window in seconds")
+	@CommandLine.Option(names = "--from", defaultValue = "0", description = "From time window in seconds")
 	private Double timeFrom;
 
 	@CommandLine.Option(names = "--to", defaultValue = "86400", description = "To time window in seconds")
