@@ -47,10 +47,10 @@ public class ShortTripsGenerator {
 		int missingTrips;
 
 		if (args.length == 0) {
-			plans = "C:\\Users\\cluac\\MATSimScenarios\\Dusseldorf\\Scenario\\v2.0\\PreparedScenario\\duesseldorf-v2.0-25pct.plans.xml.gz";
+			plans = "C:\\Users\\cluac\\MATSimScenarios\\Dusseldorf\\Scenario\\v2.0\\PreparedScenario\\duesseldorf-v2.0-10pct.plans.xml.gz";
 			shapeFile = "C:\\Users\\cluac\\MATSimScenarios\\Dusseldorf\\DusseldorfAreaShapeFile\\duesseldorf-area.shp";
 			outputFolder = "C:\\Users\\cluac\\MATSimScenarios\\Dusseldorf\\Scenario\\v2.0\\PreparedScenario";
-			missingTrips = 95000;
+			missingTrips = 38000; //95000 --> 25%; 38000 --> 10%
 			range = 1000;
 		} else {
 			plans = args[0];
@@ -86,7 +86,7 @@ public class ShortTripsGenerator {
 		log.info("trip num before augmentation: " + originalTrips);
 		shortTripsGenerator.run(condition);
 		PopulationUtils.writePopulation(shortTripsGenerator.getPopulation(),
-				outputFolder + "\\duesseldorf-v2.0-25pct-augmented.plans.xml.gz");
+				outputFolder + "\\duesseldorf-v1.2-10pct.plans.xml.gz");
 
 		long totalTrips = shortTripsGenerator.population.getPersons().values().stream()
 				.filter(person -> condition.test(person.getId().toString())).map(HasPlansAndId::getSelectedPlan)
