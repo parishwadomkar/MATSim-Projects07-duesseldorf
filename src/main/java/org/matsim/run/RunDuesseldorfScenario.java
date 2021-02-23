@@ -41,7 +41,7 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 	/**
 	 * Current version identifier.
 	 */
-	public static final String VERSION = "v2.0";
+	public static final String VERSION = "v1.2";
 
 	/**
 	 * Default coordinate system of the scenario.
@@ -185,7 +185,7 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 		config.vspExperimental().setVspDefaultsCheckingLevel(VspExperimentalConfigGroup.VspDefaultsCheckingLevel.info);
 		config.plansCalcRoute().setAccessEgressType(PlansCalcRouteConfigGroup.AccessEgressType.accessEgressModeToLink);
 		config.qsim().setUsingTravelTimeCheckInTeleportation(true);
-		config.qsim().setTrafficDynamics(QSimConfigGroup.TrafficDynamics.kinematicWaves);
+//		config.qsim().setTrafficDynamics(QSimConfigGroup.TrafficDynamics.kinematicWaves);
 
 		config.plans().setHandlingOfPlansWithoutRoutingMode(
 				PlansConfigGroup.HandlingOfPlansWithoutRoutingMode.useMainModeIdentifier);
