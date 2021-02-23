@@ -1,10 +1,16 @@
 package org.matsim.run;
 
+import java.util.Map;
+import java.util.Random;
+
 import org.junit.Rule;
 import org.junit.Test;
+import org.matsim.api.core.v01.Id;
+import org.matsim.api.core.v01.population.Person;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
+import org.matsim.core.gbl.MatsimRandom;
 import org.matsim.testcases.MatsimTestUtils;
 
 public class RunDuesseldorfIntegrationTest {
@@ -56,12 +62,21 @@ public class RunDuesseldorfIntegrationTest {
 		config.controler()
 				.setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
 		config.controler().setOutputDirectory(utils.getOutputDirectory());
-
+		
+		org.matsim.core.controler.Controler controler = MATSimApplication.prepare(RunDuesseldorfScenario.class, config, new String[] {});
+		downsample(controler.getScenario().getPopulation().getPersons(), 0.01);
+		
+		controler.run();
+		
 		// default options
-		MATSimApplication.call(RunDuesseldorfScenario.class, config, new String[] {});
+//		MATSimApplication.call(RunDuesseldorfScenario.class, config, new String[] {});
 
 	}
 
+	private static void downsample( final Map<Id<Person>, ? extends Person> map, final double sample) {
+		final Random rnd = MatsimRandom.getLocalInstance();
+		map.values().removeIf( person -> rnd.nextDouble() > sample ) ;
+	}
 
 	// Speical test (for debugging only)
 //	@Test
@@ -78,5 +93,7 @@ public class RunDuesseldorfIntegrationTest {
 //				"--no-lanes"
 //		});
 //
-//	}
+
+
+
 }
