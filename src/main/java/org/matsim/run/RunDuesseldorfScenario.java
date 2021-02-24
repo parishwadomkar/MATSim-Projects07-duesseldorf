@@ -6,6 +6,7 @@ import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.matsim.analysis.ModeAnalysisWithHomeLocationFilter;
 import org.matsim.analysis.RunSuite;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
@@ -33,7 +34,7 @@ import java.util.stream.Collectors;
 @CommandLine.Command(header = ":: Open Düsseldorf Scenario ::", version = RunDuesseldorfScenario.VERSION)
 @MATSimApplication.Prepare({CreateNetwork.class, CreateTransitSchedule.class, PreparePopulation.class,
 		CreateCityCounts.class, ExtractEvents.class, CreateBAStCounts.class})
-@MATSimApplication.Analysis({RunSuite.class})
+@MATSimApplication.Analysis({RunSuite.class, ModeAnalysisWithHomeLocationFilter.class})
 public class RunDuesseldorfScenario extends MATSimApplication {
 
 	private static final Logger log = LogManager.getLogger(RunDuesseldorfScenario.class);
