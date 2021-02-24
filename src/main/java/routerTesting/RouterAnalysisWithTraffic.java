@@ -1,4 +1,4 @@
-package org.matsim.analysis;
+package routerTesting;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -15,32 +15,59 @@ import org.matsim.api.core.v01.events.handler.LinkEnterEventHandler;
 import org.matsim.api.core.v01.events.handler.LinkLeaveEventHandler;
 import org.matsim.api.core.v01.events.handler.VehicleEntersTrafficEventHandler;
 import org.matsim.api.core.v01.events.handler.VehicleLeavesTrafficEventHandler;
-import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.events.MatsimEventsReader;
 import org.matsim.core.events.ParallelEventsManager;
 
 public class RouterAnalysisWithTraffic {
 	private final static int EVENT_QUEUE_SIZE = 1048576 * 32;
-	private final static double TIME_BIN_SIZE = 900;
-	private final static double TOTAL_TIME_BIN = 96;
-	private final String eventsFile = "aaa";
+	public final static double TIME_BIN_SIZE = 900;
+	public final static double TOTAL_TIME_BIN = 96;
+	private final String eventsFile;
 
-	public void run(Network network) {
+	public RouterAnalysisWithTraffic(String eventsFile) {
+		this.eventsFile = eventsFile;
+	}
+
+	public Map<Double, Map<String, Double>> processEventsFile() {
 		ParallelEventsManager eventManager = new ParallelEventsManager(false, EVENT_QUEUE_SIZE);
 		CarTrafficExtractor carTrafficExtractor = new CarTrafficExtractor();
 		eventManager.addHandler(carTrafficExtractor);
 		eventManager.initProcessing();
 		new MatsimEventsReader(eventManager).readFile(eventsFile);
-		Map<Double, Map<String, Set<Double>>> rawData = carTrafficExtractor.getRawData();
+		System.out.println("Event processing complete");
+		Map<Double, Map<String, List<Double>>> rawData = carTrafficExtractor.getRawData();
+		return getTravelTimeMap(rawData);
+	}
+
+	public synchronized Map<Double, Map<String, Double>> getTravelTimeMap(
+			Map<Double, Map<String, List<Double>>> rawData) {
+		Map<Double, Map<String, Double>> linkTravelTimeMap = new HashMap<>();
+
 		// Calculate
-		for (Double timeBin : rawData.keySet()) {
-			
+		Set<Double> rawDataKeySet = new HashSet<>();
+		rawDataKeySet.addAll(rawData.keySet());
+		for (Double timeBin : rawDataKeySet) {
+			linkTravelTimeMap.put(timeBin, new HashMap<>());
+			Map<String, List<Double>> rawDataForThisTimeBin = rawData.get(timeBin);
+			Map<String, Double> linkTravelTimeMapAtThisTimeBin = linkTravelTimeMap.get(timeBin);
+			Set<String> linkIds = new HashSet<>();
+			linkIds.addAll(rawDataForThisTimeBin.keySet());
+			for (String linkId : linkIds) {
+				double sum = 0;
+				List<Double> travelTimes = rawDataForThisTimeBin.get(linkId);
+				for (Double travelTime : travelTimes) {
+					sum += travelTime;
+				}
+				double meanValue = sum / travelTimes.size();
+				linkTravelTimeMapAtThisTimeBin.put(linkId, meanValue);
+			}
 		}
+		return linkTravelTimeMap;
 	}
 
 	private class CarTrafficExtractor implements VehicleEntersTrafficEventHandler, VehicleLeavesTrafficEventHandler,
 			LinkEnterEventHandler, LinkLeaveEventHandler {
-		private final Map<Double, Map<String, Set<Double>>> rawData = new HashMap<>();
+		private final Map<Double, Map<String, List<Double>>> rawData = new HashMap<>();
 		private final List<LinkTravelDataEntry> incompleteEntries = new ArrayList<>();
 
 		public CarTrafficExtractor() {
@@ -80,7 +107,7 @@ public class RouterAnalysisWithTraffic {
 					linkTravelDataEntry.setExitTime(event.getTime());
 					double timeBin = Math.min(TOTAL_TIME_BIN,
 							Math.floor(linkTravelDataEntry.getEnterTime() / TIME_BIN_SIZE));
-					Set<Double> travelTimes = rawData.get(timeBin).getOrDefault(linkId, new HashSet<>());
+					List<Double> travelTimes = rawData.get(timeBin).getOrDefault(linkId, new ArrayList<>());
 					travelTimes.add(linkTravelDataEntry.getTravelTime());
 					rawData.get(timeBin).put(linkId, travelTimes);
 					indexToRemove = i;
@@ -102,7 +129,7 @@ public class RouterAnalysisWithTraffic {
 					linkTravelDataEntry.setExitTime(event.getTime());
 					double timeBin = Math.min(TOTAL_TIME_BIN,
 							Math.floor(linkTravelDataEntry.getEnterTime() / TIME_BIN_SIZE));
-					Set<Double> travelTimes = rawData.get(timeBin).getOrDefault(linkId, new HashSet<>());
+					List<Double> travelTimes = rawData.get(timeBin).getOrDefault(linkId, new ArrayList<>());
 					travelTimes.add(linkTravelDataEntry.getTravelTime());
 					rawData.get(timeBin).put(linkId, travelTimes);
 					indexToRemove = i;
@@ -112,7 +139,7 @@ public class RouterAnalysisWithTraffic {
 			incompleteEntries.remove(indexToRemove);
 		}
 
-		public Map<Double, Map<String, Set<Double>>> getRawData() {
+		public Map<Double, Map<String, List<Double>>> getRawData() {
 			return rawData;
 		}
 	}
