@@ -64,7 +64,7 @@ public class MATSimApplication implements Callable<Integer>, CommandLine.IDefaul
 			" | |\\/| |/ _ \\| | \\__ \\ | '  \\ \n" +
 			" |_|  |_/_/ \\_\\_| |___/_|_|_|_|\n|@";
 
-	@CommandLine.Parameters(arity = "1", paramLabel = "CONFIG", description = "Scenario config used for the run.")
+	@CommandLine.Parameters(arity = "0..1", paramLabel = "CONFIG", description = "Scenario config used for the run.")
 	protected File scenario;
 
 	@CommandLine.Option(names = "--iterations", description = "Overwrite number of iterations (if greater than 0).", defaultValue = "0")
