@@ -235,14 +235,6 @@
                     <showWarnings>false</showWarnings>
                     <showDeprecation>false</showDeprecation>
                     <encoding>UTF-8</encoding>
-                    <!-- configure initial and maximal memory for compiling -->
-                    <fork>true</fork>
-                    <meminitial>128m</meminitial>
-                    <maxmem>512m</maxmem>
-                    <compilerArguments>
-                        <Xmaxwarns>4000</Xmaxwarns>
-                        <Xmaxerrs>100</Xmaxerrs>
-                    </compilerArguments>
                 </configuration>
             </plugin>
 
@@ -253,7 +245,7 @@
                 <configuration>
                     <forkMode>once</forkMode>
                     <!-- avoid out of memory errors: -->
-                    <argLine>-Xmx8000m -Djava.awt.headless=true -Dmatsim.preferLocalDtds=true</argLine>
+                    <argLine>-Xmx9500m -Djava.awt.headless=true -Dmatsim.preferLocalDtds=true</argLine>
                     <!--necessary in tu berlin gitlab. BUT not good in other places, so solve by command line switch only where needed.  kai, nov'18-->
                     <!--<useSystemClassLoader>false</useSystemClassLoader>-->
                 </configuration>
