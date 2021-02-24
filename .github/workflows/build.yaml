@@ -35,4 +35,4 @@ jobs:
         run:  mvn -Dtest=${{matrix.module}} test --batch-mode -Dmatsim.preferLocalDtds=true -Dmaven.javadoc.skip -e
 
     env:
-      MAVEN_OPTS: -Xmx8G
+      MAVEN_OPTS: -Xmx10G
