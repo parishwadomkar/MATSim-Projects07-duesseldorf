@@ -2,10 +2,8 @@ package routerTesting;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.matsim.api.core.v01.events.LinkEnterEvent;
 import org.matsim.api.core.v01.events.LinkLeaveEvent;
@@ -15,6 +13,8 @@ import org.matsim.api.core.v01.events.handler.LinkEnterEventHandler;
 import org.matsim.api.core.v01.events.handler.LinkLeaveEventHandler;
 import org.matsim.api.core.v01.events.handler.VehicleEntersTrafficEventHandler;
 import org.matsim.api.core.v01.events.handler.VehicleLeavesTrafficEventHandler;
+import org.matsim.api.core.v01.network.Link;
+import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.events.MatsimEventsReader;
 import org.matsim.core.events.ParallelEventsManager;
 
@@ -23,9 +23,11 @@ public class RouterAnalysisWithTraffic {
 	public final static double TIME_BIN_SIZE = 900;
 	public final static double TOTAL_TIME_BIN = 96;
 	private final String eventsFile;
+	private final Network network;
 
-	public RouterAnalysisWithTraffic(String eventsFile) {
+	public RouterAnalysisWithTraffic(String eventsFile, Network network) {
 		this.eventsFile = eventsFile;
+		this.network = network;
 	}
 
 	public Map<Double, Map<String, Double>> processEventsFile() {
@@ -43,25 +45,35 @@ public class RouterAnalysisWithTraffic {
 			Map<Double, Map<String, List<Double>>> rawData) {
 		Map<Double, Map<String, Double>> linkTravelTimeMap = new HashMap<>();
 
-		// Calculate
-		Set<Double> rawDataKeySet = new HashSet<>();
-		rawDataKeySet.addAll(rawData.keySet());
-		for (Double timeBin : rawDataKeySet) {
+		for (Double timeBin : rawData.keySet()) {
 			linkTravelTimeMap.put(timeBin, new HashMap<>());
-			Map<String, List<Double>> rawDataForThisTimeBin = rawData.get(timeBin);
-			Map<String, Double> linkTravelTimeMapAtThisTimeBin = linkTravelTimeMap.get(timeBin);
-			Set<String> linkIds = new HashSet<>();
-			linkIds.addAll(rawDataForThisTimeBin.keySet());
-			for (String linkId : linkIds) {
-				double sum = 0;
-				List<Double> travelTimes = rawDataForThisTimeBin.get(linkId);
-				for (Double travelTime : travelTimes) {
-					sum += travelTime;
+			for (Link link : network.getLinks().values()) {
+				String linkId = link.getId().toString();
+				if (rawData.get(timeBin).containsKey(linkId)) {
+					List<Double> travelTimes = rawData.get(timeBin).get(linkId);
+					double sum = 0;
+					for (Double travelTime : travelTimes) {
+						sum += travelTime;
+					}
+					double meanTravelTime = sum / travelTimes.size();
+					linkTravelTimeMap.get(timeBin).put(linkId, meanTravelTime);
 				}
-				double meanValue = sum / travelTimes.size();
-				linkTravelTimeMapAtThisTimeBin.put(linkId, meanValue);
 			}
 		}
+
+		// Calculate
+//		for (Double timeBin : rawData.keySet()) {
+//			linkTravelTimeMap.put(timeBin, new HashMap<>());
+//			for (String linkId : rawData.get(timeBin).keySet()) {
+//				double sum = 0;
+//				List<Double> travelTimes = rawData.get(timeBin).get(linkId);
+//				for (Double travelTime : travelTimes) {
+//					sum += travelTime;
+//				}
+//				double meanTravelTime = sum / travelTimes.size();
+//				linkTravelTimeMap.get(timeBin).put(linkId, meanTravelTime);
+//			}
+//		}
 		return linkTravelTimeMap;
 	}
 

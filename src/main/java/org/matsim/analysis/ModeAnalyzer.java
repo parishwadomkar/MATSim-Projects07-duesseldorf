@@ -13,14 +13,14 @@ import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.router.AnalysisMainModeIdentifier;
 import org.matsim.core.utils.collections.Tuple;
 
-public class ModeAnalysisRegularClass {
+public class ModeAnalyzer {
 	private final Path runDirectory;
 	private final String runId;
 	private final String shapeFile = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/"
 			+ "scenarios/countries/de/duesseldorf/duesseldorf-v1.0/original-data/"
 			+ "duesseldorf-area-shp/duesseldorf-area.shp";
 
-	public ModeAnalysisRegularClass(Path runDirectory, String runId) {
+	public ModeAnalyzer(Path runDirectory, String runId) {
 		this.runDirectory = runDirectory;
 		this.runId = runId;
 	}

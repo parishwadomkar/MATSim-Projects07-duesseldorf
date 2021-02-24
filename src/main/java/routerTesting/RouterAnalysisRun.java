@@ -28,7 +28,7 @@ public class RouterAnalysisRun {
 		Scenario scenario = ScenarioUtils.loadScenario(config);
 		Network network = scenario.getNetwork();
 
-		RouterAnalysisWithTraffic routerAnalysisWithTraffic = new RouterAnalysisWithTraffic(EVENTS_FILE);
+		RouterAnalysisWithTraffic routerAnalysisWithTraffic = new RouterAnalysisWithTraffic(EVENTS_FILE , network);
 		Map<Double, Map<String, Double>> linkTravelTimeMap = routerAnalysisWithTraffic.processEventsFile();
 		RouterTestingTravelTime travelTime = new RouterTestingTravelTime(linkTravelTimeMap, network);
 
@@ -45,7 +45,7 @@ public class RouterAnalysisRun {
 			Link fromLink = network.getLinks().get(fromLinkId);
 			Link toLink = network.getLinks().get(toLinkId);
 			Path route = router.calcLeastCostPath(fromLink.getToNode(), toLink.getToNode(),
-					Double.parseDouble(LINK_PAIRS[i][3]), null, null);
+					Double.parseDouble(LINK_PAIRS[i][2]), null, null);
 			System.out.println("The route from " + LINK_PAIRS[i][0] + " to " + LINK_PAIRS[i][1] + " is as follow: ");
 			for (Link link : route.links) {
 				System.out.println(link.getId().toString());
