@@ -1,6 +1,6 @@
 
 JAR := matsim-duesseldorf-*.jar
-V := v1.0
+V := v1.2
 
 export SUMO_HOME := $(abspath ../../sumo-1.6.0/)
 osmosis := osmosis\bin\osmosis
