@@ -53,16 +53,6 @@ public class GenerateFreightPlans {
 			regions.put(regionName, region);
 		}
 		it.close();
-
-//		Collection<SimpleFeature> features;
-//		features = ShapeFileReader.getAllFeatures(SHAPEFILE_PATH);
-//		Map<String, Geometry> regions = new HashMap<>();
-//		for (SimpleFeature feature : features) {
-//			Geometry region = (Geometry) feature.getDefaultGeometry();
-//			String regionName = feature.getAttribute("NUTS_NAME").toString();
-//			regions.put(regionName, region);
-//		}
-
 		System.out
 				.println("Shape File successfully loaded. There are in total " + regions.keySet().size() + " regions");
 

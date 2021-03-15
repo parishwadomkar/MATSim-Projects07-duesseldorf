@@ -20,16 +20,18 @@ public class RunDuesseldorfIntegrationTest {
 	@Test
 	public final void runToyExamplePopulationTest() {
 		Config config = ConfigUtils.loadConfig("scenarios/input/duesseldorf-v1.0-1pct.config.xml");
-		config.plans().setInputFile("test/input/v2.0-testing.plan.xml");
+		config.plans().setInputFile("../../test/input/v1.3-testing.plans.xml");
+		config.network().setInputFile("https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/"
+				+ "de/duesseldorf/duesseldorf-v1.0/input/duesseldorf-v1.0-network-with-freight.xml.gz");
 		config.controler().setLastIteration(1);
 		config.strategy().setFractionOfIterationsToDisableInnovation(1);
 		config.controler()
 				.setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
 		config.controler().setOutputDirectory(utils.getOutputDirectory());
 
-		MATSimApplication.call(RunDuesseldorfScenario.class, config, new String[] { "--no-lanes", "--infiniteCapacity" });
+		MATSimApplication.call(RunDuesseldorfScenario.class, config,
+				new String[] { "--no-lanes", "--infiniteCapacity" });
 	}
-
 
 	@Test
 	public final void runNoLaneTestNormalCapacity() {
@@ -51,7 +53,8 @@ public class RunDuesseldorfIntegrationTest {
 				.setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
 		config.controler().setOutputDirectory(utils.getOutputDirectory());
 
-		MATSimApplication.call(RunDuesseldorfScenario.class, config, new String[] { "--no-lanes", "--infiniteCapacity" });
+		MATSimApplication.call(RunDuesseldorfScenario.class, config,
+				new String[] { "--no-lanes", "--infiniteCapacity" });
 	}
 
 	@Test
@@ -62,20 +65,21 @@ public class RunDuesseldorfIntegrationTest {
 		config.controler()
 				.setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
 		config.controler().setOutputDirectory(utils.getOutputDirectory());
-		
-		org.matsim.core.controler.Controler controler = MATSimApplication.prepare(RunDuesseldorfScenario.class, config, new String[] {});
+
+		org.matsim.core.controler.Controler controler = MATSimApplication.prepare(RunDuesseldorfScenario.class, config,
+				new String[] {});
 		downsample(controler.getScenario().getPopulation().getPersons(), 0.01);
-		
+
 		controler.run();
-		
+
 		// default options
 //		MATSimApplication.call(RunDuesseldorfScenario.class, config, new String[] {});
 
 	}
 
-	private static void downsample( final Map<Id<Person>, ? extends Person> map, final double sample) {
+	private static void downsample(final Map<Id<Person>, ? extends Person> map, final double sample) {
 		final Random rnd = MatsimRandom.getLocalInstance();
-		map.values().removeIf( person -> rnd.nextDouble() > sample ) ;
+		map.values().removeIf(person -> rnd.nextDouble() > sample);
 	}
 
 	// Speical test (for debugging only)
@@ -93,7 +97,5 @@ public class RunDuesseldorfIntegrationTest {
 //				"--no-lanes"
 //		});
 //
-
-
 
 }
