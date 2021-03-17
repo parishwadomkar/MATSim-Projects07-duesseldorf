@@ -138,7 +138,7 @@ public class GenerateFreightPlansPart3 {
 	}
 
 	private static void generateFreightPlan(Network network, Id<Link> fromLinkId, Id<Link> toLinkId, int numOfTrucks, String goodType,
-			Population population, PopulationFactory populationFactory, MutableInt counter) {
+			Population population, PopulationFactory populationFactory, MutableInt totalGeneratedPersons) {
 		if (fromLinkId.toString().equals(toLinkId.toString())) {
 			return; // We don't have further information on the trips within the same region
 		}
@@ -146,18 +146,12 @@ public class GenerateFreightPlansPart3 {
 		int generated = 0;
 		while (generated < numOfTrucks) {
 			Person freightPerson = populationFactory
-					.createPerson(Id.create("freight_" + Integer.toString(counter.intValue()), Person.class));
+					.createPerson(Id.create("freight_" + Integer.toString(totalGeneratedPersons.intValue()), Person.class));
 			freightPerson.getAttributes().putAttribute("subpopulation", "freight");
 			freightPerson.getAttributes().putAttribute("type_of_good", goodType);
 
 			Plan plan = populationFactory.createPlan();
 			Activity act0 = populationFactory.createActivityFromLinkId("other_600.0", fromLinkId);
-//			if (network.getLinks().get(fromLinkId)==null){
-//				System.out.println("this link has some problem: " + fromLinkId.toString());//TODO delete after testing
-//			}
-//			if (network.getLinks().get(toLinkId)==null){
-//				System.out.println("this link has some problem: " + toLinkId.toString());//TODO  delete after testing
-//			}
 			act0.setCoord(network.getLinks().get(fromLinkId).getCoord());
 			act0.setEndTime(RND.nextInt(86400));
 			Leg leg = populationFactory.createLeg("freight");
@@ -171,9 +165,8 @@ public class GenerateFreightPlansPart3 {
 			population.addPerson(freightPerson);
 
 			generated += 1;
-			counter.increment();
+			totalGeneratedPersons.increment();
 		}
-
 	}
 
 }
