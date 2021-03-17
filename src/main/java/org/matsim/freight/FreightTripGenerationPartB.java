@@ -55,8 +55,9 @@ public class FreightTripGenerationPartB {
 			+ "/countries/de/duesseldorf/duesseldorf-v1.0/input/duesseldorf-v1.0-network-with-pt.xml.gz";
 	private static final String FREIGHT_DATA = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios"
 			+ "/countries/de/duesseldorf/duesseldorf-v1.0/original-data/freight-raw-data/ketten-2010.csv";
-	private static final double AVERAGE_CAPACITY_OF_TRUCK = 16;
-	private static final Random RND = new Random(1234);
+	private static final double AVERAGE_CAPACITY_OF_TRUCK = 16 * 365 * 10;
+	// 16 ton , 365 days per year, scale to 10% (1/0.1 = 10)
+	private static final Random RND = new Random(4711);
 
 	public static void main(String[] args) throws IOException {
 		if (args.length == 0) {
@@ -66,23 +67,6 @@ public class FreightTripGenerationPartB {
 		}
 		String inputFile = args[0];
 		String outputPath = args[1];
-
-		// Reading the look up table (RegionID-RegionName-Table.csv)
-		Map<String, String> lookUpTable = new HashMap<>();
-		try {
-			BufferedReader reader = new BufferedReader(new FileReader(inputFile));
-			reader.readLine(); // Skip first line
-			String line = reader.readLine();
-			while (line != null) {
-				String nutsId = line.split(",")[1];
-				String zoneId = line.split(",")[2];
-				lookUpTable.put(zoneId, nutsId);
-				line = reader.readLine();
-			}
-			reader.close();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
 
 		// Load config, scenario and network
 		Config config = ConfigUtils.createConfig();
@@ -102,14 +86,21 @@ public class FreightTripGenerationPartB {
 		ShapefileDataStore ds = (ShapefileDataStore) FileDataStoreFinder.getDataStore(new URL(SHAPEFILE_PATH));
 		ds.setCharset(StandardCharsets.UTF_8);
 		FeatureReader<SimpleFeatureType, SimpleFeature> it = ds.getFeatureReader();
-		
-		
-		int counter = 0;
+
+		Map<String, Geometry> regions = new HashMap<>();
 		while (it.hasNext()) {
 			SimpleFeature feature = it.next();
 			Geometry region = (Geometry) feature.getDefaultGeometry();
 			String nutsId = feature.getAttribute("NUTS_ID").toString();
+			regions.put(nutsId, region);
+		}
+		it.close();
+		System.out.println("Shape file loaded. There are in total " + regions.keySet().size() + " regions");
 
+		System.out.println("Start processing the region");
+		int processed = 0;
+		for (String nutsId : regions.keySet()) {
+			Geometry region = regions.get(nutsId);
 			boolean regionIsRelevant = false;
 			List<Id<Link>> linksInsideRegion = new ArrayList<>();
 			for (Link link : links) {
@@ -118,17 +109,31 @@ public class FreightTripGenerationPartB {
 					linksInsideRegion.add(link.getId());
 				}
 			}
-			
 			if (regionIsRelevant) {
 				regionLinksMap.put(nutsId, linksInsideRegion);
 			}
-			
-			counter += 1;
-			if (counter % 10 == 0) {
-				System.out.println("Analysis in progress: " + counter + " regions have been processed");
+			processed += 1;
+			if (processed % 10 == 0) {
+				System.out.println("Analysis in progress: " + processed + " regions have been processed");
 			}
 		}
-		it.close();
+
+		// Reading the look up table (RegionID-RegionName-Table.csv)
+		Map<String, String> lookUpTable = new HashMap<>();
+		try {
+			BufferedReader reader = new BufferedReader(new FileReader(inputFile));
+			reader.readLine(); // Skip first line
+			String line = reader.readLine();
+			while (line != null) {
+				String nutsId = line.split(",")[1];
+				String zoneId = line.split(",")[2];
+				lookUpTable.put(zoneId, nutsId);
+				line = reader.readLine();
+			}
+			reader.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 
 		System.out.println("Region analysis complete!");
 		System.out.println("There are " + regionLinksMap.keySet().size() + " relevant regions");
