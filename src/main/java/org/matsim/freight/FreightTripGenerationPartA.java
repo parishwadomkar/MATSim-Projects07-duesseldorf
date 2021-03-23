@@ -41,8 +41,9 @@ public class FreightTripGenerationPartA {
 
 	private static final String SHAPEFILE_PATH = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios"
 			+ "/countries/de/duesseldorf/duesseldorf-v1.0/input/shapeFiles/freight/tranfomredShapeFile.shp";
-	private static final String NETWORK_FILE = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios"
-			+ "/countries/de/duesseldorf/duesseldorf-v1.0/input/duesseldorf-v1.0-network-with-pt.xml.gz";
+//	private static final String NETWORK_FILE = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios"
+//			+ "/countries/de/duesseldorf/duesseldorf-v1.0/input/duesseldorf-v1.0-network-with-pt.xml.gz";
+	private static final String NETWORK_FILE = "C:\\Users\\cluac\\MATSimScenarios\\Dusseldorf\\freight\\network_osm_primary.xml.gz";
 	private static final String VERKEHRSZELLEN = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios"
 			+ "/countries/de/duesseldorf/duesseldorf-v1.0/original-data/freight-raw-data/verkehrszellen.csv";
 
@@ -57,6 +58,7 @@ public class FreightTripGenerationPartA {
 		Config config = ConfigUtils.createConfig();
 		config.global().setCoordinateSystem("EPSG:25832");
 		config.network().setInputFile(NETWORK_FILE);
+		config.network().setInputCRS("EPSG:5677");
 		Scenario scenario = ScenarioUtils.loadScenario(config);
 		Network network = scenario.getNetwork();
 

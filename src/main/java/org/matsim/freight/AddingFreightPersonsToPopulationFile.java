@@ -8,7 +8,7 @@ import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.scenario.ScenarioUtils;
 
-public class GenerateFreightPlansPart4 {
+public class AddingFreightPersonsToPopulationFile {
 	// In this part, the freight only plan will be merged with the population plan
 	private static final String POPULATIAON_FILE = "C:\\Users\\cluac\\MATSimScenarios\\"
 			+ "Dusseldorf\\Scenario\\duesseldorf-v1.2-10pct.plans.xml.gz";
