@@ -49,8 +49,7 @@ public class FreightTripGenerationPartA {
 
 	public static void main(String[] args) throws IOException {
 		if (args.length == 0) {
-			args = new String[] {
-					"C:\\Users\\cluac\\MATSimScenarios\\Dusseldorf\\freight\\RegionID-RegionName-Table2.csv" };
+			args = new String[] { "C:\\Users\\cluac\\MATSimScenarios\\Dusseldorf\\freight\\new-lookup-table.csv" };
 		}
 		String outputPath = args[0];
 
@@ -107,6 +106,7 @@ public class FreightTripGenerationPartA {
 		// Look up the region ID for each relevant regions from the "VERKEHRSZELLEN"
 		Map<String, String> verkehrszellen = new HashMap<>();
 		String[][] outputdata = new String[numOfRelevantRegions][3];
+		List<String> manualCheck = new ArrayList<>();
 		try (InputStream is = new URL(VERKEHRSZELLEN).openStream();
 				InputStreamReader isr = new InputStreamReader(is, StandardCharsets.ISO_8859_1);
 				BufferedReader reader = new BufferedReader(isr)) {
@@ -117,7 +117,12 @@ public class FreightTripGenerationPartA {
 				String regionIdAndName = str.replace(", ", " ");
 				String regionName = regionIdAndName.split(";")[1];
 				String regionId = regionIdAndName.split(";")[0];
-				verkehrszellen.put(regionName.split(" ")[0], regionId);
+				String regionNameShortForm = regionName.split(" ")[0];
+				if (verkehrszellen.keySet().contains(regionNameShortForm)) {
+					manualCheck.add(regionName);
+				} else {
+					verkehrszellen.put(regionNameShortForm, regionId);
+				}
 				System.out.println("Region " + regionName + " has the ID of " + regionId);
 			}
 
@@ -127,9 +132,9 @@ public class FreightTripGenerationPartA {
 
 		for (int i = 0; i < relevantRegions.size(); i++) {
 			Triple<String, String, Geometry> regionEntry = relevantRegions.get(i);
-			String regionName = regionEntry.getLeft();
+			String regionName = regionEntry.getLeft().replace(", ", " ");
 			String modifiedRegionName = regionName.split(",")[0].split(" ")[0];
-			outputdata[i][0] = modifiedRegionName;
+			outputdata[i][0] = regionName;
 			outputdata[i][1] = regionEntry.getMiddle();
 			String regionId = verkehrszellen.get(modifiedRegionName);
 			outputdata[i][2] = regionId;
@@ -158,6 +163,13 @@ public class FreightTripGenerationPartA {
 
 		csvWriter.flush();
 		csvWriter.close();
+
+		for (String string : manualCheck) {
+			if (!string.startsWith("Seehafen")) {
+				System.err.println("Mannual check is required for region: " + string);
+			}
+		}
+
 	}
 
 	private static boolean isCoordWithinGeometry(Coord coord, Geometry geometry) {
