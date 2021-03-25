@@ -47,7 +47,7 @@ import java.util.stream.Collectors;
 public class GenerateGermanWideFreightTrips implements Callable<Integer> {
 	@CommandLine.Parameters(arity = "0..1", paramLabel = "INPUT", description = "Path to the raw data directory")
 	private Path rawDataDirectory;
-	// An example of the path: "D:/svn-shared/projects/komodnext/data/freight"
+	// An example of the path: "D:/svn-shared/projects/komodnext/data/freight/originalData"
 
 	@CommandLine.Option(names = "--pct", defaultValue = "100", description = "Scaling factor of the freight" +
 			" traffic (in percentage)", required = true)
