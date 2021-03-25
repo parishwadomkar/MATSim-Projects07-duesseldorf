@@ -118,7 +118,7 @@ public class FreightTripGenerationPartA {
 				String regionName = regionIdAndName.split(";")[1];
 				String regionId = regionIdAndName.split(";")[0];
 				String regionNameShortForm = regionName.split(" ")[0];
-				if (verkehrszellen.keySet().contains(regionNameShortForm)) {
+				if (verkehrszellen.containsKey(regionNameShortForm)) {
 					manualCheck.add(regionName);
 				} else {
 					verkehrszellen.put(regionNameShortForm, regionId);
@@ -152,12 +152,12 @@ public class FreightTripGenerationPartA {
 		csvWriter.append("Verkehrszelle");
 		csvWriter.append("\n");
 
-		for (int i = 0; i < outputdata.length; i++) {
-			csvWriter.append(outputdata[i][0]);
+		for (String[] outputdatum : outputdata) {
+			csvWriter.append(outputdatum[0]);
 			csvWriter.append(",");
-			csvWriter.append(outputdata[i][1]);
+			csvWriter.append(outputdatum[1]);
 			csvWriter.append(",");
-			csvWriter.append(outputdata[i][2]);
+			csvWriter.append(outputdatum[2]);
 			csvWriter.append("\n");
 		}
 
@@ -174,10 +174,7 @@ public class FreightTripGenerationPartA {
 
 	private static boolean isCoordWithinGeometry(Coord coord, Geometry geometry) {
 		Point point = MGC.coord2Point(coord);
-		if (point.within(geometry)) {
-			return true;
-		}
-		return false;
+		return point.within(geometry);
 	}
 
 }
