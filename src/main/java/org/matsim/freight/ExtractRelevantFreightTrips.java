@@ -98,6 +98,11 @@ public class ExtractRelevantFreightTrips implements Callable<Integer> {
 		log.info("Start creating the modified plans: there are in total " + originalPlans.getPersons().keySet().size()
 				+ " persons to be processed");
 		for (Person person : originalPlans.getPersons().values()) {
+			processed += 1;
+			if (processed % 500 == 0) {
+				log.info("Processing: " + processed + " persons have been processed");
+			}
+			String goodType = (String) person.getAttributes().getAttribute("type_of_good");
 			Plan plan = person.getSelectedPlan();
 			// By default, the plan of each freight person consist of only 3 elements:
 			// startAct, leg, endAct
@@ -185,7 +190,10 @@ public class ExtractRelevantFreightTrips implements Callable<Integer> {
 			// Add new freight person to the output plans
 			if (act0.getEndTime().orElse(86400) < 86400) {
 				Person freightPerson = populationFactory
-						.createPerson(Id.create(Integer.toString(generated), Person.class));
+						.createPerson(Id.create("freight_" + Integer.toString(generated),
+								Person.class));
+				freightPerson.getAttributes().putAttribute("good_type", goodType);
+				freightPerson.getAttributes().putAttribute("subpopulation","freight");
 				Plan freightPersonPlan = populationFactory.createPlan();
 				freightPersonPlan.addActivity(act0);
 				freightPersonPlan.addLeg(leg);
@@ -193,10 +201,6 @@ public class ExtractRelevantFreightTrips implements Callable<Integer> {
 				freightPerson.addPlan(freightPersonPlan);
 				outputPlans.addPerson(freightPerson);
 				generated += 1;
-			}
-			processed += 1;
-			if (processed % 100 ==0) {
-				log.info("Processing: " + processed + " persons have been processed");
 			}
 		}
 
