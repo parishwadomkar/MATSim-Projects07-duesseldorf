@@ -168,7 +168,6 @@ public class ExtractRelevantFreightTrips implements Callable<Integer> {
 						network.getLinks().get(endLink).getToNode(), 0, null, null);
 				for (Link link : route.links) {
 					if (linksOnTheBoundary.contains(link.getId())) {
-						tripIsRelevant = true;
 						if (!vehicleIsInside) {
 							act0.setCoord(link.getCoord());
 							double newEndTime = departureTime + timeSpent;
@@ -176,6 +175,7 @@ public class ExtractRelevantFreightTrips implements Callable<Integer> {
 							vehicleIsInside = true;
 						} else {
 							act1.setCoord(link.getCoord());
+							tripIsRelevant = true;
 							break;
 						}
 					}
