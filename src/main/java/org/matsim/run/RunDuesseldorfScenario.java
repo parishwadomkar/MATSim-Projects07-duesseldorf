@@ -42,7 +42,7 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 	/**
 	 * Current version identifier.
 	 */
-	public static final String VERSION = "v1.2";
+	public static final String VERSION = "v1.4";
 
 	/**
 	 * Default coordinate system of the scenario.
@@ -153,7 +153,7 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 
 			addRunOption(config, "no-lanes");
 
-			config.controler().setRoutingAlgorithmType(ControlerConfigGroup.RoutingAlgorithmType.FastAStarLandmarks);
+			config.controler().setRoutingAlgorithmType(ControlerConfigGroup.RoutingAlgorithmType.SpeedyALT);
 
 		}
 

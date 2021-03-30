@@ -14,7 +14,7 @@
         <param name="writePlansInterval" value="50"/>
         <param name="enableLinkToLinkRouting" value="true" />
         <!-- LinkToLink router does not work well with landmarks -->
-        <param name="routingAlgorithmType" value="FastDijkstra"/>
+        <param name="routingAlgorithmType" value="SpeedyALT"/>
     </module>
 
     <module name="global">

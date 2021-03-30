@@ -1,8 +1,8 @@
 
 JAR := matsim-duesseldorf-*.jar
-V := v1.2
+V := v1.4
 
-export SUMO_HOME := $(abspath ../../sumo-1.6.0/)
+export SUMO_HOME := $(abspath ../../sumo-1.8.0/)
 osmosis := osmosis\bin\osmosis
 
 .PHONY: prepare
@@ -12,7 +12,7 @@ $(JAR):
 
 # Required files
 scenarios/input/network.osm.pbf:
-	curl https://download.geofabrik.de/europe/germany/nordrhein-westfalen-201209.osm.pbf\
+	curl https://download.geofabrik.de/europe/germany-210101.osm.pbf\
 	  -o scenarios/input/network.osm.pbf
 
 scenarios/input/gtfs-vrr.zip:
@@ -32,23 +32,23 @@ scenarios/input/network.osm: scenarios/input/network.osm.pbf
 	$(osmosis) --rb file=$<\
 	 --tf accept-ways highway=motorway,motorway_link,trunk,trunk_link,primary,primary_link,secondary_link,secondary,tertiary,motorway_junction,residential,unclassified,living_street\
 	 --bounding-box top=51.65 left=6.00 bottom=50.60 right=7.56\
-	 --used-node --wx $@
+	 --used-node --wb network-detailed.osm.pbf
 
-	#$(osmosis) --rb file=$<\
-	# --tf accept-ways highway=motorway,motorway_link,trunk,trunk_link,primary,primary_link,secondary_link,secondary,tertiary,motorway_junction\
-	# --bounding-box top=51.46 left=6.60 bottom=50.98 right=7.03\
-	# --used-node --wb network-coarse.osm.pbf
+	$(osmosis) --rb file=$<\
+	 --tf accept-ways highway=motorway,motorway_link,trunk,trunk_link,primary,primary_link,secondary_link,secondary,motorway_junction\
+	 --bounding-box top=52.04 left=6.00 bottom=50.02 right=8.62\
+	 --used-node --wb network-coarse.osm.pbf
 
-	#$(osmosis) --rb file=network-detailed.osm.pbf\
-  	# --merge --wx $@
+	$(osmosis) --rb file=network-coarse.osm.pbf --rb file=network-detailed.osm.pbf\
+  	 --merge --wx $@
 
-	#rm network-detailed.osm.pbf
-	#rm network-coarse.osm.pbf
+	rm network-detailed.osm.pbf
+	rm network-coarse.osm.pbf
 
-
+# One ramp has been excluded due to errors
 scenarios/input/sumo.net.xml: scenarios/input/network.osm
 
-	$(SUMO_HOME)/bin/netconvert --geometry.remove --ramps.guess\
+	$(SUMO_HOME)/bin/netconvert --geometry.remove --ramps.guess --ramps.no-split\
 	 --type-files $(SUMO_HOME)/data/typemap/osmNetconvert.typ.xml,$(SUMO_HOME)/data/typemap/osmNetconvertUrbanDe.typ.xml\
 	 --tls.guess-signals true --tls.discard-simple --tls.join --tls.default-type actuated\
 	 --junctions.join --junctions.corner-detail 5\
@@ -58,7 +58,6 @@ scenarios/input/sumo.net.xml: scenarios/input/network.osm
 	 --output.original-names --output.street-names\
 	 --proj "+proj=utm +zone=32 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs"\
 	 --osm-files $< -o=$@
-
 
 scenarios/input/duesseldorf-$V-network.xml.gz: scenarios/input/sumo.net.xml
 	java -jar $(JAR) prepare network $< scenarios/input/herzogstrasse.net.xml\
