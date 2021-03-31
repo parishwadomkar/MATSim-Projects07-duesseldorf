@@ -1,5 +1,6 @@
 package org.matsim.prepare;
 
+import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.population.*;
 import org.matsim.core.config.Config;
@@ -10,6 +11,7 @@ import picocli.CommandLine;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 import static org.matsim.run.RunDuesseldorfScenario.VERSION;
@@ -28,6 +30,9 @@ public class PreparePopulation implements Callable<Integer> {
 
     @CommandLine.Option(names = "--population", description = "Input original population file", required = true)
     private Path population;
+
+	@CommandLine.Option(names = "--freight", description = "Path to freight population", required = false)
+	private Path freight;
 
     @CommandLine.Option(names = "--attributes", description = "Input person attributes file", required = true)
     private Path attributes;
@@ -59,6 +64,13 @@ public class PreparePopulation implements Callable<Integer> {
         scenario.getPopulation().getPersons().forEach((k, v) -> v.getAttributes().putAttribute("subpopulation", "person"));
 
         splitActivityTypesBasedOnDuration(scenario.getPopulation());
+
+        if (freight != null) {
+			Map<Id<Person>, ? extends Person> freightTraffic = PopulationUtils.readPopulation(freight.toString()).getPersons();
+			for (Person e : freightTraffic.values()) {
+				scenario.getPopulation().addPerson(e);
+			}
+		}
 
         PopulationUtils.writePopulation(scenario.getPopulation(), output.resolve("duesseldorf-" + VERSION + "-25pct.plans.xml.gz").toString());
 
@@ -100,11 +112,11 @@ public class PreparePopulation implements Callable<Integer> {
                     if (durationCategoryNr <= 0) {
                         durationCategoryNr = 1;
                     }
-                    
+
                     if (durationCategoryNr >= 24) {
                     	durationCategoryNr = 24;
                     }
-                    
+
                     String newType = act.getType() + "_" + (durationCategoryNr * timeBinSize_s);
                     act.setType(newType);
 

@@ -1,6 +1,7 @@
 package org.matsim.run;
 
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
+import com.google.common.collect.Sets;
 import com.google.inject.Provides;
 import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
 import org.apache.commons.lang3.tuple.Triple;
@@ -28,7 +29,9 @@ import org.matsim.prepare.*;
 import picocli.CommandLine;
 
 import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @CommandLine.Command(header = ":: Open Düsseldorf Scenario ::", version = RunDuesseldorfScenario.VERSION)
@@ -93,7 +96,7 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 	private boolean infiniteCapacity;
 
 	public RunDuesseldorfScenario() {
-		super(String.format("scenarios/input/duesseldorf-%s-1pct.config.xml", VERSION));
+		super("scenarios/input/duesseldorf-v1.0-1pct.config.xml");
 	}
 
 	public RunDuesseldorfScenario(Config config) {
@@ -182,6 +185,9 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 		config.planCalcScore().addActivityParams(new ActivityParams("car interaction").setTypicalDuration(60));
 		config.planCalcScore().addActivityParams(new ActivityParams("other").setTypicalDuration(600 * 3));
 
+		config.planCalcScore().addActivityParams(new ActivityParams("freight_start").setTypicalDuration(60 * 15));
+		config.planCalcScore().addActivityParams(new ActivityParams("freight_end").setTypicalDuration(60 * 15));
+
 		// vsp defaults
 		config.vspExperimental().setVspDefaultsCheckingLevel(VspExperimentalConfigGroup.VspDefaultsCheckingLevel.info);
 		config.plansCalcRoute().setAccessEgressType(PlansCalcRouteConfigGroup.AccessEgressType.accessEgressModeToLink);
@@ -248,6 +254,16 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 				if (originalStorageCapacity < 1) {
 					link.setNumberOfLanes(minimumLaneRequred);
 				}
+			}
+
+			Set<String> modes = link.getAllowedModes();
+
+			// allow freight traffic together with cars
+			if (modes.contains("car")) {
+				HashSet<String> newModes = Sets.newHashSet(modes);
+				newModes.add("freight");
+
+				link.setAllowedModes(newModes);
 			}
 		}
 

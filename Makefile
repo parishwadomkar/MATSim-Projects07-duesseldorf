@@ -70,7 +70,8 @@ scenarios/input/duesseldorf-$V-network-with-pt.xml.gz: scenarios/input/duesseldo
 scenarios/input/duesseldorf-$V-25pct.plans.xml.gz:
 	java -jar $(JAR) prepare population\
 	 --population ../../shared-svn/komodnext/matsim-input-files/duesseldorf-senozon/optimizedPopulation_filtered.xml.gz\
-	 --attributes  ../../shared-svn/komodnext/matsim-input-files/duesseldorf-senozon/personAttributes.xml.gz
+	 --attributes  ../../shared-svn/komodnext/matsim-input-files/duesseldorf-senozon/personAttributes.xml.gz\
+	 --freight ../../TODO-extrachted-25pct-freight-plans.xml.gz
 
 
 # Aggregated target
