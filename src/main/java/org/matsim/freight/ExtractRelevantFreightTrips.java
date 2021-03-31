@@ -29,6 +29,7 @@ import java.util.concurrent.Callable;
 		showDefaultValues = true
 )
 
+@Deprecated
 public class ExtractRelevantFreightTrips implements Callable<Integer> {
 	// This script will extract the relevant freight trips within the given shape
 	// file from the German wide freight traffic.

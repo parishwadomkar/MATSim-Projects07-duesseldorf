@@ -44,6 +44,7 @@ import java.util.stream.Collectors;
 		showDefaultValues = true
 )
 
+@Deprecated
 public class GenerateGermanWideFreightTrips implements Callable<Integer> {
 	@CommandLine.Parameters(arity = "0..1", paramLabel = "INPUT", description = "Path to the raw data directory")
 	private Path rawDataDirectory;
