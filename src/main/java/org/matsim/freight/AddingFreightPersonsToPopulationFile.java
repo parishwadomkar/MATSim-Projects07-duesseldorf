@@ -45,7 +45,6 @@ public class AddingFreightPersonsToPopulationFile implements Callable<Integer> {
 		Config freightConfig = ConfigUtils.createConfig();
 		freightConfig.global().setCoordinateSystem("EPSG:25832");
 		freightConfig.plans().setInputFile(freightOnlyPlans.toString());
-		freightConfig.plans().setInputCRS("EPSG:5677");
 		Scenario freightScenario = ScenarioUtils.loadScenario(freightConfig);
 		Population freightOnlyPlans = freightScenario.getPopulation();
 
