@@ -52,6 +52,7 @@ public class PreparePopulation implements Callable<Integer> {
         config.plans().setInputPersonAttributeFile(attributes.toString());
         config.plans().setInputFile(population.toString());
 
+        config.global().setCoordinateSystem("EPSG:25832");
         config.plans().setInsistingOnUsingDeprecatedPersonAttributeFile(true);
 
         Scenario scenario = ScenarioUtils.loadScenario(config);
