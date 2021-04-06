@@ -15,6 +15,7 @@ import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.network.NetworkWriter;
+import org.matsim.application.MATSimAppCommand;
 import org.matsim.contrib.osm.networkReader.LinkProperties;
 import org.matsim.contrib.osm.networkReader.SupersonicOsmNetworkReader;
 import org.matsim.contrib.sumo.SumoNetworkConverter;
@@ -49,7 +50,8 @@ import static org.matsim.run.TurnDependentFlowEfficiencyCalculator.ATTR_TURN_EFF
 		description = "Create MATSim network from OSM data",
 		showDefaultValues = true
 )
-public final class CreateNetwork implements Callable<Integer> {
+@Deprecated
+public final class CreateNetwork implements MATSimAppCommand {
 
 	private static final Logger log = LogManager.getLogger(CreateNetwork.class);
 

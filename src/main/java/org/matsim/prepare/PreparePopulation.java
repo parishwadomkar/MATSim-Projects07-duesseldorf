@@ -3,6 +3,7 @@ package org.matsim.prepare;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.population.*;
+import org.matsim.application.MATSimAppCommand;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.population.PopulationUtils;
@@ -26,7 +27,8 @@ import static org.matsim.run.RunDuesseldorfScenario.VERSION;
         description = "Create population with input data",
         showDefaultValues = true
 )
-public class PreparePopulation implements Callable<Integer> {
+@Deprecated
+public class PreparePopulation implements MATSimAppCommand {
 
     @CommandLine.Option(names = "--population", description = "Input original population file", required = true)
     private Path population;

@@ -4,6 +4,7 @@ import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.network.NetworkWriter;
+import org.matsim.application.MATSimAppCommand;
 import org.matsim.contrib.gtfs.GtfsConverter;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.network.NetworkUtils;
@@ -36,7 +37,8 @@ import static org.matsim.run.RunDuesseldorfScenario.VERSION;
         description = "Create transit schedule from GTFS data",
         showDefaultValues = true
 )
-public class CreateTransitSchedule implements Callable<Integer> {
+@Deprecated
+public class CreateTransitSchedule implements MATSimAppCommand {
 
     @CommandLine.Parameters(arity = "1..*", paramLabel = "INPUT", description = "Input GTFS zip files")
     private List<Path> gtfsFiles;

@@ -7,6 +7,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.population.Person;
+import org.matsim.application.MATSimApplication;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
@@ -29,8 +30,8 @@ public class RunDuesseldorfIntegrationTest {
 				.setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
 		config.controler().setOutputDirectory(utils.getOutputDirectory());
 
-		MATSimApplication.call(RunDuesseldorfScenario.class, config,
-				new String[] { "--no-lanes", "--infiniteCapacity" });
+		MATSimApplication.execute(RunDuesseldorfScenario.class, config,
+				"--no-lanes", "--infiniteCapacity");
 	}
 
 	@Test
@@ -41,7 +42,7 @@ public class RunDuesseldorfIntegrationTest {
 		config.controler()
 				.setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
 		config.controler().setOutputDirectory(utils.getOutputDirectory());
-		MATSimApplication.call(RunDuesseldorfScenario.class, config, new String[] { "--no-lanes" });
+		MATSimApplication.execute(RunDuesseldorfScenario.class, config, "--no-lanes");
 	}
 
 	@Test
@@ -53,8 +54,8 @@ public class RunDuesseldorfIntegrationTest {
 				.setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
 		config.controler().setOutputDirectory(utils.getOutputDirectory());
 
-		MATSimApplication.call(RunDuesseldorfScenario.class, config,
-				new String[] { "--no-lanes", "--infiniteCapacity" });
+		MATSimApplication.execute(RunDuesseldorfScenario.class, config,
+				"--no-lanes", "--infiniteCapacity");
 	}
 
 	@Test
@@ -66,8 +67,7 @@ public class RunDuesseldorfIntegrationTest {
 				.setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
 		config.controler().setOutputDirectory(utils.getOutputDirectory());
 
-		org.matsim.core.controler.Controler controler = MATSimApplication.prepare(RunDuesseldorfScenario.class, config,
-				new String[] {});
+		org.matsim.core.controler.Controler controler = MATSimApplication.prepare(RunDuesseldorfScenario.class, config);
 		downsample(controler.getScenario().getPopulation().getPersons(), 0.01);
 
 		controler.run();

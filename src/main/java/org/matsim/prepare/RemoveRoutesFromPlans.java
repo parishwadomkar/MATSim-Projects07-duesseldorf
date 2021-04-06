@@ -2,6 +2,7 @@ package org.matsim.prepare;
 
 import com.google.common.collect.Lists;
 import org.matsim.api.core.v01.population.*;
+import org.matsim.application.MATSimAppCommand;
 import org.matsim.core.population.PopulationUtils;
 import picocli.CommandLine;
 
@@ -19,7 +20,8 @@ import java.util.concurrent.Callable;
         description = "Remove route information from a plans file.",
         showDefaultValues = true
 )
-public class RemoveRoutesFromPlans implements Callable<Integer> {
+@Deprecated
+public class RemoveRoutesFromPlans implements MATSimAppCommand {
 
     @CommandLine.Option(names = "--plans", description = "Input original plan file", required = true)
     private Path plans;

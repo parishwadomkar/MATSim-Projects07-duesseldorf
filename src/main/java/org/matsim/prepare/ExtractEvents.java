@@ -8,6 +8,7 @@ import org.matsim.api.core.v01.events.LinkEnterEvent;
 import org.matsim.api.core.v01.events.LinkLeaveEvent;
 import org.matsim.api.core.v01.events.handler.LinkEnterEventHandler;
 import org.matsim.api.core.v01.events.handler.LinkLeaveEventHandler;
+import org.matsim.application.MATSimAppCommand;
 import org.matsim.contrib.sumo.SumoNetworkConverter;
 import org.matsim.contrib.sumo.SumoNetworkHandler;
 import org.matsim.core.api.experimental.events.EventsManager;
@@ -36,7 +37,7 @@ import java.util.concurrent.Callable;
         description = "Extract events for a certain network area.",
         showDefaultValues = true
 )
-public class ExtractEvents implements Callable<Integer>, LinkEnterEventHandler, LinkLeaveEventHandler, LaneEnterEventHandler, LaneLeaveEventHandler {
+public class ExtractEvents implements MATSimAppCommand, LinkEnterEventHandler, LinkLeaveEventHandler, LaneEnterEventHandler, LaneLeaveEventHandler {
 
     private static final Logger log = LogManager.getLogger(ExtractEvents.class);
 

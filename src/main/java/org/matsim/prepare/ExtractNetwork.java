@@ -9,6 +9,7 @@ import org.matsim.api.core.v01.events.Event;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.network.Node;
+import org.matsim.application.MATSimAppCommand;
 import org.matsim.contrib.sumo.SumoNetworkConverter;
 import org.matsim.contrib.sumo.SumoNetworkHandler;
 import org.matsim.core.config.ConfigUtils;
@@ -32,7 +33,8 @@ import java.util.concurrent.Callable;
         description = "Extract network and lanes for certain area.",
         showDefaultValues = true
 )
-public class ExtractNetwork implements Callable<Integer> {
+@Deprecated
+public class ExtractNetwork implements MATSimAppCommand {
 
     private static final Logger log = LogManager.getLogger(ExtractNetwork.class);
 

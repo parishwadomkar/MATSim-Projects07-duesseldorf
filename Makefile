@@ -67,13 +67,31 @@ scenarios/input/duesseldorf-$V-network.xml.gz: scenarios/input/sumo.net.xml
 scenarios/input/duesseldorf-$V-network-with-pt.xml.gz: scenarios/input/duesseldorf-$V-network.xml.gz scenarios/input/gtfs-vrs.zip scenarios/input/gtfs-vrr.zip scenarios/input/gtfs-avv.zip
 	java -jar $(JAR) prepare transit --network $< $(filter-out $<,$^)
 
-scenarios/input/duesseldorf-$V-25pct.plans.xml.gz:
-	java -jar $(JAR) prepare population\
-	 --population ../../shared-svn/komodnext/matsim-input-files/duesseldorf-senozon/optimizedPopulation_filtered.xml.gz\
-	 --attributes  ../../shared-svn/komodnext/matsim-input-files/duesseldorf-senozon/personAttributes.xml.gz\
-	 --freight ../../TODO-extrachted-25pct-freight-plans.xml.gz
+scenarios/input/freight-only-25pct.plans.xml.gz:
+	curl https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/duesseldorf/duesseldorf-v1.0/input/freight-only-25pct.plans.xml.gz\
+		-o $@
+
+scenarios/input/duesseldorf-$V-10pct.plans.xml.gz: scenarios/input/freight-only-25pct.plans.xml.gz
+
+	java -jar $(JAR) prepare trajectory-to-plans\
+	 --name prepare\
+	 --sample-size 0.25\
+	 --population ../../shared-svn/komodnext/matsim-input-files/20210216_duesseldorf_2/optimizedPopulation_filtered.xml.gz\
+	 --attributes  ../../shared-svn/komodnext/matsim-input-files/20210216_duesseldorf_2/personAttributes.xml.gz\
+
+	java -jar $(JAR) prepare generate-short-distance-trips\
+	 --population scenarios/input/prepare-25pct.plans.xml.gz\
+	 --shp ../public-svn/matsim/scenarios/countries/de/duesseldorf/duesseldorf-v1.0/original-data/duesseldorf-area-shp/duesseldorf-area.shp\
+	 --num-trips 95000
+
+	java -jar $(JAR) prepare merge-populations scenarios/input/prepare-25pct.plans-with-trips.xml.gz $<\
+	 --output scenarios/input/duesseldorf-$V-25pct.plans.xml.gz
+
+	java -jar $(JAR) prepare downsample-population scenarios/input/duesseldorf-$V-25pct.plans.xml.gz\
+	 --sample-size 0.25\
+	 --samples 0.1 0.01\
 
 
 # Aggregated target
-prepare: scenarios/input/duesseldorf-$V-25pct.plans.xml.gz scenarios/input/duesseldorf-$V-network-with-pt.xml.gz
+prepare: scenarios/input/duesseldorf-$V-10pct.plans.xml.gz scenarios/input/duesseldorf-$V-network-with-pt.xml.gz
 	echo "Done"

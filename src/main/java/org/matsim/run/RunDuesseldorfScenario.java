@@ -12,6 +12,11 @@ import org.matsim.analysis.RunSuite;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
+import org.matsim.application.MATSimApplication;
+import org.matsim.application.prepare.DownSamplePopulation;
+import org.matsim.application.prepare.GenerateShortDistanceTrips;
+import org.matsim.application.prepare.MergePopulations;
+import org.matsim.application.prepare.TrajectoryToPlans;
 import org.matsim.contrib.signals.otfvis.OTFVisWithSignalsLiveModule;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.config.Config;
@@ -35,8 +40,11 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @CommandLine.Command(header = ":: Open Düsseldorf Scenario ::", version = RunDuesseldorfScenario.VERSION)
-@MATSimApplication.Prepare({CreateNetwork.class, CreateTransitSchedule.class, PreparePopulation.class,
-		CreateCityCounts.class, ExtractEvents.class, CreateBAStCounts.class})
+@MATSimApplication.Prepare({
+		CreateNetwork.class, CreateTransitSchedule.class, PreparePopulation.class,
+		CreateCityCounts.class, ExtractEvents.class, CreateBAStCounts.class, TrajectoryToPlans.class,
+		GenerateShortDistanceTrips.class, MergePopulations.class, DownSamplePopulation.class
+})
 @MATSimApplication.Analysis({RunSuite.class, ModeAnalysisWithHomeLocationFilter.class})
 public class RunDuesseldorfScenario extends MATSimApplication {
 

@@ -7,6 +7,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Link;
+import org.matsim.application.MATSimAppCommand;
 import org.matsim.counts.Count;
 import org.matsim.counts.Counts;
 import org.matsim.counts.CountsWriter;
@@ -31,7 +32,7 @@ import java.util.zip.ZipInputStream;
 		name = "createCityCounts",
 		description = "Aggregate and convert counts from inner city"
 )
-public class CreateCityCounts implements Callable<Integer> {
+public class CreateCityCounts implements MATSimAppCommand {
 
 	private static final Logger log = LogManager.getLogger(CreateCityCounts.class);
 

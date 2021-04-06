@@ -4,6 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Link;
+import org.matsim.application.MATSimAppCommand;
 import org.matsim.counts.Counts;
 import org.matsim.counts.CountsWriter;
 import picocli.CommandLine;
@@ -17,7 +18,7 @@ import java.util.concurrent.Callable;
 		name = "createBAStCounts",
 		description = "Create vehicle counts from BASt data"
 )
-public class CreateBAStCounts implements Callable<Integer> {
+public class CreateBAStCounts implements MATSimAppCommand {
 
 	private static final Logger logger = Logger.getLogger(CreateBAStCounts.class);
 

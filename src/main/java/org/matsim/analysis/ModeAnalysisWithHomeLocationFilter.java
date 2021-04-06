@@ -13,6 +13,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.analysis.modalSplitUserType.ModeAnalysis;
 import org.matsim.api.core.v01.Scenario;
+import org.matsim.application.MATSimAppCommand;
 import org.matsim.core.router.AnalysisMainModeIdentifier;
 import org.matsim.core.utils.collections.Tuple;
 
@@ -22,7 +23,7 @@ import picocli.CommandLine;
 		name = "modeAnalysis",
 		description = "Run mode analysis on a specific run."
 )
-public class ModeAnalysisWithHomeLocationFilter implements Callable<Integer> {
+public class ModeAnalysisWithHomeLocationFilter implements MATSimAppCommand {
 
 	private static final Logger log = LogManager.getLogger(ModeAnalysisWithHomeLocationFilter.class);
 

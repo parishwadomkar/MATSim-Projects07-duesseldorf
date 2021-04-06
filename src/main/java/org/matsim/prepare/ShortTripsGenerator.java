@@ -1,5 +1,16 @@
 package org.matsim.prepare;
 
+import org.apache.log4j.Logger;
+import org.matsim.analysis.HomeLocationFilter;
+import org.matsim.api.core.v01.Coord;
+import org.matsim.api.core.v01.TransportMode;
+import org.matsim.api.core.v01.population.*;
+import org.matsim.application.MATSimAppCommand;
+import org.matsim.core.gbl.MatsimRandom;
+import org.matsim.core.population.PopulationUtils;
+import org.matsim.core.router.RoutingModeMainModeIdentifier;
+import org.matsim.core.router.TripStructureUtils;
+
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -7,40 +18,24 @@ import java.util.Random;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import org.apache.log4j.Logger;
-import org.matsim.analysis.HomeLocationFilter;
-import org.matsim.api.core.v01.Coord;
-import org.matsim.api.core.v01.Scenario;
-import org.matsim.api.core.v01.TransportMode;
-import org.matsim.api.core.v01.population.Activity;
-import org.matsim.api.core.v01.population.HasPlansAndId;
-import org.matsim.api.core.v01.population.Leg;
-import org.matsim.api.core.v01.population.Person;
-import org.matsim.api.core.v01.population.Plan;
-import org.matsim.api.core.v01.population.Population;
-import org.matsim.core.config.Config;
-import org.matsim.core.config.ConfigUtils;
-import org.matsim.core.gbl.MatsimRandom;
-import org.matsim.core.population.PopulationUtils;
-import org.matsim.core.router.RoutingModeMainModeIdentifier;
-import org.matsim.core.router.TripStructureUtils;
-import org.matsim.core.scenario.ScenarioUtils;
-
 /**
  * @author zmeng, Chengqi Lu
  */
-public class ShortTripsGenerator {
+@Deprecated
+public class ShortTripsGenerator implements MATSimAppCommand {
 	private static final Logger log = Logger.getLogger(ShortTripsGenerator.class);
 	private static final Random rnd = MatsimRandom.getLocalInstance();
 	private static int addingTrips = 0;
 	private static double range;
 
 	private Population population;
+	private String shapeFile;
+	private String outputFolder;
 	private int numOfMissingTrips;
 	private double rangeForShortDistanceTrips;
 	private double maxShortRangeActivityDuration = 3600.;
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws Exception {
 		String plans;
 		String shapeFile;
 		String outputFolder;
@@ -60,13 +55,31 @@ public class ShortTripsGenerator {
 			range = Integer.parseInt(args[4]);
 		}
 
-		ShortTripsGenerator shortTripsGenerator = new ShortTripsGenerator(plans, missingTrips, range);
+		ShortTripsGenerator shortTripsGenerator = new ShortTripsGenerator(
+				PopulationUtils.readPopulation(plans),
+				shapeFile,
+				outputFolder,
+				missingTrips,
+				range
+		);
+
+		shortTripsGenerator.call();
+	}
+
+	public ShortTripsGenerator(Population population, String shapeFile, String outputFolder, int numOfMissingTrips, double rangeForShortDistanceTrips) {
+		this.population = population;
+		this.numOfMissingTrips = numOfMissingTrips;
+		this.rangeForShortDistanceTrips = rangeForShortDistanceTrips;
+	}
+
+	@Override
+	public Integer call() throws Exception {
 
 		List<String> personsInCityBoundary = new ArrayList<>();
 		HomeLocationFilter homeLocationFilter = new HomeLocationFilter(shapeFile);
 
-		homeLocationFilter.analyzePopulation(shortTripsGenerator.getPopulation());
-		for (Person person : shortTripsGenerator.getPopulation().getPersons().values()) {
+		homeLocationFilter.analyzePopulation(population);
+		for (Person person : population.getPersons().values()) {
 			if (homeLocationFilter.considerAgent(person)) {
 				personsInCityBoundary.add(person.getId().toString());
 			}
@@ -80,33 +93,19 @@ public class ShortTripsGenerator {
 //            }
 //        };
 
-		long originalTrips = shortTripsGenerator.population.getPersons().values().stream()
+		long originalTrips = population.getPersons().values().stream()
 				.filter(person -> condition.test(person.getId().toString())).map(HasPlansAndId::getSelectedPlan)
 				.map(plan -> TripStructureUtils.getTrips(plan.getPlanElements())).mapToLong(List::size).sum();
 		log.info("trip num before augmentation: " + originalTrips);
-		shortTripsGenerator.run(condition);
-		PopulationUtils.writePopulation(shortTripsGenerator.getPopulation(),
-				outputFolder + "\\duesseldorf-v1.2-10pct.plans.xml.gz");
+		run(condition);
+		PopulationUtils.writePopulation(population, outputFolder + "\\duesseldorf-v1.2-10pct.plans.xml.gz");
 
-		long totalTrips = shortTripsGenerator.population.getPersons().values().stream()
+		long totalTrips = population.getPersons().values().stream()
 				.filter(person -> condition.test(person.getId().toString())).map(HasPlansAndId::getSelectedPlan)
 				.map(plan -> TripStructureUtils.getTrips(plan.getPlanElements())).mapToLong(List::size).sum();
 		log.info("trip num after augmentation: " + totalTrips);
-	}
 
-	public ShortTripsGenerator(String snz_population, int numOfMissingTrips, double rangeForShortDistanceTrips) {
-
-		Config config = ConfigUtils.createConfig();
-
-		config.plans().setInputFile(snz_population);
-
-		config.global().setCoordinateSystem("EPSG:25832");
-		config.plans().setInputCRS("EPSG:25832");
-		Scenario scenario = ScenarioUtils.loadScenario(config);
-
-		this.population = scenario.getPopulation();
-		this.numOfMissingTrips = numOfMissingTrips;
-		this.rangeForShortDistanceTrips = rangeForShortDistanceTrips;
+		return null;
 	}
 
 	public void run(Predicate<String> addingCondition) {
@@ -136,7 +135,7 @@ public class ShortTripsGenerator {
 
 							addingTrips += 2;
 
-							if (addingTrips % 100 == 0) {
+							if (addingTrips % 1000 == 0) {
 								log.info("adding missing trips.........." + addingTrips);
 							}
 							// add activity
