@@ -82,6 +82,7 @@ scenarios/input/duesseldorf-$V-10pct.plans.xml.gz: scenarios/input/freight-only-
 	java -jar $(JAR) prepare generate-short-distance-trips\
 	 --population scenarios/input/prepare-25pct.plans.xml.gz\
 	 --shp ../public-svn/matsim/scenarios/countries/de/duesseldorf/duesseldorf-v1.0/original-data/duesseldorf-area-shp/duesseldorf-area.shp\
+	 --input-crs EPSG:25832\
 	 --num-trips 95000
 
 	java -jar $(JAR) prepare merge-populations scenarios/input/prepare-25pct.plans-with-trips.xml.gz $<\
