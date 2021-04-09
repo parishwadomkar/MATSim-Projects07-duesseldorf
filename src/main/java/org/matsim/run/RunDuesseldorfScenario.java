@@ -8,11 +8,11 @@ import org.apache.commons.lang3.tuple.Triple;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.analysis.ModeAnalysisWithHomeLocationFilter;
-import org.matsim.analysis.RunSuite;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.application.MATSimApplication;
+import org.matsim.application.analysis.AnalysisSummary;
 import org.matsim.application.prepare.DownSamplePopulation;
 import org.matsim.application.prepare.GenerateShortDistanceTrips;
 import org.matsim.application.prepare.MergePopulations;
@@ -45,7 +45,7 @@ import java.util.stream.Collectors;
 		CreateCityCounts.class, ExtractEvents.class, CreateBAStCounts.class, TrajectoryToPlans.class,
 		GenerateShortDistanceTrips.class, MergePopulations.class, DownSamplePopulation.class
 })
-@MATSimApplication.Analysis({RunSuite.class, ModeAnalysisWithHomeLocationFilter.class})
+@MATSimApplication.Analysis({AnalysisSummary.class, ModeAnalysisWithHomeLocationFilter.class})
 public class RunDuesseldorfScenario extends MATSimApplication {
 
 	private static final Logger log = LogManager.getLogger(RunDuesseldorfScenario.class);

@@ -6,6 +6,8 @@ import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.Plan;
+import org.matsim.application.analysis.AnalysisSummary;
+import org.matsim.application.options.CrsOptions;
 import org.matsim.contrib.analysis.vsp.traveltimedistance.HereMapsRouteValidator;
 import org.matsim.contrib.analysis.vsp.traveltimedistance.TravelTimeValidationRunner;
 import org.matsim.core.replanning.selectors.BestPlanSelector;
@@ -19,9 +21,6 @@ import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.Set;
 import java.util.concurrent.Callable;
-
-import static org.matsim.analysis.RunSuite.glob;
-import static org.matsim.analysis.RunSuite.loadScenario;
 
 @CommandLine.Command(
 		name = "travelTimeAnalysis",
@@ -66,8 +65,8 @@ public class RunTravelTimeAnalysis implements Callable<Integer> {
 	@Override
 	public Integer call() throws Exception {
 
-		Scenario scenario = loadScenario(runId, runDirectory);
-		Path events = glob(runDirectory, runId + ".*events.*")
+		Scenario scenario = AnalysisSummary.loadScenario(runId, runDirectory, new CrsOptions(RunDuesseldorfScenario.COORDINATE_SYSTEM));
+		Path events = AnalysisSummary.glob(runDirectory, runId + ".*events.*", true)
 				.orElseThrow(() -> new IllegalArgumentException("Could not find events file."));
 
 		Set<Id<Person>> populationIds = scenario.getPopulation().getPersons().keySet();

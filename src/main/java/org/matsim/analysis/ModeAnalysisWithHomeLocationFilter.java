@@ -1,23 +1,23 @@
 package org.matsim.analysis;
 
-import static org.matsim.analysis.RunSuite.loadScenario;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.Callable;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.analysis.modalSplitUserType.ModeAnalysis;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.application.MATSimAppCommand;
+import org.matsim.application.analysis.AnalysisSummary;
+import org.matsim.application.options.CrsOptions;
 import org.matsim.core.router.AnalysisMainModeIdentifier;
 import org.matsim.core.utils.collections.Tuple;
-
+import org.matsim.run.RunDuesseldorfScenario;
 import picocli.CommandLine;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 
 @CommandLine.Command(
 		name = "modeAnalysis",
@@ -54,7 +54,7 @@ public class ModeAnalysisWithHomeLocationFilter implements MATSimAppCommand {
 			return 1;
 		}
 
-		Scenario scenario = loadScenario(runId, runDirectory);
+		Scenario scenario = AnalysisSummary.loadScenario(runId, runDirectory, new CrsOptions(RunDuesseldorfScenario.COORDINATE_SYSTEM));
 
 		HomeLocationFilter homeLocationFilter = new HomeLocationFilter(shapeFile.toString());
 		homeLocationFilter.analyzePopulation(scenario.getPopulation());
