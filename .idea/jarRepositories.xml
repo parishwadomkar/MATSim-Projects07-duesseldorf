@@ -44,6 +44,11 @@
     <remote-repository>
       <option name="id" value="matsim" />
       <option name="name" value="matsim" />
+      <option name="url" value="https://repo.matsim.org" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="matsim" />
+      <option name="name" value="matsim" />
       <option name="url" value="https://dl.bintray.com/matsim/matsim" />
     </remote-repository>
     <remote-repository>

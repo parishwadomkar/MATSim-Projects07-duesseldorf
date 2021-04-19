@@ -19,7 +19,13 @@
         <!-- Repository for MATSim releases (MATSim is not on Maven central) -->
         <repository>
             <id>matsim</id>
-            <url>https://dl.bintray.com/matsim/matsim</url>
+            <url>https://repo.matsim.org</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
         </repository>
 
         <repository>
@@ -37,12 +43,6 @@
             <releases>
                 <enabled>true</enabled>
             </releases>
-        </repository>
-
-        <repository>
-            <!-- Required for MATSim snaphots -->
-            <id>ojo-snapshots</id>
-            <url>https://oss.jfrog.org/libs-snapshot</url>
         </repository>
 
         <!-- Temporarily needed for the osm reader -->
