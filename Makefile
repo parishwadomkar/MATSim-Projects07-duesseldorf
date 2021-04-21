@@ -1,6 +1,6 @@
 
 JAR := matsim-duesseldorf-*.jar
-V := v1.4
+V := v1.5
 
 export SUMO_HOME := $(abspath ../../sumo-1.8.0/)
 osmosis := osmosis\bin\osmosis
@@ -78,6 +78,13 @@ scenarios/input/duesseldorf-$V-10pct.plans.xml.gz: scenarios/input/freight-only-
 	 --sample-size 0.25\
 	 --population ../../shared-svn/komodnext/matsim-input-files/20210216_duesseldorf_2/optimizedPopulation_filtered.xml.gz\
 	 --attributes  ../../shared-svn/komodnext/matsim-input-files/20210216_duesseldorf_2/personAttributes.xml.gz\
+
+	# Landuse data must be copied to the specified location
+	java -jar $(JAR) prepare resolve-grid-coords\
+	 scenarios/input/prepare-25pct.plans.xml.gz\
+	 --grid-resolution 500\
+	 --landuse scenarios/input/landuse/landuse.shp\
+	 --output scenarios/input/prepare-25pct.plans.xml.gz
 
 	java -jar $(JAR) prepare generate-short-distance-trips\
 	 --population scenarios/input/prepare-25pct.plans.xml.gz\
