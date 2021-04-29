@@ -50,7 +50,6 @@ import static org.matsim.run.TurnDependentFlowEfficiencyCalculator.ATTR_TURN_EFF
 		description = "Create MATSim network from OSM data",
 		showDefaultValues = true
 )
-@Deprecated
 public final class CreateNetwork implements MATSimAppCommand {
 
 	private static final Logger log = LogManager.getLogger(CreateNetwork.class);

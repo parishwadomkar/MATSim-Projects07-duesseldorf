@@ -13,6 +13,7 @@ import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.application.MATSimApplication;
 import org.matsim.application.analysis.AnalysisSummary;
+import org.matsim.application.analysis.emissions.AirPollutionByVehicleCategory;
 import org.matsim.application.prepare.population.*;
 import org.matsim.contrib.signals.otfvis.OTFVisWithSignalsLiveModule;
 import org.matsim.core.api.experimental.events.EventsManager;
@@ -42,7 +43,7 @@ import java.util.stream.Collectors;
 		CreateCityCounts.class, ExtractEvents.class, CreateBAStCounts.class, TrajectoryToPlans.class,
 		GenerateShortDistanceTrips.class, MergePopulations.class, DownSamplePopulation.class, ResolveGridCoordinates.class
 })
-@MATSimApplication.Analysis({AnalysisSummary.class, ModeAnalysisWithHomeLocationFilter.class})
+@MATSimApplication.Analysis({AnalysisSummary.class, ModeAnalysisWithHomeLocationFilter.class, AirPollutionByVehicleCategory.class})
 public class RunDuesseldorfScenario extends MATSimApplication {
 
 	private static final Logger log = LogManager.getLogger(RunDuesseldorfScenario.class);
@@ -50,7 +51,7 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 	/**
 	 * Current version identifier.
 	 */
-	public static final String VERSION = "v1.4";
+	public static final String VERSION = "v1.5";
 
 	/**
 	 * Default coordinate system of the scenario.

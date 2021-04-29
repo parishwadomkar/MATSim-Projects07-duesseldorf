@@ -37,7 +37,6 @@ import static org.matsim.run.RunDuesseldorfScenario.VERSION;
         description = "Create transit schedule from GTFS data",
         showDefaultValues = true
 )
-@Deprecated
 public class CreateTransitSchedule implements MATSimAppCommand {
 
     @CommandLine.Parameters(arity = "1..*", paramLabel = "INPUT", description = "Input GTFS zip files")
