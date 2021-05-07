@@ -32,6 +32,11 @@
       <option name="url" value="https://repository.jboss.org/nexus/content/repositories/public/" />
     </remote-repository>
     <remote-repository>
+      <option name="id" value="matsim" />
+      <option name="name" value="matsim" />
+      <option name="url" value="https://repo.matsim.org/repository/matsim" />
+    </remote-repository>
+    <remote-repository>
       <option name="id" value="ojo-snapshots" />
       <option name="name" value="ojo-snapshots" />
       <option name="url" value="https://oss.jfrog.org/libs-snapshot" />

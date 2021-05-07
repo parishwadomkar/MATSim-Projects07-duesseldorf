@@ -1,6 +1,7 @@
 
 JAR := matsim-duesseldorf-*.jar
 V := v1.5
+CRS := EPSG:25832
 
 export SUMO_HOME := $(abspath ../../sumo-1.8.0/)
 osmosis := osmosis\bin\osmosis
@@ -67,11 +68,17 @@ scenarios/input/duesseldorf-$V-network.xml.gz: scenarios/input/sumo.net.xml
 scenarios/input/duesseldorf-$V-network-with-pt.xml.gz: scenarios/input/duesseldorf-$V-network.xml.gz scenarios/input/gtfs-vrs.zip scenarios/input/gtfs-vrr.zip scenarios/input/gtfs-avv.zip
 	java -jar $(JAR) prepare transit --network $< $(filter-out $<,$^)
 
-scenarios/input/freight-only-25pct.plans.xml.gz:
-	curl https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/duesseldorf/duesseldorf-v1.0/input/freight-only-25pct.plans.xml.gz\
-		-o $@
 
-scenarios/input/duesseldorf-$V-10pct.plans.xml.gz: scenarios/input/freight-only-25pct.plans.xml.gz
+scenarios/input/freight-trips.xml.gz: scenarios/input/duesseldorf-$V-network.xml.gz
+	java -jar $(JAR) prepare extract-freight-trips ../shared-svn/projects/german-wide-freight/v1.1/german-wide-freight-25pct.xml.gz\
+	 --network ../shared-svn/projects/german-wide-freight/original-data/german-primary-road.network.xml.gz\
+	 --input-crs EPSG:5677\
+	 --target-crs $(CRS)\
+	 --shp ../public-svn/matsim/scenarios/countries/de/duesseldorf/duesseldorf-v1.0/input/shapeFiles/freight/newDusseldorfBoundary.shp --shp-crs $(CRS)\
+	 --cut-on-boundary\
+	 --output $@
+
+scenarios/input/duesseldorf-$V-10pct.plans.xml.gz: scenarios/input/freight-trips.xml.gz
 
 	java -jar $(JAR) prepare trajectory-to-plans\
 	 --name prepare\
@@ -83,6 +90,7 @@ scenarios/input/duesseldorf-$V-10pct.plans.xml.gz: scenarios/input/freight-only-
 	java -jar $(JAR) prepare resolve-grid-coords\
 	 scenarios/input/prepare-25pct.plans.xml.gz\
 	 --grid-resolution 500\
+	 --input-crs $(CRS)\
 	 --landuse scenarios/input/landuse/landuse.shp\
 	 --output scenarios/input/prepare-25pct.plans.xml.gz
 
@@ -99,6 +107,10 @@ scenarios/input/duesseldorf-$V-10pct.plans.xml.gz: scenarios/input/freight-only-
 	 --sample-size 0.25\
 	 --samples 0.1 0.01\
 
+check:
+	java -jar $(JAR) analysis check-population scenarios/input/duesseldorf-$V-25pct.plans.xml.gz\
+	 --shp ../public-svn/matsim/scenarios/countries/de/duesseldorf/duesseldorf-v1.0/original-data/duesseldorf-area-shp/duesseldorf-area.shp\
+	 --input-crs EPSG:25832\
 
 # Aggregated target
 prepare: scenarios/input/duesseldorf-$V-10pct.plans.xml.gz scenarios/input/duesseldorf-$V-network-with-pt.xml.gz

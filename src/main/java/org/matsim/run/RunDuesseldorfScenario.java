@@ -8,12 +8,15 @@ import org.apache.commons.lang3.tuple.Triple;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.analysis.ModeAnalysisWithHomeLocationFilter;
+import org.matsim.analysis.ModeChoiceCoverageControlerListener;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.application.MATSimApplication;
 import org.matsim.application.analysis.AnalysisSummary;
+import org.matsim.application.analysis.CheckPopulation;
 import org.matsim.application.analysis.emissions.AirPollutionByVehicleCategory;
+import org.matsim.application.prepare.freight.ExtractRelevantFreightTrips;
 import org.matsim.application.prepare.population.*;
 import org.matsim.contrib.signals.otfvis.OTFVisWithSignalsLiveModule;
 import org.matsim.core.api.experimental.events.EventsManager;
@@ -39,11 +42,11 @@ import java.util.stream.Collectors;
 
 @CommandLine.Command(header = ":: Open Düsseldorf Scenario ::", version = RunDuesseldorfScenario.VERSION)
 @MATSimApplication.Prepare({
-		CreateNetwork.class, CreateTransitSchedule.class,
-		CreateCityCounts.class, ExtractEvents.class, CreateBAStCounts.class, TrajectoryToPlans.class,
+		CreateNetwork.class, CreateTransitSchedule.class, CreateCityCounts.class,
+		ExtractEvents.class, CreateBAStCounts.class, TrajectoryToPlans.class, ExtractRelevantFreightTrips.class,
 		GenerateShortDistanceTrips.class, MergePopulations.class, DownSamplePopulation.class, ResolveGridCoordinates.class
 })
-@MATSimApplication.Analysis({AnalysisSummary.class, ModeAnalysisWithHomeLocationFilter.class, AirPollutionByVehicleCategory.class})
+@MATSimApplication.Analysis({AnalysisSummary.class, CheckPopulation.class, ModeAnalysisWithHomeLocationFilter.class, AirPollutionByVehicleCategory.class})
 public class RunDuesseldorfScenario extends MATSimApplication {
 
 	private static final Logger log = LogManager.getLogger(RunDuesseldorfScenario.class);
@@ -93,13 +96,6 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 
 	@CommandLine.Option(names = "--no-mc", defaultValue = "false", description = "Disable mode choice as replanning strategy.")
 	private boolean noModeChoice;
-
-	@CommandLine.Option(names = {"--increase-storage-capacity"}, defaultValue = "false", description = "Increase the storage capcity of short links to at least 1")
-	private boolean increaseStorageCapacity;
-
-	@CommandLine.Option(names = {
-			"--infiniteCapacity"}, defaultValue = "false", description = "Testing the network under inf flow and storage capcity")
-	private boolean infiniteCapacity;
 
 	public RunDuesseldorfScenario() {
 		super("scenarios/input/duesseldorf-v1.0-1pct.config.xml");
@@ -203,12 +199,6 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 		config.plans().setHandlingOfPlansWithoutRoutingMode(
 				PlansConfigGroup.HandlingOfPlansWithoutRoutingMode.useMainModeIdentifier);
 
-		if (infiniteCapacity) {
-			config.qsim().setFlowCapFactor(100000);
-			config.qsim().setStorageCapFactor(100000);
-			addRunOption(config, "infiniteCapacity");
-		}
-
 		return config;
 	}
 
@@ -249,19 +239,6 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 					|| "traffic_light".equals(link.getToNode().getAttributes().getAttribute("type")))
 				link.setCapacity(link.getCapacity() * capacityFactor);
 
-			if (increaseStorageCapacity) {
-				// Enlarge the storage capcity of short link to at least 1 (by adding more
-				// lanes)
-				// TODO length of vehicle is set manualy here (it is not a big problem as the
-				// whole thing here a temporary solution anyway)
-				double originalStorageCapacity = link.getLength() / 7.5 * link.getNumberOfLanes() * sample.getSize()
-						/ 100.0;
-				int minimumLaneRequred = (int) (1 / originalStorageCapacity + 1);
-				if (originalStorageCapacity < 1) {
-					link.setNumberOfLanes(minimumLaneRequred);
-				}
-			}
-
 			Set<String> modes = link.getAllowedModes();
 
 			// allow freight traffic together with cars
@@ -285,6 +262,7 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 			@Override
 			public void install() {
 				install(new SwissRailRaptorModule());
+				addControlerListenerBinding().to(ModeChoiceCoverageControlerListener.class);
 			}
 		});
 
