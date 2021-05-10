@@ -74,7 +74,7 @@ scenarios/input/freight-trips.xml.gz: scenarios/input/duesseldorf-$V-network.xml
 	 --network ../shared-svn/projects/german-wide-freight/original-data/german-primary-road.network.xml.gz\
 	 --input-crs EPSG:5677\
 	 --target-crs $(CRS)\
-	 --shp ../public-svn/matsim/scenarios/countries/de/duesseldorf/duesseldorf-v1.0/input/shapeFiles/freight/newDusseldorfBoundary.shp --shp-crs $(CRS)\
+	 --shp ../public-svn/matsim/scenarios/countries/de/duesseldorf/duesseldorf-v1.0/input/shapeFiles/freight/newDusseldorfBoundary.shp\
 	 --cut-on-boundary\
 	 --output $@
 
@@ -84,7 +84,7 @@ scenarios/input/duesseldorf-$V-10pct.plans.xml.gz: scenarios/input/freight-trips
 	 --name prepare\
 	 --sample-size 0.25\
 	 --population ../../shared-svn/komodnext/matsim-input-files/20210216_duesseldorf_2/optimizedPopulation_filtered.xml.gz\
-	 --attributes  ../../shared-svn/komodnext/matsim-input-files/20210216_duesseldorf_2/personAttributes.xml.gz\
+	 --attributes ../../shared-svn/komodnext/matsim-input-files/20210216_duesseldorf_2/personAttributes.xml.gz\
 
 	# Landuse data must be copied to the specified location
 	java -jar $(JAR) prepare resolve-grid-coords\
