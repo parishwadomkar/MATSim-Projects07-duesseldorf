@@ -62,14 +62,14 @@ scenarios/input/sumo.net.xml: scenarios/input/network.osm
 
 scenarios/input/duesseldorf-$V-network.xml.gz: scenarios/input/sumo.net.xml
 	java -jar $(JAR) prepare network $< scenarios/input/herzogstrasse.net.xml\
-	 --capacities KoMoDnext_Q_at_LSA_SUMO-TUB_20201228.csv.gz\
+	 --capacities CV-100_AV-000.csv\
 	 --output $@
 
 scenarios/input/duesseldorf-$V-network-with-pt.xml.gz: scenarios/input/duesseldorf-$V-network.xml.gz scenarios/input/gtfs-vrs.zip scenarios/input/gtfs-vrr.zip scenarios/input/gtfs-avv.zip
 	java -jar $(JAR) prepare transit --network $< $(filter-out $<,$^)
 
 
-scenarios/input/freight-trips.xml.gz: scenarios/input/duesseldorf-$V-network.xml.gz
+scenarios/input/freight-trips.xml.gz:
 	java -jar $(JAR) prepare extract-freight-trips ../shared-svn/projects/german-wide-freight/v1.1/german-wide-freight-25pct.xml.gz\
 	 --network ../shared-svn/projects/german-wide-freight/original-data/german-primary-road.network.xml.gz\
 	 --input-crs EPSG:5677\

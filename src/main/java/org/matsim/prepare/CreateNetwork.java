@@ -150,7 +150,7 @@ public final class CreateNetwork implements MATSimAppCommand {
 		Object2DoubleMap<Triple<Id<Link>, Id<Link>, Id<Lane>>> result = new Object2DoubleOpenHashMap<>();
 
 		try (CSVParser parser = new CSVParser(IOUtils.getBufferedReader(input.toString()),
-				CSVFormat.DEFAULT.withDelimiter(';').withFirstRecordAsHeader())) {
+				CSVFormat.DEFAULT.withDelimiter(',').withFirstRecordAsHeader())) {
 
 			for (CSVRecord record : parser) {
 
