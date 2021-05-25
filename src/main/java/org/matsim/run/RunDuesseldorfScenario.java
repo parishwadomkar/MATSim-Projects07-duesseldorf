@@ -16,6 +16,7 @@ import org.matsim.application.MATSimApplication;
 import org.matsim.application.analysis.AnalysisSummary;
 import org.matsim.application.analysis.CheckPopulation;
 import org.matsim.application.analysis.emissions.AirPollutionByVehicleCategory;
+import org.matsim.application.options.SampleOptions;
 import org.matsim.application.prepare.freight.ExtractRelevantFreightTrips;
 import org.matsim.application.prepare.population.*;
 import org.matsim.contrib.signals.otfvis.OTFVisWithSignalsLiveModule;
@@ -42,7 +43,7 @@ import java.util.stream.Collectors;
 
 @CommandLine.Command(header = ":: Open Düsseldorf Scenario ::", version = RunDuesseldorfScenario.VERSION)
 @MATSimApplication.Prepare({
-		CreateNetwork.class, CreateTransitSchedule.class, CreateCityCounts.class,
+		CreateNetwork.class, CreateTransitSchedule.class, CreateCityCounts.class, CleanPopulation.class,
 		ExtractEvents.class, CreateBAStCounts.class, TrajectoryToPlans.class, ExtractRelevantFreightTrips.class,
 		GenerateShortDistanceTrips.class, MergePopulations.class, DownSamplePopulation.class, ResolveGridCoordinates.class
 })
@@ -73,8 +74,8 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 	@CommandLine.Option(names = "--otfvis", defaultValue = "false", description = "Enable OTFVis live view")
 	private boolean otfvis;
 
-	@CommandLine.ArgGroup(exclusive = true, multiplicity = "*..1")
-	private Sample sample = new Sample();
+	@CommandLine.Mixin
+	private SampleOptions sample = new SampleOptions(1, 10, 25);
 
 	@CommandLine.Option(names = {"--dc"}, defaultValue = "1", description = "Correct demand by downscaling links")
 	private double demandCorrection;
@@ -135,11 +136,9 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 		// Config changes for larger samples
 		if (sample.getSize() != 1) {
 
-			String postfix = "-" + sample.getSize() + "pct";
-
-			config.plans().setInputFile(config.plans().getInputFile().replace("-1pct", postfix));
-			config.controler().setRunId(config.controler().getRunId().replace("-1pct", postfix));
-			config.controler().setOutputDirectory(config.controler().getOutputDirectory().replace("-1pct", postfix));
+			config.plans().setInputFile(sample.adjustName(config.plans().getInputFile()));
+			config.controler().setRunId(sample.adjustName(config.controler().getRunId()));
+			config.controler().setOutputDirectory(sample.adjustName(config.controler().getOutputDirectory()));
 
 			// Further reduction of flow capacity because of difference in the absolute, number of trips by 1.78x
 			config.qsim().setFlowCapFactor(sample.getSize() / (100.0 * demandCorrection));

@@ -15,6 +15,9 @@ srv <- read_delim("srv.csv", delim = ";") %>%
   mutate(mode = fct_relevel(mode, "walk", "bike", "pt", "ride", "car")) %>%
   mutate(source="srv")
 
+srv_aggr <- srv %>% group_by(mode) %>%
+            summarise(trips=sum(trips) / sum(srv$trips))
+
 
 # Inhabitants times avg trip number
 
@@ -31,8 +34,8 @@ srv <- srv %>%
 # Read simulation
 #######################
 
-f <- "005.csv"
-sim_scale <- 10.0
+f <- "026.csv"
+sim_scale <- 4
 
 calib <- read_delim(f, delim = ";", trim_ws = T) %>%
   pivot_longer(cols=c("pt", "walk", "car", "bike", "ride"),
