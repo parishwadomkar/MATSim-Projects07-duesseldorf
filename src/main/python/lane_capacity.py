@@ -1,30 +1,51 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import os
+
 import pandas as pd
-from bs4 import BeautifulSoup
+import lxml.etree as ET
+from shapely.geometry import LineString
 
 #%%
 
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
+
+#%%
+
+def parse_ls(el):
+    shape = el.attrib['shape']
+    coords = [tuple(map(float, l.split(","))) for l in shape.split(" ")]
+    return LineString(coords)
+
 def read_network(sumo_network):
     """ Read sumo network from xml file. """
-
-    with open(sumo_network) as f:
-        network = BeautifulSoup(f, "lxml-xml")
         
     edges = {}
     junctions = {}
-    
-    for edge in network.findAll("edge"):
-        edges[edge["id"]] = edge
-    
-    for j in network.findAll("junction"):
-        junctions[j["id"]] = j
-    
-    
+    # count the indices of connections, assuming they are ordered
+    # this seems to be the case according to sumo doc. there is no further index attribute
+    idx = {}
     data = []
-
-    for conn in network.findAll("connection"):
+    
+    for _, elem in ET.iterparse(sumo_network, events=("end",),
+                                tag=('edge', 'junction', 'connection'),
+                                remove_blank_text=True):
+        
+        if elem.tag == "edge":
+            edges[elem.attrib["id"]] = elem
+            continue
+        elif elem.tag == "junction":
+            junctions[elem.attrib["id"]] = elem
+            idx[elem.attrib["id"]] = 0
+            continue
+        
+        if elem.tag != "connection":
+            continue
+    
+        # Rest is parsing connection        
+        conn = elem.attrib
     
         fromEdge = edges[conn["from"]]
         fromLane = fromEdge.find("lane", {"index": conn["fromLane"]})
@@ -32,34 +53,43 @@ def read_network(sumo_network):
         toEdge = edges[conn["to"]]
         toLane = toEdge.find("lane", {"index": conn["toLane"]})
         
-        junction = junctions[fromEdge["to"]]
+        junction = junctions[fromEdge.attrib["to"]]
+
+        request = junction.find("request", {"index": str(idx[fromEdge.attrib["to"]])})
+
+        # increase request index
+        idx[fromEdge.attrib["to"]] += 1
             
         d = {
-            "junctionId": junction["id"],
-            "fromEdgeId": fromEdge["id"],
-            "toEdgeId": toEdge["id"],
-            "fromLaneId":fromLane["id"],
-            "toLaneId": toLane["id"],
+            "junctionId": junction.attrib["id"],
+            "fromEdgeId": fromEdge.attrib["id"],
+            "toEdgeId": toEdge.attrib["id"],
+            "fromLaneId": fromLane.attrib["id"],
+            "toLaneId": toLane.attrib["id"],
             "dir": conn["dir"],
             "state": conn["state"],
-            "edgeType": fromEdge["type"],
-            "numLanes": len(fromEdge.findAll("lane")),
-            "priority": int(fromEdge["priority"]),
-            "speed": float(fromLane["speed"]),
-            "junctionType": junction["type"],
-            "junctionSize": len(junction.findAll("request"))
+            "edgeType": fromEdge.attrib["type"],
+            "fromLength": float(fromLane.attrib["length"]),
+            "numLanes": len(fromEdge.findall("lane")),
+            "numResponse": request.attrib["response"].count("1"),
+            "numFoes": request.attrib["foes"].count("1"),
+            "connDistance": parse_ls(fromLane).distance(parse_ls(toLane)),
+            "priority": int(fromEdge.attrib["priority"]),
+            "speed": float(fromLane.attrib["speed"]),
+            "junctionType": junction.attrib["type"],
+            "junctionSize": len(junction.findall("request"))
         }
-        
-        # TODO: request and foes
-        
+
         data.append(d)
         
     return pd.DataFrame(data)
 
 #%%
 
-network = read_network("../../../scenarios/input/sumo.net.xml")
+if __name__ == "__main__":
+
+    network = read_network("../../../scenarios/input/sumo.net.xml")
+    network.to_csv("lanes.csv.gz", index=False)
+
 
 #%%
-
-network.to_csv("lanes.csv.gz", index=False)
