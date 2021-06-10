@@ -302,8 +302,13 @@ public final class CreateNetwork implements MATSimAppCommand {
 	 */
 	private static Map<String, String> getTurnEfficiencyMap(Attributable obj) {
 		Map<String, String> cap = (Map<String, String>) obj.getAttributes().getAttribute(ATTR_TURN_EFFICIENCY);
+
 		if (cap == null) {
 			cap = new HashMap<>();
+			obj.getAttributes().putAttribute(ATTR_TURN_EFFICIENCY, cap);
+		} else if (cap.getClass().getName().contains("Unmodifiable")) {
+			// copy the map
+			cap = new HashMap<>(cap);
 			obj.getAttributes().putAttribute(ATTR_TURN_EFFICIENCY, cap);
 		}
 

@@ -204,20 +204,20 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 	@Override
 	protected void prepareScenario(Scenario scenario) {
 
+		if (laneCapacity != null) {
+
+			Object2DoubleMap<Triple<Id<Link>, Id<Link>, Id<Lane>>> map = CreateNetwork
+					.readLaneCapacities(laneCapacity);
+
+			log.info("Overwrite capacities from {}, containing {} lanes", laneCapacity, map.size());
+
+			int n = CreateNetwork.setLinkCapacities(scenario.getNetwork(), map);
+			int n2 = CreateNetwork.setLaneCapacities(scenario.getLanes(), map);
+
+			log.info("Unmatched links: {}, lanes: {}", n, n2);
+		}
+
 		if (!noLanes) {
-
-			if (laneCapacity != null) {
-
-				Object2DoubleMap<Triple<Id<Link>, Id<Link>, Id<Lane>>> map = CreateNetwork
-						.readLaneCapacities(laneCapacity);
-
-				log.info("Overwrite capacities from {}, containing {} lanes", laneCapacity, map.size());
-
-				int n = CreateNetwork.setLinkCapacities(scenario.getNetwork(), map);
-				int n2 = CreateNetwork.setLaneCapacities(scenario.getLanes(), map);
-
-				log.info("Unmatched links: {}, lanes: {}", n, n2);
-			}
 
 			// scale lane capacities
 			for (LanesToLinkAssignment l2l : scenario.getLanes().getLanesToLinkAssignments().values()) {
