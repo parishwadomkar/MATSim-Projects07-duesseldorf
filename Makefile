@@ -1,6 +1,6 @@
 
 JAR := matsim-duesseldorf-*.jar
-V := v1.5
+V := v1.6
 CRS := EPSG:25832
 
 export SUMO_HOME := $(abspath ../../sumo-1.8.0/)

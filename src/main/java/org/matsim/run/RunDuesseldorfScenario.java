@@ -15,7 +15,9 @@ import org.matsim.api.core.v01.network.Link;
 import org.matsim.application.MATSimApplication;
 import org.matsim.application.analysis.AnalysisSummary;
 import org.matsim.application.analysis.CheckPopulation;
+import org.matsim.application.analysis.LinkStats;
 import org.matsim.application.analysis.emissions.AirPollutionByVehicleCategory;
+import org.matsim.application.analysis.emissions.AirPollutionSpatialAggregation;
 import org.matsim.application.options.SampleOptions;
 import org.matsim.application.prepare.freight.ExtractRelevantFreightTrips;
 import org.matsim.application.prepare.population.*;
@@ -47,7 +49,10 @@ import java.util.stream.Collectors;
 		ExtractEvents.class, CreateBAStCounts.class, TrajectoryToPlans.class, ExtractRelevantFreightTrips.class,
 		GenerateShortDistanceTrips.class, MergePopulations.class, DownSamplePopulation.class, ResolveGridCoordinates.class
 })
-@MATSimApplication.Analysis({AnalysisSummary.class, CheckPopulation.class, ModeAnalysisWithHomeLocationFilter.class, AirPollutionByVehicleCategory.class})
+@MATSimApplication.Analysis({
+		AnalysisSummary.class, CheckPopulation.class, ModeAnalysisWithHomeLocationFilter.class,
+		AirPollutionByVehicleCategory.class, AirPollutionSpatialAggregation.class, LinkStats.class
+})
 public class RunDuesseldorfScenario extends MATSimApplication {
 
 	private static final Logger log = LogManager.getLogger(RunDuesseldorfScenario.class);
@@ -55,7 +60,7 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 	/**
 	 * Current version identifier.
 	 */
-	public static final String VERSION = "v1.5";
+	public static final String VERSION = "v1.6";
 
 	/**
 	 * Default coordinate system of the scenario.

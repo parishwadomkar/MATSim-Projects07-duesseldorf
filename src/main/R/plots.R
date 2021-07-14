@@ -92,7 +92,7 @@ ggsave(filename = "modal-split.png", path = "../imgs", g,
 
 split <- read.csv("modal_split.csv")
 
-trips <- read_delim("big/calib/travelTimeResults/validated_trips.csv", ";") %>%
+trips <- read_delim("validated_trips.csv", ";") %>%
           mutate(error=traveltimeActual / traveltimeValidated - 1) %>%
           filter(traveltimeValidated > 0)
 
@@ -110,7 +110,7 @@ p2 <- ggplot(data=trips, mapping = aes(x=traveltimeActual, y=traveltimeValidated
 
 show(p2)
 
-ggsave(filename = "trips.png", path = "../imgs", p2, width = 10, height = 5, device='png', dpi=300)
+ggsave(filename = "trips.png", p2, width = 10, height = 5, device='png', dpi=300)
 
 g <- arrangeGrob(p1, p2, ncol = 2)
 
