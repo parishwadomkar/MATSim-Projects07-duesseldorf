@@ -7,6 +7,7 @@ import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.matsim.analysis.DefaultAnalysisMainModeIdentifier;
 import org.matsim.analysis.ModeAnalysisWithHomeLocationFilter;
 import org.matsim.analysis.ModeChoiceCoverageControlerListener;
 import org.matsim.api.core.v01.Id;
@@ -32,6 +33,7 @@ import org.matsim.core.mobsim.qsim.AbstractQSimModule;
 import org.matsim.core.mobsim.qsim.qnetsimengine.ConfigurableQNetworkFactory;
 import org.matsim.core.mobsim.qsim.qnetsimengine.QLanesNetworkFactory;
 import org.matsim.core.mobsim.qsim.qnetsimengine.QNetworkFactory;
+import org.matsim.core.router.AnalysisMainModeIdentifier;
 import org.matsim.lanes.Lane;
 import org.matsim.lanes.LanesToLinkAssignment;
 import org.matsim.prepare.*;
@@ -40,6 +42,7 @@ import picocli.CommandLine;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -233,7 +236,8 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 		}
 
 		// scale free flow speed
-		for (Link link : scenario.getNetwork().getLinks().values()) {
+		Map<Id<Link>, ? extends Link> links = scenario.getNetwork().getLinks();
+		for (Link link : links.values()) {
 			if (link.getFreespeed() < 25.5 / 3.6) {
 				link.setFreespeed(link.getFreespeed() * freeFlowFactor);
 			}
@@ -254,6 +258,15 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 			}
 		}
 
+		// Fix the capacities of some links that are implausible in OSM
+
+		links.get(Id.createLinkId("314648993#0")).setCapacity(6000);
+		links.get(Id.createLinkId("239242545")).setCapacity(3000);
+		links.get(Id.createLinkId("145178328")).setCapacity(4000);
+		links.get(Id.createLinkId("157381200#0")).setCapacity(4000);
+		links.get(Id.createLinkId("145178328")).setCapacity(4000);
+
+
 	}
 
 	@Override
@@ -267,6 +280,7 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 			public void install() {
 				install(new SwissRailRaptorModule());
 				addControlerListenerBinding().to(ModeChoiceCoverageControlerListener.class);
+				bind(AnalysisMainModeIdentifier.class).to(DefaultAnalysisMainModeIdentifier.class);
 			}
 		});
 

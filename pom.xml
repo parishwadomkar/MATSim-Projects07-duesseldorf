@@ -55,12 +55,6 @@
             <url>https://mvn.slimjars.com</url>
         </repository>
 
-        <!-- Needed by DVRP -->
-        <repository>
-            <id>SBB</id>
-            <url>https://schweizerischebundesbahnen.bintray.com/simba.mvn</url>
-        </repository>
-
     </repositories>
 
     <distributionManagement>
