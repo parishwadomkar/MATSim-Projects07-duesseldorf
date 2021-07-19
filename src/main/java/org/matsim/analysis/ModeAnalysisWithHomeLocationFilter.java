@@ -6,7 +6,6 @@ import org.apache.logging.log4j.Logger;
 import org.matsim.analysis.modalSplitUserType.ModeAnalysis;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.application.MATSimAppCommand;
-import org.matsim.application.analysis.AnalysisSummary;
 import org.matsim.application.options.CrsOptions;
 import org.matsim.core.router.AnalysisMainModeIdentifier;
 import org.matsim.core.utils.collections.Tuple;
