@@ -4,6 +4,9 @@ import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 import com.google.common.collect.Sets;
 import com.google.inject.Provides;
 import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -39,11 +42,10 @@ import org.matsim.lanes.LanesToLinkAssignment;
 import org.matsim.prepare.*;
 import picocli.CommandLine;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @CommandLine.Command(header = ":: Open Düsseldorf Scenario ::", version = RunDuesseldorfScenario.VERSION)
@@ -85,19 +87,19 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 	@CommandLine.Mixin
 	private SampleOptions sample = new SampleOptions(1, 10, 25);
 
-	@CommandLine.Option(names = {"--dc"}, defaultValue = "1", description = "Correct demand by downscaling links")
+	@CommandLine.Option(names = {"--dc"}, defaultValue = "1", description = "Correct demand by downscaling links.")
 	private double demandCorrection;
 
-	@CommandLine.Option(names = {"--no-lanes"}, defaultValue = "false", description = "Deactivate the use of lane information")
+	@CommandLine.Option(names = {"--no-lanes"}, defaultValue = "false", description = "Deactivate the use of lane information.")
 	private boolean noLanes;
 
-	@CommandLine.Option(names = {"--lane-capacity"}, description = "CSV file with lane capacities", required = false)
+	@CommandLine.Option(names = {"--lane-capacity"}, description = "CSV file with lane capacities.", required = false)
 	private Path laneCapacity;
 
 	@CommandLine.Option(names = {"--capacity-factor"}, defaultValue = "1", description = "Scale lane capacity by this factor.")
 	private double capacityFactor;
 
-	@CommandLine.Option(names = {"--no-capacity-reduction"}, defaultValue = "false", description = "Disable reduction of flow capacity for taking turns")
+	@CommandLine.Option(names = {"--no-capacity-reduction"}, defaultValue = "false", description = "Disable reduction of flow capacity for taking turns.")
 	private boolean noCapacityReduction;
 
 	@CommandLine.Option(names = {"--free-flow"}, defaultValue = "1", description = "Scale up free flow speed of slow links.")
@@ -105,6 +107,12 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 
 	@CommandLine.Option(names = "--no-mc", defaultValue = "false", description = "Disable mode choice as replanning strategy.")
 	private boolean noModeChoice;
+
+	@CommandLine.Option(names = "--intersections", defaultValue = "intersections.csv", description = "Path to the ordered csv of scored intersections.")
+	private Path intersections;
+
+	@CommandLine.Option(names = "--top-n", defaultValue = "0", description = "If greater than 0, apply capacity modifications only to the top n intersections from the csv.")
+	private int topN;
 
 	public RunDuesseldorfScenario() {
 		super("scenarios/input/duesseldorf-v1.0-1pct.config.xml");
@@ -235,6 +243,24 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 			}
 		}
 
+		Set<Id<Link>> top = new HashSet<>();
+		if (topN > 0) {
+
+			log.info("Reading top {} intersections from {}", topN, intersections);
+
+			try (CSVParser parser = new CSVParser(Files.newBufferedReader(intersections), CSVFormat.DEFAULT.withFirstRecordAsHeader())) {
+
+				Iterator<CSVRecord> it = parser.iterator();
+				for (int i = 0; it.hasNext() && i < topN; i++) {
+					CSVRecord r = it.next();
+					top.add(Id.createLinkId(r.get("linkId")));
+				}
+
+			} catch (IOException e) {
+				throw new IllegalStateException("Could not read csv", e);
+			}
+		}
+
 		// scale free flow speed
 		Map<Id<Link>, ? extends Link> links = scenario.getNetwork().getLinks();
 		for (Link link : links.values()) {
@@ -244,8 +270,13 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 
 			// might be null, so avoid unboxing
 			if (link.getAttributes().getAttribute("junction") == Boolean.TRUE
-					|| "traffic_light".equals(link.getToNode().getAttributes().getAttribute("type")))
-				link.setCapacity(link.getCapacity() * capacityFactor);
+					|| "traffic_light".equals(link.getToNode().getAttributes().getAttribute("type"))) {
+
+				if (top.isEmpty() || top.contains(link.getId())) {
+					log.debug("Setting capacity for link: {}", link);
+					link.setCapacity(link.getCapacity() * capacityFactor);
+				}
+			}
 
 			Set<String> modes = link.getAllowedModes();
 
