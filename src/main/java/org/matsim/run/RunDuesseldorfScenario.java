@@ -185,13 +185,26 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 
 		if (noModeChoice) {
 
+			// reduce number of iterations when running no mode choice
+			config.controler().setLastIteration((int) (config.controler().getLastIteration() * 0.8));
+
 			List<StrategyConfigGroup.StrategySettings> strategies = config.strategy().getStrategySettings().stream()
-					.filter(s -> !s.getStrategyName().equals("SubtourModeChoice")).collect(Collectors.toList());
+					.filter(s -> !s.getStrategyName().equals("SubtourModeChoice") && !s.getStrategyName().equals("ChangeSingleTripMode")).collect(Collectors.toList());
 
 			config.strategy().clearStrategySettings();
+			strategies.forEach(s -> {
+				if (s.getStrategyName().equals("ReRoute"))
+					s.setDisableAfter((int) (config.controler().getLastIteration() * 0.8));
+				else if (s.getDisableAfter() > 0 && s.getDisableAfter() != Integer.MAX_VALUE)
+					s.setDisableAfter((int) (0.8 * s.getDisableAfter()));
+			});
+
 			strategies.forEach(s -> config.strategy().addStrategySettings(s));
 
+
 			addRunOption(config, "noMc");
+
+			log.info("Number of iterations reduced automatically by using no mode choice: {}", config.controler().getLastIteration());
 		}
 
 		if (noCapacityReduction)
