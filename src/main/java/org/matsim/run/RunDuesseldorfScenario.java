@@ -22,6 +22,7 @@ import org.matsim.application.analysis.CheckPopulation;
 import org.matsim.application.analysis.LinkStats;
 import org.matsim.application.analysis.emissions.AirPollutionByVehicleCategory;
 import org.matsim.application.analysis.emissions.AirPollutionSpatialAggregation;
+import org.matsim.application.analysis.noise.NoiseAnalysis;
 import org.matsim.application.options.SampleOptions;
 import org.matsim.application.prepare.freight.ExtractRelevantFreightTrips;
 import org.matsim.application.prepare.population.*;
@@ -56,7 +57,7 @@ import java.util.stream.Collectors;
 })
 @MATSimApplication.Analysis({
 		AnalysisSummary.class, CheckPopulation.class, ModeAnalysisWithHomeLocationFilter.class,
-		AirPollutionByVehicleCategory.class, AirPollutionSpatialAggregation.class, LinkStats.class
+		AirPollutionByVehicleCategory.class, AirPollutionSpatialAggregation.class, LinkStats.class, NoiseAnalysis.class
 })
 public class RunDuesseldorfScenario extends MATSimApplication {
 
