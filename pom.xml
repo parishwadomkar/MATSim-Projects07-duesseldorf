@@ -252,7 +252,12 @@
                             <outputFile>${project.basedir}/${project.build.finalName}.jar</outputFile>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>org.matsim.run.RunDuesseldorfScenario</mainClass>
+                                    <manifestEntries>
+                                        <Main-Class>org.matsim.run.RunDuesseldorfScenario</Main-Class>
+                                        <Specification-Vendor>org.matsim</Specification-Vendor>
+                                        <Implementation-Vendor>org.matsim</Implementation-Vendor>
+                                        <Implementation-Version>${project.version}</Implementation-Version>
+                                    </manifestEntries>
                                 </transformer>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
                             </transformers>
