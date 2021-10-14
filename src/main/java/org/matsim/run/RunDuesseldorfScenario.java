@@ -3,6 +3,7 @@ package org.matsim.run;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 import com.google.common.collect.Sets;
 import com.google.inject.Provides;
+import com.google.inject.Singleton;
 import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -10,15 +11,13 @@ import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.matsim.analysis.AnalysisSummary;
-import org.matsim.analysis.DefaultAnalysisMainModeIdentifier;
-import org.matsim.analysis.ModeAnalysisWithHomeLocationFilter;
 import org.matsim.analysis.ModeChoiceCoverageControlerListener;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.application.MATSimApplication;
 import org.matsim.application.analysis.CheckPopulation;
+import org.matsim.application.analysis.DefaultAnalysisMainModeIdentifier;
 import org.matsim.application.analysis.LinkStats;
 import org.matsim.application.analysis.emissions.AirPollutionByVehicleCategory;
 import org.matsim.application.analysis.emissions.AirPollutionSpatialAggregation;
@@ -56,8 +55,8 @@ import java.util.stream.Collectors;
 		GenerateShortDistanceTrips.class, MergePopulations.class, DownSamplePopulation.class, ResolveGridCoordinates.class
 })
 @MATSimApplication.Analysis({
-		AnalysisSummary.class, CheckPopulation.class, ModeAnalysisWithHomeLocationFilter.class,
-		AirPollutionByVehicleCategory.class, AirPollutionSpatialAggregation.class, LinkStats.class, NoiseAnalysis.class
+		CheckPopulation.class, AirPollutionByVehicleCategory.class, AirPollutionSpatialAggregation.class,
+		LinkStats.class, NoiseAnalysis.class
 })
 public class RunDuesseldorfScenario extends MATSimApplication {
 
@@ -325,6 +324,7 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 			public void install() {
 				install(new SwissRailRaptorModule());
 				addControlerListenerBinding().to(ModeChoiceCoverageControlerListener.class);
+				addControlerListenerBinding().to(TuneModeChoice.class).in(Singleton.class);
 				bind(AnalysisMainModeIdentifier.class).to(DefaultAnalysisMainModeIdentifier.class);
 			}
 		});
