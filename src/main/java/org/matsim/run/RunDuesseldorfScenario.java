@@ -36,6 +36,7 @@ import org.matsim.core.mobsim.qsim.AbstractQSimModule;
 import org.matsim.core.mobsim.qsim.qnetsimengine.ConfigurableQNetworkFactory;
 import org.matsim.core.mobsim.qsim.qnetsimengine.QLanesNetworkFactory;
 import org.matsim.core.mobsim.qsim.qnetsimengine.QNetworkFactory;
+import org.matsim.core.replanning.strategies.DefaultPlanStrategiesModule;
 import org.matsim.core.router.AnalysisMainModeIdentifier;
 import org.matsim.lanes.Lane;
 import org.matsim.lanes.LanesToLinkAssignment;
@@ -186,15 +187,16 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 		if (noModeChoice) {
 
 			// reduce number of iterations when running no mode choice
-			config.controler().setLastIteration((int) (config.controler().getLastIteration() * 0.8));
+			config.controler().setLastIteration((int) (config.controler().getLastIteration() * 0.7));
 
 			List<StrategyConfigGroup.StrategySettings> strategies = config.strategy().getStrategySettings().stream()
-					.filter(s -> !s.getStrategyName().equals("SubtourModeChoice") && !s.getStrategyName().equals("ChangeSingleTripMode")).collect(Collectors.toList());
+					.filter(s -> !s.getStrategyName().equals(DefaultPlanStrategiesModule.DefaultStrategy.SubtourModeChoice) &&
+							!s.getStrategyName().equals(DefaultPlanStrategiesModule.DefaultStrategy.ChangeSingleTripMode)).collect(Collectors.toList());
 
 			config.strategy().clearStrategySettings();
 			strategies.forEach(s -> {
 				if (s.getStrategyName().equals("ReRoute"))
-					s.setDisableAfter((int) (config.controler().getLastIteration() * 0.8));
+					s.setDisableAfter((int) (config.controler().getLastIteration() * 0.9));
 				else if (s.getDisableAfter() > 0 && s.getDisableAfter() != Integer.MAX_VALUE)
 					s.setDisableAfter((int) (0.8 * s.getDisableAfter()));
 			});
