@@ -107,7 +107,6 @@ public final class TuneModeChoice implements IterationStartsListener {
 			else
 				endAt = settings.getDisableAfter();
 
-			startAt = 0;
 			log.info("{} fadeout from iteration {} to {} with start weight {}", strategyName, startAt, endAt, initialWeight);
 		}
 
