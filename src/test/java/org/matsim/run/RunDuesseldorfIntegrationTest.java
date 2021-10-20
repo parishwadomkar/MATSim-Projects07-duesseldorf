@@ -3,6 +3,7 @@ package org.matsim.run;
 import java.util.Map;
 import java.util.Random;
 
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.matsim.api.core.v01.Id;
@@ -58,6 +59,7 @@ public class RunDuesseldorfIntegrationTest {
 				"--no-lanes", "--infiniteCapacity");
 	}
 
+	@Ignore
 	@Test
 	public final void runWithLaneTest() {
 		Config config = ConfigUtils.loadConfig("scenarios/input/duesseldorf-v1.0-1pct.config.xml");
