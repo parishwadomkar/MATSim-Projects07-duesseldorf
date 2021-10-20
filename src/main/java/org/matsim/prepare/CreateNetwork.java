@@ -132,12 +132,58 @@ public final class CreateNetwork implements MATSimAppCommand {
 
 		}
 
+		applyNetworkCorrections(network);
+
 		new NetworkWriter(network).write(output.toAbsolutePath().toString());
 		new LanesWriter(lanes).write(output.toAbsolutePath().toString().replace(".xml", "-lanes.xml"));
 
 		converter.writeGeometry(handler, output.toAbsolutePath().toString().replace(".xml", "-linkGeometries.csv").replace(".gz", ""));
 
 		return 0;
+	}
+
+	/**
+	 * Correct erroneous data from osm. Most common error is wrong number of lanes or wrong capacities.
+	 */
+	private void applyNetworkCorrections(Network network) {
+
+		Map<Id<Link>, ? extends Link> links = network.getLinks();
+		Link link = links.get(Id.createLinkId("-40686598#1"));
+
+		link.setCapacity(1600);
+		link.setNumberOfLanes(2);
+
+		link = links.get(Id.createLinkId("40686598#0"));
+		link.setNumberOfLanes(2);
+
+		link = links.get(Id.createLinkId("25494723"));
+		link.setCapacity(1000);
+
+		link = links.get(Id.createLinkId("7653201"));
+		link.setCapacity(3000);
+		link.setNumberOfLanes(2);
+
+		link = links.get(Id.createLinkId("340415235"));
+		link.setCapacity(3000);
+		link.setNumberOfLanes(2);
+
+
+		link = links.get(Id.createLinkId("34380173#0"));
+		link.setCapacity(1600);
+		link.setNumberOfLanes(2);
+
+		links.get(Id.createLinkId("85943638"));
+		link.setCapacity(3000);
+		link.setNumberOfLanes(2);
+
+
+		// Fix the capacities of some links that are implausible in OSM
+		links.get(Id.createLinkId("314648993#0")).setCapacity(6000);
+		links.get(Id.createLinkId("239242545")).setCapacity(3000);
+		links.get(Id.createLinkId("145178328")).setCapacity(4000);
+		links.get(Id.createLinkId("157381200#0")).setCapacity(4000);
+		links.get(Id.createLinkId("145178328")).setCapacity(4000);
+
 	}
 
 	/**

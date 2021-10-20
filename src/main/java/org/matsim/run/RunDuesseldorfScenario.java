@@ -4,6 +4,7 @@ import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 import com.google.common.collect.Sets;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+import com.google.inject.multibindings.Multibinder;
 import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -53,7 +54,8 @@ import java.util.stream.Collectors;
 @MATSimApplication.Prepare({
 		CreateNetwork.class, CreateTransitSchedule.class, CreateCityCounts.class, CleanPopulation.class,
 		ExtractEvents.class, CreateBAStCounts.class, TrajectoryToPlans.class, ExtractRelevantFreightTrips.class,
-		GenerateShortDistanceTrips.class, MergePopulations.class, DownSamplePopulation.class, ResolveGridCoordinates.class
+		GenerateShortDistanceTrips.class, MergePopulations.class, DownSamplePopulation.class, ResolveGridCoordinates.class,
+		ExtractHomeCoordinates.class
 })
 @MATSimApplication.Analysis({
 		CheckPopulation.class, AirPollutionByVehicleCategory.class, AirPollutionSpatialAggregation.class,
@@ -187,7 +189,7 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 		if (noModeChoice) {
 
 			// reduce number of iterations when running no mode choice
-			config.controler().setLastIteration((int) (config.controler().getLastIteration() * 0.7));
+			config.controler().setLastIteration((int) (config.controler().getLastIteration() * 0.6));
 
 			List<StrategyConfigGroup.StrategySettings> strategies = config.strategy().getStrategySettings().stream()
 					.filter(s -> !s.getStrategyName().equals(DefaultPlanStrategiesModule.DefaultStrategy.SubtourModeChoice) &&
@@ -304,15 +306,6 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 			}
 		}
 
-		// Fix the capacities of some links that are implausible in OSM
-
-		links.get(Id.createLinkId("314648993#0")).setCapacity(6000);
-		links.get(Id.createLinkId("239242545")).setCapacity(3000);
-		links.get(Id.createLinkId("145178328")).setCapacity(4000);
-		links.get(Id.createLinkId("157381200#0")).setCapacity(4000);
-		links.get(Id.createLinkId("145178328")).setCapacity(4000);
-
-
 	}
 
 	@Override
@@ -326,8 +319,24 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 			public void install() {
 				install(new SwissRailRaptorModule());
 				addControlerListenerBinding().to(ModeChoiceCoverageControlerListener.class);
-				addControlerListenerBinding().to(TuneModeChoice.class).in(Singleton.class);
 				bind(AnalysisMainModeIdentifier.class).to(DefaultAnalysisMainModeIdentifier.class);
+
+				addControlerListenerBinding().to(StrategyWeightFadeout.class).in(Singleton.class);
+
+				Multibinder<StrategyWeightFadeout.Schedule> schedules = Multibinder.newSetBinder(binder(), StrategyWeightFadeout.Schedule.class);
+
+				if (noModeChoice) {
+
+					schedules.addBinding().toInstance(new StrategyWeightFadeout.Schedule(DefaultPlanStrategiesModule.DefaultStrategy.ReRoute, "person", 0.6));
+
+
+				} else {
+					schedules.addBinding().toInstance(new StrategyWeightFadeout.Schedule(DefaultPlanStrategiesModule.DefaultStrategy.SubtourModeChoice, "person", 0.7, 0.85));
+					schedules.addBinding().toInstance(new StrategyWeightFadeout.Schedule(DefaultPlanStrategiesModule.DefaultStrategy.ReRoute, "person", 0.8));
+
+				}
+
+
 			}
 		});
 

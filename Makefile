@@ -105,7 +105,11 @@ scenarios/input/duesseldorf-$V-10pct.plans.xml.gz: scenarios/input/freight-trips
 
 	java -jar $(JAR) prepare downsample-population scenarios/input/duesseldorf-$V-25pct.plans.xml.gz\
 	 --sample-size 0.25\
-	 --samples 0.1 0.01\
+	 --samples 0.1 0.01
+
+	java -jar $(JAR) prepare extract-home-coordinates scenarios/input/duesseldorf-$V-25pct.plans.xml.gz\
+	 --csv scenarios/input/duesseldorf-$V-homes.csv
+
 
 check:
 	java -jar $(JAR) analysis check-population scenarios/input/duesseldorf-$V-25pct.plans.xml.gz\
