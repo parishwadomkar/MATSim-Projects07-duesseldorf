@@ -30,9 +30,9 @@ if os.path.exists("srv_raw.csv"):
 modes = ["walk", "car", "pt", "bike"]
 fixed_mode = "walk"
 initial = {
-    "bike": -2.3,
-    "pt": 0,
-    "car": 0
+    "bike": -1.9,
+    "pt": -0.7,
+    "car": -1.4
 }
 
 # Use adjusted modal split for our distance distribution
@@ -43,7 +43,7 @@ target = {
     "walk": 0.246461
 }
 
-region = gpd.read_file("../scenarios/metropole-ruhr-v1.0/original-data/duesseldorf-area-shp/duesseldorf-area.shp").set_crs("EPSG:25832")
+region = gpd.read_file("../scenarios/input/shapeFile/duesseldorf-area.shp").set_crs("EPSG:25832")
 
 
 def f(persons):

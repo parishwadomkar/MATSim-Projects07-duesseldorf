@@ -20,12 +20,14 @@ import org.matsim.application.MATSimApplication;
 import org.matsim.application.analysis.CheckPopulation;
 import org.matsim.application.analysis.DefaultAnalysisMainModeIdentifier;
 import org.matsim.application.analysis.LinkStats;
+import org.matsim.application.analysis.TravelTimeAnalysis;
 import org.matsim.application.analysis.emissions.AirPollutionByVehicleCategory;
 import org.matsim.application.analysis.emissions.AirPollutionSpatialAggregation;
 import org.matsim.application.analysis.noise.NoiseAnalysis;
 import org.matsim.application.options.SampleOptions;
 import org.matsim.application.prepare.freight.ExtractRelevantFreightTrips;
 import org.matsim.application.prepare.population.*;
+import org.matsim.application.prepare.pt.CreateTransitScheduleFromGtfs;
 import org.matsim.contrib.signals.otfvis.OTFVisWithSignalsLiveModule;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.config.Config;
@@ -52,14 +54,14 @@ import java.util.stream.Collectors;
 
 @CommandLine.Command(header = ":: Open Düsseldorf Scenario ::", version = RunDuesseldorfScenario.VERSION)
 @MATSimApplication.Prepare({
-		CreateNetwork.class, CreateTransitSchedule.class, CreateCityCounts.class, CleanPopulation.class,
+		CreateNetwork.class, CreateTransitScheduleFromGtfs.class, CreateCityCounts.class, CleanPopulation.class,
 		ExtractEvents.class, CreateBAStCounts.class, TrajectoryToPlans.class, ExtractRelevantFreightTrips.class,
 		GenerateShortDistanceTrips.class, MergePopulations.class, DownSamplePopulation.class, ResolveGridCoordinates.class,
 		ExtractHomeCoordinates.class
 })
 @MATSimApplication.Analysis({
 		CheckPopulation.class, AirPollutionByVehicleCategory.class, AirPollutionSpatialAggregation.class,
-		LinkStats.class, NoiseAnalysis.class
+		LinkStats.class, NoiseAnalysis.class, TravelTimeAnalysis.class
 })
 public class RunDuesseldorfScenario extends MATSimApplication {
 
