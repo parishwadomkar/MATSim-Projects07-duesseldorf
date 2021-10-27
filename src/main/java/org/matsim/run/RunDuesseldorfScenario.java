@@ -92,7 +92,7 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 	@CommandLine.Mixin
 	private SampleOptions sample = new SampleOptions(1, 10, 25);
 
-	@CommandLine.Option(names = {"--dc"}, defaultValue = "1", description = "Correct demand by downscaling links.")
+	@CommandLine.Option(names = {"--dc"}, defaultValue = "1.14", description = "Correct demand by downscaling links.")
 	private double demandCorrection;
 
 	@CommandLine.Option(names = {"--no-lanes"}, defaultValue = "false", description = "Deactivate the use of lane information.")
@@ -141,16 +141,16 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 			for (String act : List.of("home", "restaurant", "other", "visit", "errands", "educ_higher",
 					"educ_secondary")) {
 				config.planCalcScore()
-						.addActivityParams(new ActivityParams(act + "_" + ii + ".0").setTypicalDuration(ii));
+						.addActivityParams(new ActivityParams(act + "_" + ii).setTypicalDuration(ii));
 			}
 
-			config.planCalcScore().addActivityParams(new ActivityParams("work_" + ii + ".0").setTypicalDuration(ii)
+			config.planCalcScore().addActivityParams(new ActivityParams("work_" + ii).setTypicalDuration(ii)
 					.setOpeningTime(6. * 3600.).setClosingTime(20. * 3600.));
-			config.planCalcScore().addActivityParams(new ActivityParams("business_" + ii + ".0").setTypicalDuration(ii)
+			config.planCalcScore().addActivityParams(new ActivityParams("business_" + ii).setTypicalDuration(ii)
 					.setOpeningTime(6. * 3600.).setClosingTime(20. * 3600.));
-			config.planCalcScore().addActivityParams(new ActivityParams("leisure_" + ii + ".0").setTypicalDuration(ii)
+			config.planCalcScore().addActivityParams(new ActivityParams("leisure_" + ii).setTypicalDuration(ii)
 					.setOpeningTime(9. * 3600.).setClosingTime(27. * 3600.));
-			config.planCalcScore().addActivityParams(new ActivityParams("shopping_" + ii + ".0").setTypicalDuration(ii)
+			config.planCalcScore().addActivityParams(new ActivityParams("shopping_" + ii).setTypicalDuration(ii)
 					.setOpeningTime(8. * 3600.).setClosingTime(20. * 3600.));
 		}
 

@@ -73,7 +73,6 @@ scenarios/input/duesseldorf-$V-network-with-pt.xml.gz: scenarios/input/duesseldo
 	 --date "2020-06-08"\
 	 --include-stops "org.matsim.prepare.FilterTransitStops"
 
-
 scenarios/input/freight-trips.xml.gz:
 	java -jar $(JAR) prepare extract-freight-trips ../shared-svn/projects/german-wide-freight/v1.1/german-wide-freight-25pct.xml.gz\
 	 --network ../shared-svn/projects/german-wide-freight/original-data/german-primary-road.network.xml.gz\
