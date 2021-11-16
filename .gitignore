@@ -4,6 +4,7 @@ output/
 scenarios/output
 *.gz
 *.pbf
+*.csv
 
 .classpath
 .project
