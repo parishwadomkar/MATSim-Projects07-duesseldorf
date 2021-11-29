@@ -20,7 +20,7 @@ read_spatial <- function(f) {
   return(st_as_sf(df, coords = c("x", "y"), crs=25832))
 }
 
-df <- read_spatial("\\\\sshfs.kr\\rakow@cluster.math.tu-berlin.de\\net\\ils4\\matsim-duesseldorf\\experiment\\output\\base")
+df <- read_spatial("\\\\sshfs.kr\\rakow@cluster.math.tu-berlin.de\\net\\ils\\matsim-duesseldorf\\experiment\\output\\base")
 
 
 tmap_mode("plot")

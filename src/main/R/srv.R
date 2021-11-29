@@ -52,7 +52,7 @@ srv <- read_csv("srv_adj.csv") %>%
 # Read simulation
 #######################
 
-f <- "\\\\sshfs.kr\\rakow@cluster.math.tu-berlin.de\\net\\ils4\\matsim-duesseldorf\\experiment\\output\\cap-1.0"
+f <- "\\\\sshfs.kr\\rakow@cluster.math.tu-berlin.de\\net\\ils\\matsim-duesseldorf\\calibration\\runs\\005"
 sim_scale <- 4
 
 homes <- read_csv("../../../home.csv", col_types = cols(
