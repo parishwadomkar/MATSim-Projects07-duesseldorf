@@ -175,7 +175,7 @@ def go(scenario, network, edge, p_detector, args):
     shutil.rmtree(folder, ignore_errors=True)
     os.makedirs(folder, exist_ok=True)
 
-    traci.start([sumoBinary, "-n", network])
+    traci.start([sumoBinary, "-n", network], port=args.port)
 
     xr = ["%.2f" % s for s in np.arange(1, 2.1, 0.05)]
 
@@ -224,6 +224,7 @@ if __name__ == "__main__":
     parser.add_argument("--runner", type=str, default="runner0", help="Runner id")
 
     args = parser.parse_args()
+    args.port = sumolib.miscutils.getFreeSocketPort()
 
     net = sumolib.net.readNet(args.network, withConnections=False, withInternal=False, withFoes=False)
 
