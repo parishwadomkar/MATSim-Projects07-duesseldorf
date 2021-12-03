@@ -4,6 +4,7 @@
 import argparse
 import os
 import sys
+import shutil
 from os.path import join, basename
 
 from utils import init_env, write_scenario, filter_network
@@ -61,7 +62,7 @@ def writeRouteFile(f_name, departLane, arrivalLane, edges, veh, qCV, qAV, qACV):
         f.write(text.format(**context))
 
 
-def writeDetectorFile(f_name, output, detectorName, lane, laneNr, output_file):
+def writeDetectorFile(f_name, output, lane, laneNr, scale):
     text = """<?xml version="1.0" encoding="UTF-8"?>
 
 	<additional xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/additional_file.xsd">
@@ -69,15 +70,14 @@ def writeDetectorFile(f_name, output, detectorName, lane, laneNr, output_file):
 	</additional>
 
 	""" % "\n".join(
-        """<e1Detector id="{detectorName}_%d" lane="{lane}_%d" pos="-15" friendlyPos="true" freq="10.00" file="{output_file}_%d.xml"/>""" % (i, i, i)
+        """<e1Detector id="detector_%d" lane="{lane}_%d" pos="-15" friendlyPos="true" freq="10.00" file="{output_file}_%d.xml"/>""" % (i, i, i)
         for i in
         range(laneNr))
 
     context = {
-        "detectorName": detectorName,
         "lane": lane,
         "laneNr": laneNr,
-        "output_file": join("..", output, output_file)
+        "output_file": join(output, scale, "lane")
     }
 
     with open(f_name, 'w') as f:
@@ -88,7 +88,7 @@ def read_result(folder, edge, scale):
     data = []
 
     for f in os.listdir(folder):
-        if not f.startswith(edge) or not f.endswith(".xml"):
+        if not f.endswith(".xml"):
             continue
 
         total = 0
@@ -106,9 +106,10 @@ def read_result(folder, edge, scale):
             total += float(elem.attrib["nVehContrib"])
 
         data.append({
+            "edgeId": edge,
             "laneId": f.replace(".xml", ""),
             "flow": total * (3660 / (end - 60)),
-            "scale": scale,
+            "scale": float(scale),
             "count": total
         })
 
@@ -139,8 +140,7 @@ def run(args, edges):
         i += 1
         print("Edge id: ", edge._id)
         print("Number of lanes: ", edge.getLaneNumber(), "speed:", edge.getSpeed())
-        file_name = (str(edge._id))  # use as detector output name
-        detector_name = (str(edge._id))  # use as detector name
+
         laneNr = edge.getLaneNumber()  # nr of lanes
 
         cap = capacity_estimate(edge.getSpeed()) * 0.9 * laneNr
@@ -153,42 +153,56 @@ def run(args, edges):
 
         filter_network(netconvert, args.network, edge, p_network)
         writeRouteFile(p_routes, "best", "current", edge._id, cap, qCV, qAV, qACV)
-        writeDetectorFile(p_detector, args.output, detector_name, edge._id, laneNr, file_name)
-
         p_scenario = join(args.runner, "scenario.sumocfg")
 
         write_scenario(p_scenario, basename(p_network), basename(p_routes), basename(p_detector), args.step_length)
 
-        go(p_scenario, p_network, edge._id, args)
+        go(p_scenario, p_network, edge, p_detector, args)
         print("####################################################################")
         print("[" + str(i) + " / " + str(args.to_node - args.from_node) + "]")
 
 
-def go(scenario, network, edge, args):
+def go(scenario, network, edge, p_detector, args):
     # while traci.simulation.getMinExpectedNumber() > 0:
 
     end = int(600 * (1 / args.step_length))
 
     res = []
 
+    folder = join(args.runner, "detector")
+
+    # Clean old data
+    shutil.rmtree(folder, ignore_errors=True)
+    os.makedirs(folder, exist_ok=True)
+
+    traci.start([sumoBinary, "-n", network])
+
+    xr = ["%.2f" % s for s in np.arange(1, 2.1, 0.05)]
+
     # Simulate different scales
-    for scale in np.arange(1, 2.1, 0.05):
+    for scale in xr:
 
-        print("Running scale", scale)
+        #print("Running scale", scale)
 
-        traci.start([sumoBinary, "-c", scenario, "--scale", str(scale)])
+        os.makedirs(join(folder, scale), exist_ok=True)
+        writeDetectorFile(p_detector, "detector", edge._id, edge.getLaneNumber(), scale)
+
+        # Load scenario with desired traffic scaling
+        traci.load(["-c", scenario, "--scale", scale])
+
         try:
             for step in range(0, end):
                 traci.simulationStep()
         except Exception as e:
             print(e)
 
-        traci.close()
+    traci.close()
 
-        res.extend(read_result(args.output, edge, scale))
+    for scale in xr:
+        res.extend(read_result(join(folder, scale), edge._id, scale))
 
     df = pd.DataFrame(res)
-    df.to_csv(join(args.output, "%s.csv" % edge), index=False)
+    df.to_csv(join(args.output, "%s.csv" % edge._id), index=False)
 
     sys.stdout.flush()
 
