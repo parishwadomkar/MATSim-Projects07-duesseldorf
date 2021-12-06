@@ -116,7 +116,7 @@ def read_edges(sumo_network):
             "to": v.attrib["to"],
             "type": v.attrib["type"],
             "speed": lane.attrib["speed"],
-            "length": lane.attrib["length"],
+            "length": float(lane.attrib["length"]),
             "numLanes": len(v.findall("lane")),
             "fromType": f.attrib["type"],
             "toType": t.attrib["type"]
@@ -140,7 +140,7 @@ res = []
 
 for k, _ in edges.speed.value_counts()[:-4].items():
     
-    df = edges[ (edges.speed == k) & (edges.fromType == "priority") & (edges.toType == "priority")]
+    df = edges[ (edges.speed == k) & (edges.fromType == "priority") & (edges.toType == "priority") & (edges.length > 80) & (edges.length < 400)]
     
     for s, v2 in df.numLanes.value_counts().items():
     

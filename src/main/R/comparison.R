@@ -23,50 +23,52 @@ theme_set(theme_Publication(18))
 
 source("utils.R")
 
+shape <- st_read("../../../../public-svn/matsim/scenarios/countries/de/duesseldorf/duesseldorf-v1.0/original-data/duesseldorf-area-shp/duesseldorf-area.shp", crs=25832)
+
 agg_sim <- function(df) {
   
-  agg <- df %>%
-    group_by(`trip main mode`) %>%
-    summarise(distance=sum(`travel distance (trip) [m]`), time=sum(`travel time (trip) [sec]`), n=n()) %>%
+  agg <- st_join(shape, df, left=F, join=st_contains) %>%
+    st_set_geometry(NULL) %>%
+    mutate(traveled_time=as.double(trav_time)) %>%
+    group_by(main_mode) %>%
+    summarise(distance=sum(traveled_distance), time=sum(traveled_time), n=n()) %>%
     mutate(share=n/sum(n))
   
   return(agg)
 }
 
 
-base <- read_sim("\\\\sshfs.kr\\rakow@cluster.math.tu-berlin.de\\net\\ils4\\matsim-duesseldorf\\experiment\\output\\base")
-#base <- read_sim("\\\\sshfs.kr\\rakow@cluster.math.tu-berlin.de\\net\\ils4\\matsim-duesseldorf\\old\\output\\v1.5-25pct-026-dc_1.14-no-lanes")
+base <- read_trips("\\\\sshfs.kr\\rakow@cluster.math.tu-berlin.de\\net\\ils\\matsim-duesseldorf\\calibration\\runs\\003")
 
 
-cap06_mc <- read_sim("\\\\sshfs.kr\\rakow@cluster.math.tu-berlin.de\\net\\ils4\\matsim-duesseldorf\\experiment\\output\\cap-0.6")
-cap08_mc <- read_sim("\\\\sshfs.kr\\rakow@cluster.math.tu-berlin.de\\net\\ils4\\matsim-duesseldorf\\experiment\\output\\cap-0.8")
-cap12_mc <- read_sim("\\\\sshfs.kr\\rakow@cluster.math.tu-berlin.de\\net\\ils4\\matsim-duesseldorf\\experiment\\output\\cap-1.2")
-cap14_mc <- read_sim("\\\\sshfs.kr\\rakow@cluster.math.tu-berlin.de\\net\\ils4\\matsim-duesseldorf\\experiment\\output\\cap-1.4")
-
-
-cap06 <- read_sim("\\\\sshfs.kr\\rakow@cluster.math.tu-berlin.de\\net\\ils4\\matsim-duesseldorf\\experiment\\output\\cap-0.6-noMC")
-cap08 <- read_sim("\\\\sshfs.kr\\rakow@cluster.math.tu-berlin.de\\net\\ils4\\matsim-duesseldorf\\experiment\\output\\cap-0.8-noMC")
-cap12 <- read_sim("\\\\sshfs.kr\\rakow@cluster.math.tu-berlin.de\\net\\ils4\\matsim-duesseldorf\\experiment\\output\\cap-1.2-noMC")
-cap14 <- read_sim("\\\\sshfs.kr\\rakow@cluster.math.tu-berlin.de\\net\\ils4\\matsim-duesseldorf\\experiment\\output\\cap-1.4-noMC")
-
-
-av100 <- read_sim("\\\\sshfs.kr\\rakow@cluster.math.tu-berlin.de\\net\\ils4\\matsim-duesseldorf\\experiment\\output\\av-100-noMC")
-av50 <- read_sim("\\\\sshfs.kr\\rakow@cluster.math.tu-berlin.de\\net\\ils4\\matsim-duesseldorf\\experiment\\output\\av-050-noMC")
-
+cav100 <- read_trips("\\\\sshfs.kr\\rakow@cluster.math.tu-berlin.de\\net\\ils\\matsim-duesseldorf\\experiment\\output\\cav-100")
+cav100_nmc <- read_trips("\\\\sshfs.kr\\rakow@cluster.math.tu-berlin.de\\net\\ils\\matsim-duesseldorf\\experiment\\output\\cav-100-noMc")
 
 base_agg <- agg_sim(base)
-cap06_mc_agg <- agg_sim(cap06_mc)
-cap08_mc_agg <- agg_sim(cap08_mc)
-cap12_mc_agg <- agg_sim(cap12_mc)
-cap14_mc_agg <- agg_sim(cap14_mc)
-cap06_agg <- agg_sim(cap06)
-cap08_agg <- agg_sim(cap08)
-cap12_agg <- agg_sim(cap12)
-cap14_agg <- agg_sim(cap14)
+cav100_agg <- agg_sim(cav100)
+cav100_nmc_agg <- agg_sim(cav100_nmc)
+
+##################################
+
+change <- left_join(st_drop_geometry(base), st_drop_geometry(cav100), by="trip_id") %>%
+    filter(main_mode.x != "freight" & !is.na(main_mode.y)) %>%
+    filter(main_mode.x != "ride") %>%
+    group_by(main_mode.x, main_mode.y) %>%
+    summarise(n=n()) %>%
+    rename(source=main_mode.x, target=main_mode.y)
+
+write_delim(x = change, file = "shift.csv", delim = ";")
+
+ggplot(data = change,
+       aes(axis1 = source, axis2 = target,
+           y = n)) +
+  scale_x_discrete(limits = c("Source", "Target"), expand = c(.2, .05)) +
+  geom_alluvium() +
+  geom_stratum() +
+  geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
+  theme_minimal()
 
 
-av100_agg <- agg_sim(av100)
-av50_agg <- agg_sim(av50)
 
 ##################################
 

@@ -19,21 +19,6 @@ public class RunDuesseldorfIntegrationTest {
 	@Rule
 	public MatsimTestUtils utils = new MatsimTestUtils();
 
-	@Test
-	public final void runToyExamplePopulationTest() {
-		Config config = ConfigUtils.loadConfig("scenarios/input/duesseldorf-v1.0-1pct.config.xml");
-		config.plans().setInputFile("../../test/input/v1.3-testing.plans.xml");
-		config.network().setInputFile("https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/"
-				+ "de/duesseldorf/duesseldorf-v1.0/input/duesseldorf-v1.0-network-with-freight.xml.gz");
-		config.controler().setLastIteration(1);
-		config.strategy().setFractionOfIterationsToDisableInnovation(1);
-		config.controler()
-				.setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
-		config.controler().setOutputDirectory(utils.getOutputDirectory());
-
-		MATSimApplication.execute(RunDuesseldorfScenario.class, config,
-				"--no-lanes", "--infiniteCapacity");
-	}
 
 	@Test
 	public final void runNoLaneTestNormalCapacity() {
