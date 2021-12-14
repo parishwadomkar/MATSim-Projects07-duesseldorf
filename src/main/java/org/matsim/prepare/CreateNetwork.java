@@ -150,7 +150,7 @@ public final class CreateNetwork implements MATSimAppCommand {
 		Map<Id<Link>, ? extends Link> links = network.getLinks();
 
 		// Double lanes for these links
-		List<String> incorrect = Lists.newArrayList(
+		List<String> incorrectList = Lists.newArrayList(
 				"-40686598#1",
 				"40686598#0",
 				"25494723",
@@ -162,7 +162,40 @@ public final class CreateNetwork implements MATSimAppCommand {
 				"38873048",
 				"-705697329#0",
 				"-367884913",
-				"93248576");
+				"93248576",
+				"289987955#0",//Breitestrasse / Heinrich Heine Allee links
+				"289987955#2",
+				"4683309#0",
+				"145433835",
+				"46146378#2",
+				"33381974",
+				"621308781#0",
+				"145503631#0",
+				"149902601",
+				"147614221",
+				"147614263",
+				"420530117", // Kasernstrasse
+				"40348110#4",
+				"40348110#2",
+				"40348110#0",
+				"142697893#0",
+				"223447139", // Oststrasse
+				"-223447139",
+				"145424749#0",
+				"-145424749#2",
+				"149291901#0", // Karl-Rudolfstrasse
+				"85388142#0",
+				"144531009#0",
+				"23157292#0", // Corneliusstrasse
+				"207108052#0",
+				"219116943#0",
+				"239250010#2" // Brunnenstrasse
+
+				);
+
+		//dump it into a set in case we accidentally repeat an id in the list
+		Set<String> incorrect = new HashSet<>();
+		incorrect.addAll(incorrectList);
 
 		for (String l : incorrect) {
 			Link link = links.get(Id.createLinkId(l));
