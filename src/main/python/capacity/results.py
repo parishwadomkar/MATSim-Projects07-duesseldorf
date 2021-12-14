@@ -25,6 +25,10 @@ if __name__ == "__main__":
 
     df = pd.concat(data)
 
-    df = df.groupby(["edgeId", "laneId"]).agg(flow=("flow", "max"))
+    if "scale" in df.columns:
+        df = df.groupby(["edgeId", "laneId"]).agg(flow=("flow", "max"))
+        df.to_csv(args.result, index=True)
 
-    df.to_csv(args.result, index=True)
+    else:
+
+        df.to_csv(args.result, index=False)

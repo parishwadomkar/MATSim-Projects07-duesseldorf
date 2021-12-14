@@ -5,13 +5,18 @@ import com.google.common.collect.Sets;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.multibindings.Multibinder;
+import it.unimi.dsi.fastutil.doubles.Double2DoubleMap;
+import it.unimi.dsi.fastutil.doubles.Double2DoubleOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
+import it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.matsim.analysis.ACVModel;
+import org.matsim.analysis.AVModel;
 import org.matsim.analysis.ModeChoiceCoverageControlerListener;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
@@ -43,7 +48,10 @@ import org.matsim.core.replanning.strategies.DefaultPlanStrategiesModule;
 import org.matsim.core.router.AnalysisMainModeIdentifier;
 import org.matsim.lanes.Lane;
 import org.matsim.lanes.LanesToLinkAssignment;
-import org.matsim.prepare.*;
+import org.matsim.prepare.CreateBAStCounts;
+import org.matsim.prepare.CreateCityCounts;
+import org.matsim.prepare.CreateNetwork;
+import org.matsim.prepare.ExtractEvents;
 import picocli.CommandLine;
 
 import java.io.IOException;
@@ -118,6 +126,9 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 
 	@CommandLine.Option(names = "--top-n", defaultValue = "0", description = "If greater than 0, apply capacity modifications only to the top n intersections from the csv.")
 	private int topN;
+
+	@CommandLine.ArgGroup(exclusive = false, heading = "Flow capacity models\n")
+	private final VehicleShare vehicleShare = new VehicleShare();
 
 	public RunDuesseldorfScenario() {
 		super("scenarios/input/duesseldorf-v1.0-1pct.config.xml");
@@ -239,17 +250,52 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 	@Override
 	protected void prepareScenario(Scenario scenario) {
 
+		// scale free flow speed
+		Map<Id<Link>, ? extends Link> links = scenario.getNetwork().getLinks();
+		Object2DoubleMap<Triple<Id<Link>, Id<Link>, Id<Lane>>> capacities = new Object2DoubleOpenHashMap<>();
+
 		if (laneCapacity != null) {
 
-			Object2DoubleMap<Triple<Id<Link>, Id<Link>, Id<Lane>>> map = CreateNetwork
-					.readLaneCapacities(laneCapacity);
+			capacities = CreateNetwork.readLaneCapacities(laneCapacity);
 
-			log.info("Overwrite capacities from {}, containing {} lanes", laneCapacity, map.size());
+			log.info("Overwrite capacities from {}, containing {} lanes", laneCapacity, capacities.size());
 
-			int n = CreateNetwork.setLinkCapacities(scenario.getNetwork(), map);
-			int n2 = CreateNetwork.setLaneCapacities(scenario.getLanes(), map);
+			int n = CreateNetwork.setLinkCapacities(scenario.getNetwork(), capacities);
+			int n2 = CreateNetwork.setLaneCapacities(scenario.getLanes(), capacities);
 
 			log.info("Unmatched links: {}, lanes: {}", n, n2);
+		}
+
+		if (vehicleShare.av > 0 || vehicleShare.acv > 0) {
+
+			if (vehicleShare.av > 0 && vehicleShare.acv > 0)
+				 throw new IllegalArgumentException("Only one of ACV or AV can be greater 0!");
+
+			log.info("Applying model AV {} ACV {} to road capacities", vehicleShare.av, vehicleShare.acv);
+
+			Set<Id<Link>> ids = capacities.keySet().stream().map(Triple::getLeft).collect(Collectors.toSet());
+
+			Double2DoubleMap factors = new Double2DoubleOpenHashMap();
+
+			for (Link link : links.values()) {
+
+				// Skip links that have been set already
+				if (ids.contains(link.getId()))
+					continue;
+
+				if (link.getAttributes().getAttribute("allowed_speed") == null)
+					continue;
+
+				double cap = 1d;
+				if (vehicleShare.av > 0)
+					cap = factors.computeIfAbsent( (double) link.getAttributes().getAttribute("allowed_speed"), s -> AVModel.score(s, vehicleShare.av / 100d));
+				else
+					cap = factors.computeIfAbsent( (double) link.getAttributes().getAttribute("allowed_speed"), s -> ACVModel.score(s, vehicleShare.acv / 100d));
+
+				link.setCapacity(link.getCapacity() * cap);
+			}
+
+			log.trace("Done");
 		}
 
 		if (!noLanes) {
@@ -280,8 +326,6 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 			}
 		}
 
-		// scale free flow speed
-		Map<Id<Link>, ? extends Link> links = scenario.getNetwork().getLinks();
 		for (Link link : links.values()) {
 			if (link.getFreespeed() < 25.5 / 3.6) {
 				link.setFreespeed(link.getFreespeed() * freeFlowFactor);
@@ -400,5 +444,15 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 			throw new IllegalStateException("No sample size defined");
 		}
 
+	}
+
+	/**
+	 * Option group to modify capacities based on vehicle share model
+	 */
+	static final class VehicleShare {
+		@CommandLine.Option(names = "--av", defaultValue = "0", description = "Percentage of automated vehicles. [0, 100]")
+		int av;
+		@CommandLine.Option(names = "--acv", defaultValue = "0", description = "Percentage of autonomous connected vehicles. [0, 100]")
+		int acv;
 	}
 }

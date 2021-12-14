@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 # @author  Angelo Banse, Ronald Nippold, Christian Rakow
 
-import argparse
 import os
 import sys
 import shutil
 from os.path import join, basename
 
-from utils import init_env, write_scenario, filter_network
+from utils import init_env, create_args, write_scenario, filter_network
 
 init_env()
 
@@ -120,9 +119,6 @@ def run(args, edges):
     # saveToFile(edges_ids,"junctions.json")
     i = 0
 
-    os.makedirs(args.output, exist_ok=True)
-    os.makedirs(args.runner, exist_ok=True)
-
     total = args.cv + args.av + args.acv
 
     qCV = (args.cv / total)
@@ -131,11 +127,10 @@ def run(args, edges):
 
     print("Running vehicle shares cv: %.2f, av: %.2f, acv: %.2f" % (qCV, qAV, qACV))
 
-    if args.to_node <= 0:
-        args.to_node = len(edges)
+    if args.to_index <= 0:
+        args.to_index = len(edges)
 
-    #    for edge in list:		### total: 1636
-    for x in range(args.from_node, args.to_node):
+    for x in range(args.from_index, args.to_index):
         edge = edges[x]
         i += 1
         print("Edge id: ", edge._id)
@@ -159,7 +154,7 @@ def run(args, edges):
 
         go(p_scenario, p_network, edge, p_detector, args)
         print("####################################################################")
-        print("[" + str(i) + " / " + str(args.to_node - args.from_node) + "]")
+        print("[" + str(i) + " / " + str(args.to_index - args.from_index) + "]")
 
 
 def go(scenario, network, edge, p_detector, args):
@@ -208,37 +203,19 @@ def go(scenario, network, edge, p_detector, args):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Determine edge volumes with SUMO")
 
-    parser.add_argument("edges", nargs=1, help="Path to edge csv")
-
-    parser.add_argument("--output", default="output", help="Path to output folder")
-    parser.add_argument("--network", type=str, default="../../../../scenarios/input/sumo.net.xml", help="Path to network file")
-    parser.add_argument("--veh", type=int, default=5000, help="Vehicles per hour per lane simulate")
-    parser.add_argument("--cv", type=float, default=1, help="Share of conventional vehicles")
-    parser.add_argument("--av", type=float, default=0, help="Share of automated vehicles")
-    parser.add_argument("--acv", type=float, default=0, help="Share of connected autonomous vehicles")
-    parser.add_argument("--from-node", type=int, default=0, help="Start from edge number")
-    parser.add_argument("--to-node", type=int, default=-1, help="Stop at edge number")
-    parser.add_argument("--step-length", type=float, default=0.2, help="SUMO step length")
-    parser.add_argument("--runner", type=str, default="runner0", help="Runner id")
-
-    args = parser.parse_args()
-    args.port = sumolib.miscutils.getFreeSocketPort()
+    args = create_args("Determine edge volumes with SUMO")
 
     net = sumolib.net.readNet(args.network, withConnections=False, withInternal=False, withFoes=False)
 
     allEdges = net.getEdges()  # all type of edges
 
-    selection = set(pd.read_csv(args.edges[0]).edgeId)
+    selection = set(pd.read_csv(args.input[0]).edgeId)
 
     # select if edges in net file
     edges = [edge for edge in allEdges if edge._id in selection]
 
-    # storing edge id's in list
-    edge_ids = [edge._id for edge in edges]
-
-    print("Total number of edges:", len(edge_ids))
-    print("Processing: ", args.from_node, ' to ', args.to_node)
+    print("Total number of edges:", len(edges))
+    print("Processing: ", args.from_index, ' to ', args.to_index)
 
     run(args, edges)
