@@ -28,8 +28,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 @CommandLine.Command(
-        name = "TODO",
-        description = "TODO"
+        name = "prepare-noise-barrier",
+        description = "Prepare noise barrier file based on the noise barrier data"
 )
 public class PrepareNoiseBarrierFile implements MATSimAppCommand {
     @CommandLine.Option(names = "--noise-barrier", description = "Noise barrier file", required = true)
