@@ -84,12 +84,74 @@ def read_network(sumo_network):
         
     return pd.DataFrame(data)
 
+def read_edges(sumo_network):
+    data = []
+    
+    edges = {}
+    junctions = {}
+
+    for _, elem in ET.iterparse(sumo_network, events=("end",),
+                                tag=('edge', 'junction'),
+                                remove_blank_text=True):
+
+        if elem.tag == "edge":
+            edges[elem.attrib["id"]] = elem
+            continue
+        elif elem.tag == "junction":
+            junctions[elem.attrib["id"]] = elem
+            continue
+
+
+    for k,v in edges.items():
+        
+        lane = v.find("lane")
+        
+        f = junctions[v.attrib["from"]]
+        t = junctions[v.attrib["to"]]
+
+        data.append({
+            "edgeId": k,
+            "name": v.attrib.get("name", ""),
+            "from": v.attrib["from"],
+            "to": v.attrib["to"],
+            "type": v.attrib["type"],
+            "speed": lane.attrib["speed"],
+            "length": float(lane.attrib["length"]),
+            "numLanes": len(v.findall("lane")),
+            "fromType": f.attrib["type"],
+            "toType": t.attrib["type"]
+        })
+
+    return pd.DataFrame(data)
+
 #%%
 
 if __name__ == "__main__":
 
-    network = read_network("../../../scenarios/input/sumo.net.xml")
-    network.to_csv("lanes.csv.gz", index=False)
+    #network = read_network("../../../scenarios/input/sumo.net.xml")
+    edges = read_edges("../../../scenarios/input/sumo.net.xml")
+
+    #network.to_csv("lanes.csv.gz", index=False)
 
 
 #%%
+
+res = []
+
+for k, _ in edges.speed.value_counts()[:-4].items():
+    
+    df = edges[ (edges.speed == k) & (edges.fromType == "priority") & (edges.toType == "priority") & (edges.length > 80) & (edges.length < 400)]
+    
+    for s, v2 in df.numLanes.value_counts().items():
+    
+        if v2 < 5: continue
+    
+        sf = df[df.numLanes == s]
+        
+        res.append(sf.sample(5))
+    
+
+#%%
+
+pd.concat(res).to_csv("sample.csv", index=False)
+

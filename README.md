@@ -1,6 +1,6 @@
 # The MATSim Open Düsseldorf Scenario
 
-[![Build Status](https://travis-ci.com/matsim-scenarios/matsim-duesseldorf.svg?branch=master)](https://travis-ci.org/matsim-scenarios/matsim-duesseldorf)
+![Build Status](https://github.com/matsim-scenarios/matsim-duesseldorf/workflows/build/badge.svg?branch=master)
 ![license](https://img.shields.io/github/license/matsim-scenarios/matsim-duesseldorf.svg)
 ![JDK](https://img.shields.io/badge/JDK-11+-green.svg)
 

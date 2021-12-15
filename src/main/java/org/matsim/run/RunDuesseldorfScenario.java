@@ -3,29 +3,36 @@ package org.matsim.run;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 import com.google.common.collect.Sets;
 import com.google.inject.Provides;
+import com.google.inject.Singleton;
+import com.google.inject.multibindings.Multibinder;
+import it.unimi.dsi.fastutil.doubles.Double2DoubleMap;
+import it.unimi.dsi.fastutil.doubles.Double2DoubleOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
+import it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.matsim.analysis.AnalysisSummary;
-import org.matsim.analysis.DefaultAnalysisMainModeIdentifier;
-import org.matsim.analysis.ModeAnalysisWithHomeLocationFilter;
+import org.matsim.analysis.ACVModel;
+import org.matsim.analysis.AVModel;
 import org.matsim.analysis.ModeChoiceCoverageControlerListener;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.application.MATSimApplication;
 import org.matsim.application.analysis.CheckPopulation;
-import org.matsim.application.analysis.LinkStats;
+import org.matsim.application.analysis.DefaultAnalysisMainModeIdentifier;
 import org.matsim.application.analysis.emissions.AirPollutionByVehicleCategory;
 import org.matsim.application.analysis.emissions.AirPollutionSpatialAggregation;
 import org.matsim.application.analysis.noise.NoiseAnalysis;
+import org.matsim.application.analysis.traffic.LinkStats;
+import org.matsim.application.analysis.travelTimeValidation.TravelTimeAnalysis;
 import org.matsim.application.options.SampleOptions;
 import org.matsim.application.prepare.freight.ExtractRelevantFreightTrips;
 import org.matsim.application.prepare.population.*;
+import org.matsim.application.prepare.pt.CreateTransitScheduleFromGtfs;
 import org.matsim.contrib.signals.otfvis.OTFVisWithSignalsLiveModule;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.config.Config;
@@ -37,10 +44,14 @@ import org.matsim.core.mobsim.qsim.AbstractQSimModule;
 import org.matsim.core.mobsim.qsim.qnetsimengine.ConfigurableQNetworkFactory;
 import org.matsim.core.mobsim.qsim.qnetsimengine.QLanesNetworkFactory;
 import org.matsim.core.mobsim.qsim.qnetsimengine.QNetworkFactory;
+import org.matsim.core.replanning.strategies.DefaultPlanStrategiesModule;
 import org.matsim.core.router.AnalysisMainModeIdentifier;
 import org.matsim.lanes.Lane;
 import org.matsim.lanes.LanesToLinkAssignment;
-import org.matsim.prepare.*;
+import org.matsim.prepare.CreateBAStCounts;
+import org.matsim.prepare.CreateCityCounts;
+import org.matsim.prepare.CreateNetwork;
+import org.matsim.prepare.ExtractEvents;
 import picocli.CommandLine;
 
 import java.io.IOException;
@@ -51,13 +62,14 @@ import java.util.stream.Collectors;
 
 @CommandLine.Command(header = ":: Open Düsseldorf Scenario ::", version = RunDuesseldorfScenario.VERSION)
 @MATSimApplication.Prepare({
-		CreateNetwork.class, CreateTransitSchedule.class, CreateCityCounts.class, CleanPopulation.class,
+		CreateNetwork.class, CreateTransitScheduleFromGtfs.class, CreateCityCounts.class, CleanPopulation.class,
 		ExtractEvents.class, CreateBAStCounts.class, TrajectoryToPlans.class, ExtractRelevantFreightTrips.class,
-		GenerateShortDistanceTrips.class, MergePopulations.class, DownSamplePopulation.class, ResolveGridCoordinates.class
+		GenerateShortDistanceTrips.class, MergePopulations.class, DownSamplePopulation.class, ResolveGridCoordinates.class,
+		ExtractHomeCoordinates.class
 })
 @MATSimApplication.Analysis({
-		AnalysisSummary.class, CheckPopulation.class, ModeAnalysisWithHomeLocationFilter.class,
-		AirPollutionByVehicleCategory.class, AirPollutionSpatialAggregation.class, LinkStats.class, NoiseAnalysis.class
+		CheckPopulation.class, AirPollutionByVehicleCategory.class, AirPollutionSpatialAggregation.class,
+		LinkStats.class, NoiseAnalysis.class, TravelTimeAnalysis.class
 })
 public class RunDuesseldorfScenario extends MATSimApplication {
 
@@ -88,7 +100,7 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 	@CommandLine.Mixin
 	private SampleOptions sample = new SampleOptions(1, 10, 25);
 
-	@CommandLine.Option(names = {"--dc"}, defaultValue = "1", description = "Correct demand by downscaling links.")
+	@CommandLine.Option(names = {"--dc"}, defaultValue = "1.14", description = "Correct demand by downscaling links.")
 	private double demandCorrection;
 
 	@CommandLine.Option(names = {"--no-lanes"}, defaultValue = "false", description = "Deactivate the use of lane information.")
@@ -115,6 +127,9 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 	@CommandLine.Option(names = "--top-n", defaultValue = "0", description = "If greater than 0, apply capacity modifications only to the top n intersections from the csv.")
 	private int topN;
 
+	@CommandLine.ArgGroup(exclusive = false, heading = "Flow capacity models\n")
+	private final VehicleShare vehicleShare = new VehicleShare();
+
 	public RunDuesseldorfScenario() {
 		super("scenarios/input/duesseldorf-v1.0-1pct.config.xml");
 	}
@@ -137,16 +152,16 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 			for (String act : List.of("home", "restaurant", "other", "visit", "errands", "educ_higher",
 					"educ_secondary")) {
 				config.planCalcScore()
-						.addActivityParams(new ActivityParams(act + "_" + ii + ".0").setTypicalDuration(ii));
+						.addActivityParams(new ActivityParams(act + "_" + ii).setTypicalDuration(ii));
 			}
 
-			config.planCalcScore().addActivityParams(new ActivityParams("work_" + ii + ".0").setTypicalDuration(ii)
+			config.planCalcScore().addActivityParams(new ActivityParams("work_" + ii).setTypicalDuration(ii)
 					.setOpeningTime(6. * 3600.).setClosingTime(20. * 3600.));
-			config.planCalcScore().addActivityParams(new ActivityParams("business_" + ii + ".0").setTypicalDuration(ii)
+			config.planCalcScore().addActivityParams(new ActivityParams("business_" + ii).setTypicalDuration(ii)
 					.setOpeningTime(6. * 3600.).setClosingTime(20. * 3600.));
-			config.planCalcScore().addActivityParams(new ActivityParams("leisure_" + ii + ".0").setTypicalDuration(ii)
+			config.planCalcScore().addActivityParams(new ActivityParams("leisure_" + ii).setTypicalDuration(ii)
 					.setOpeningTime(9. * 3600.).setClosingTime(27. * 3600.));
-			config.planCalcScore().addActivityParams(new ActivityParams("shopping_" + ii + ".0").setTypicalDuration(ii)
+			config.planCalcScore().addActivityParams(new ActivityParams("shopping_" + ii).setTypicalDuration(ii)
 					.setOpeningTime(8. * 3600.).setClosingTime(20. * 3600.));
 		}
 
@@ -187,15 +202,16 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 		if (noModeChoice) {
 
 			// reduce number of iterations when running no mode choice
-			config.controler().setLastIteration((int) (config.controler().getLastIteration() * 0.8));
+			config.controler().setLastIteration((int) (config.controler().getLastIteration() * 0.6));
 
 			List<StrategyConfigGroup.StrategySettings> strategies = config.strategy().getStrategySettings().stream()
-					.filter(s -> !s.getStrategyName().equals("SubtourModeChoice") && !s.getStrategyName().equals("ChangeSingleTripMode")).collect(Collectors.toList());
+					.filter(s -> !s.getStrategyName().equals(DefaultPlanStrategiesModule.DefaultStrategy.SubtourModeChoice) &&
+							!s.getStrategyName().equals(DefaultPlanStrategiesModule.DefaultStrategy.ChangeSingleTripMode)).collect(Collectors.toList());
 
 			config.strategy().clearStrategySettings();
 			strategies.forEach(s -> {
 				if (s.getStrategyName().equals("ReRoute"))
-					s.setDisableAfter((int) (config.controler().getLastIteration() * 0.8));
+					s.setDisableAfter((int) (config.controler().getLastIteration() * 0.9));
 				else if (s.getDisableAfter() > 0 && s.getDisableAfter() != Integer.MAX_VALUE)
 					s.setDisableAfter((int) (0.8 * s.getDisableAfter()));
 			});
@@ -234,17 +250,52 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 	@Override
 	protected void prepareScenario(Scenario scenario) {
 
+		// scale free flow speed
+		Map<Id<Link>, ? extends Link> links = scenario.getNetwork().getLinks();
+		Object2DoubleMap<Triple<Id<Link>, Id<Link>, Id<Lane>>> capacities = new Object2DoubleOpenHashMap<>();
+
 		if (laneCapacity != null) {
 
-			Object2DoubleMap<Triple<Id<Link>, Id<Link>, Id<Lane>>> map = CreateNetwork
-					.readLaneCapacities(laneCapacity);
+			capacities = CreateNetwork.readLaneCapacities(laneCapacity);
 
-			log.info("Overwrite capacities from {}, containing {} lanes", laneCapacity, map.size());
+			log.info("Overwrite capacities from {}, containing {} lanes", laneCapacity, capacities.size());
 
-			int n = CreateNetwork.setLinkCapacities(scenario.getNetwork(), map);
-			int n2 = CreateNetwork.setLaneCapacities(scenario.getLanes(), map);
+			int n = CreateNetwork.setLinkCapacities(scenario.getNetwork(), capacities);
+			int n2 = CreateNetwork.setLaneCapacities(scenario.getLanes(), capacities);
 
 			log.info("Unmatched links: {}, lanes: {}", n, n2);
+		}
+
+		if (vehicleShare.av > 0 || vehicleShare.acv > 0) {
+
+			if (vehicleShare.av > 0 && vehicleShare.acv > 0)
+				 throw new IllegalArgumentException("Only one of ACV or AV can be greater 0!");
+
+			log.info("Applying model AV {} ACV {} to road capacities", vehicleShare.av, vehicleShare.acv);
+
+			Set<Id<Link>> ids = capacities.keySet().stream().map(Triple::getLeft).collect(Collectors.toSet());
+
+			Double2DoubleMap factors = new Double2DoubleOpenHashMap();
+
+			for (Link link : links.values()) {
+
+				// Skip links that have been set already
+				if (ids.contains(link.getId()))
+					continue;
+
+				if (link.getAttributes().getAttribute("allowed_speed") == null)
+					continue;
+
+				double cap = 1d;
+				if (vehicleShare.av > 0)
+					cap = factors.computeIfAbsent( (double) link.getAttributes().getAttribute("allowed_speed"), s -> AVModel.score(s, vehicleShare.av / 100d));
+				else
+					cap = factors.computeIfAbsent( (double) link.getAttributes().getAttribute("allowed_speed"), s -> ACVModel.score(s, vehicleShare.acv / 100d));
+
+				link.setCapacity(link.getCapacity() * cap);
+			}
+
+			log.trace("Done");
 		}
 
 		if (!noLanes) {
@@ -275,8 +326,6 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 			}
 		}
 
-		// scale free flow speed
-		Map<Id<Link>, ? extends Link> links = scenario.getNetwork().getLinks();
 		for (Link link : links.values()) {
 			if (link.getFreespeed() < 25.5 / 3.6) {
 				link.setFreespeed(link.getFreespeed() * freeFlowFactor);
@@ -303,15 +352,6 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 			}
 		}
 
-		// Fix the capacities of some links that are implausible in OSM
-
-		links.get(Id.createLinkId("314648993#0")).setCapacity(6000);
-		links.get(Id.createLinkId("239242545")).setCapacity(3000);
-		links.get(Id.createLinkId("145178328")).setCapacity(4000);
-		links.get(Id.createLinkId("157381200#0")).setCapacity(4000);
-		links.get(Id.createLinkId("145178328")).setCapacity(4000);
-
-
 	}
 
 	@Override
@@ -326,6 +366,23 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 				install(new SwissRailRaptorModule());
 				addControlerListenerBinding().to(ModeChoiceCoverageControlerListener.class);
 				bind(AnalysisMainModeIdentifier.class).to(DefaultAnalysisMainModeIdentifier.class);
+
+				addControlerListenerBinding().to(StrategyWeightFadeout.class).in(Singleton.class);
+
+				Multibinder<StrategyWeightFadeout.Schedule> schedules = Multibinder.newSetBinder(binder(), StrategyWeightFadeout.Schedule.class);
+
+				if (noModeChoice) {
+
+					schedules.addBinding().toInstance(new StrategyWeightFadeout.Schedule(DefaultPlanStrategiesModule.DefaultStrategy.ReRoute, "person", 0.6));
+
+
+				} else {
+					schedules.addBinding().toInstance(new StrategyWeightFadeout.Schedule(DefaultPlanStrategiesModule.DefaultStrategy.SubtourModeChoice, "person", 0.65, 0.85));
+					schedules.addBinding().toInstance(new StrategyWeightFadeout.Schedule(DefaultPlanStrategiesModule.DefaultStrategy.ReRoute, "person", 0.78));
+
+				}
+
+
 			}
 		});
 
@@ -387,5 +444,15 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 			throw new IllegalStateException("No sample size defined");
 		}
 
+	}
+
+	/**
+	 * Option group to modify capacities based on vehicle share model
+	 */
+	static final class VehicleShare {
+		@CommandLine.Option(names = "--av", defaultValue = "0", description = "Percentage of automated vehicles. [0, 100]")
+		int av;
+		@CommandLine.Option(names = "--acv", defaultValue = "0", description = "Percentage of autonomous connected vehicles. [0, 100]")
+		int acv;
 	}
 }

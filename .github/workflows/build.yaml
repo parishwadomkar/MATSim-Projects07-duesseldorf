@@ -16,12 +16,14 @@ jobs:
           - org.matsim.run.**
           - org.matsim.analysis.**
 
+        java: [11, 13]
+
     steps:
       - uses: actions/checkout@v2
       - name: Set up JDK
         uses: actions/setup-java@v1
         with:
-          java-version: 11
+          java-version: ${{ matrix.java }}
           architecture: x64
 
       - name: Cache Maven packages

@@ -1,5 +1,6 @@
 package org.matsim.prepare;
 
+import com.google.common.collect.Lists;
 import it.unimi.dsi.fastutil.Pair;
 import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
 import it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap;
@@ -33,7 +34,6 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.Callable;
 
 import static org.matsim.run.RunDuesseldorfScenario.VERSION;
 import static org.matsim.run.TurnDependentFlowEfficiencyCalculator.ATTR_TURN_EFFICIENCY;
@@ -132,12 +132,60 @@ public final class CreateNetwork implements MATSimAppCommand {
 
 		}
 
+		applyNetworkCorrections(network);
+
 		new NetworkWriter(network).write(output.toAbsolutePath().toString());
 		new LanesWriter(lanes).write(output.toAbsolutePath().toString().replace(".xml", "-lanes.xml"));
 
 		converter.writeGeometry(handler, output.toAbsolutePath().toString().replace(".xml", "-linkGeometries.csv").replace(".gz", ""));
 
 		return 0;
+	}
+
+	/**
+	 * Correct erroneous data from osm. Most common error is wrong number of lanes or wrong capacities.
+	 */
+	private void applyNetworkCorrections(Network network) {
+
+		Map<Id<Link>, ? extends Link> links = network.getLinks();
+
+		// Double lanes for these links
+		List<String> incorrect = Lists.newArrayList(
+				"-40686598#1",
+				"40686598#0",
+				"25494723",
+				"7653201",
+				"340415235",
+				"34380173#0",
+				"85943638",
+				"18708266",
+				"38873048",
+				"-705697329#0",
+				"-367884913",
+				"93248576");
+
+		for (String l : incorrect) {
+			Link link = links.get(Id.createLinkId(l));
+			link.setNumberOfLanes(link.getNumberOfLanes() * 2);
+			link.setCapacity(link.getCapacity() * 2);
+		}
+
+		// Fix the capacities of some links that are implausible in OSM
+		links.get(Id.createLinkId("314648993#0")).setCapacity(6000);
+		links.get(Id.createLinkId("239242545")).setCapacity(3000);
+		links.get(Id.createLinkId("800035681")).setCapacity(3000);
+		links.get(Id.createLinkId("145178328")).setCapacity(4000);
+		links.get(Id.createLinkId("157381200#0")).setCapacity(4000);
+		links.get(Id.createLinkId("145178328")).setCapacity(4000);
+		links.get(Id.createLinkId("45252320")).setCapacity(4000);
+		links.get(Id.createLinkId("375678205#0")).setCapacity(1200);
+		links.get(Id.createLinkId("40816222#0")).setCapacity(1200);
+		links.get(Id.createLinkId("233307305#0")).setCapacity(1200);
+		links.get(Id.createLinkId("23157292#0")).setCapacity(1200);
+		links.get(Id.createLinkId("-33473202#1")).setCapacity(1200);
+		links.get(Id.createLinkId("26014655#0")).setCapacity(1200);
+		links.get(Id.createLinkId("32523335#5")).setCapacity(1200);
+
 	}
 
 	/**

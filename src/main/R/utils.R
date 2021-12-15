@@ -19,6 +19,26 @@ read_sim <- function(f) {
   #return(st_as_sf(df, wkt="wkt", crs=25832))
 }
 
+read_trips <- function(f, crs=25832) {
+  trips <- read_delim(list.files(f, pattern = "*.output_trips.csv.gz", full.names = T, include.dirs = F), delim = ";", trim_ws = T, 
+                      col_types = cols(
+                        person = col_character()
+                      )) %>%
+    mutate(wkt=paste("LINESTRING(", start_x, start_y, ",", end_x, end_y, ")"))
+  
+  return(st_as_sf(trips, wkt="wkt", crs=crs) %>% select(-wkt))
+}
+
+read_legs <- function(f, crs=25832) {
+  legs <- read_delim(list.files(f, pattern = "*.output_legs.csv.gz", full.names = T, include.dirs = F), delim = ";", trim_ws = T, 
+                      col_types = cols(
+                        person = col_character()
+                      )) %>%
+    mutate(wkt=paste("LINESTRING(", start_x, start_y, ",", end_x, end_y, ")"))
+  
+  return(st_as_sf(legs, wkt="wkt", crs=crs)) %>% select(-wkt)
+}
+
 read_link_stats <- function(f) {
   
   p <- file.path(f, "linkStats.csv.gz")
