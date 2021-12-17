@@ -162,7 +162,10 @@ public final class CreateNetwork implements MATSimAppCommand {
 				"38873048",
 				"-705697329#0",
 				"-367884913",
-				"93248576");
+				"93248576",
+				"30694311#0",
+				"432816762"
+		);
 
 		for (String l : incorrect) {
 			Link link = links.get(Id.createLinkId(l));
@@ -179,18 +182,18 @@ public final class CreateNetwork implements MATSimAppCommand {
 		// Fix the capacities of some links that are implausible in OSM
 		increaseCapacity(links, "314648993#0", 6000);
 		increaseCapacity(links, "239242545", 3000);
-		increaseCapacity(links, "800035681",3000);
-		increaseCapacity(links, "145178328",4000);
-		increaseCapacity(links, "157381200#0",4000);
-		increaseCapacity(links, "145178328",4000);
-		increaseCapacity(links, "45252320",4000);
-		increaseCapacity(links, "375678205#0",1200);
-		increaseCapacity(links, "40816222#0",1200);
-		increaseCapacity(links, "233307305#0",1200);
-		increaseCapacity(links, "23157292#0",1200);
-		increaseCapacity(links, "-33473202#1",1200);
-		increaseCapacity(links, "26014655#0",1200);
-		increaseCapacity(links, "32523335#5",1200);
+		increaseCapacity(links, "800035681", 3000);
+		increaseCapacity(links, "145178328", 4000);
+		increaseCapacity(links, "157381200#0", 4000);
+		increaseCapacity(links, "145178328", 4000);
+		increaseCapacity(links, "45252320", 4000);
+		increaseCapacity(links, "375678205#0", 1200);
+		increaseCapacity(links, "40816222#0", 1200);
+		increaseCapacity(links, "233307305#0", 1200);
+		increaseCapacity(links, "23157292#0", 1200);
+		increaseCapacity(links, "-33473202#1", 1200);
+		increaseCapacity(links, "26014655#0", 1200);
+		increaseCapacity(links, "32523335#5", 1200);
 
 	}
 
