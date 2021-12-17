@@ -9,6 +9,7 @@ import org.matsim.application.MATSimAppCommand;
 import org.matsim.application.options.ShpOptions;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.utils.geometry.geotools.MGC;
+import org.matsim.run.RunDuesseldorfScenario;
 import picocli.CommandLine;
 
 import java.io.BufferedWriter;
@@ -24,7 +25,7 @@ public class ExtractIntersections implements MATSimAppCommand {
 	private static final Logger log = LogManager.getLogger(ExtractIntersections.class);
 
 	@CommandLine.Parameters(arity = "0..1", paramLabel = "INPUT", description = "Path to network",
-			defaultValue = "scenarios/input/duesseldorf-v1.5-network.xml.gz")
+			defaultValue = "scenarios/input/duesseldorf-" + RunDuesseldorfScenario.VERSION + "-network.xml.gz")
 	private Path network;
 
 	@CommandLine.Mixin

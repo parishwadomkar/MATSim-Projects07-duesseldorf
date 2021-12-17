@@ -1,6 +1,6 @@
 
 JAR := matsim-duesseldorf-*.jar
-V := v1.6
+V := v1.7
 CRS := EPSG:25832
 
 export SUMO_HOME := $(abspath ../../sumo-1.8.0/)
@@ -13,7 +13,7 @@ $(JAR):
 
 # Required files
 scenarios/input/network.osm.pbf:
-	curl https://download.geofabrik.de/europe/germany-210101.osm.pbf\
+	curl https://download.geofabrik.de/europe/germany-211216.osm.pbf\
 	  -o scenarios/input/network.osm.pbf
 
 scenarios/input/gtfs-vrr.zip:
