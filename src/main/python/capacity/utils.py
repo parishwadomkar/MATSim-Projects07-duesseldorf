@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 
+import argparse
 import os
 import sys
-import argparse
-
 from subprocess import call
 
 
@@ -23,7 +22,9 @@ def create_args(description):
     parser.add_argument("--from-index", type=int, default=0, help="Start from number")
     parser.add_argument("--to-index", type=int, default=-1, help="Stop at number")
     parser.add_argument("--step-length", type=float, default=0.2, help="SUMO step length")
-    parser.add_argument("--runner", type=str, default="runner0", help="Runner id")
+    parser.add_argument("--runner", type=str, default="runner0", help="Runner name")
+    parser.add_argument("--runner-total", type=int, default=0, help="Total number of runners")
+    parser.add_argument("--runner-index", type=int, default=0, help="Runner index")
 
     args = parser.parse_args()
     args.port = sumolib.miscutils.getFreeSocketPort()
@@ -32,6 +33,19 @@ def create_args(description):
     os.makedirs(args.runner, exist_ok=True)
 
     return args
+
+
+def init_workload(args, items):
+    """ Set indices for the runner automatically """
+    if args.runner_total <= 1:
+        return
+
+    n = len(items)
+    step = n // args.runner_total
+
+    args.from_index = args.runner_index * step
+    args.to_index = min((args.runner_index + 1) * step, n)
+
 
 def init_env():
     if 'SUMO_HOME' in os.environ:
@@ -64,7 +78,6 @@ def write_scenario(f, network_file, route_file, additional_file, step_length=0.2
 
 
 def filter_network(netconvert, netfile, edge, output, args=None):
-
     if isinstance(edge, list):
         x = [s[0] for e in edge for s in e.getShape()]
         y = [s[1] for e in edge for s in e.getShape()]
