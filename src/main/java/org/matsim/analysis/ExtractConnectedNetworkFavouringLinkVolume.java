@@ -12,6 +12,7 @@ import org.matsim.api.core.v01.events.LinkLeaveEvent;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.network.NetworkWriter;
+import org.matsim.api.core.v01.network.Node;
 import org.matsim.api.core.v01.population.*;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.events.EventsManagerImpl;
@@ -179,6 +180,15 @@ public class ExtractConnectedNetworkFavouringLinkVolume {
 		new NetworkWriter(outNet).write(args[1]);
 		new NetworkCleaner().run(args[1], args[2]);
 
+		Network cleanNet = NetworkUtils.createNetwork(ConfigUtils.createConfig());
+		new MatsimNetworkReader(cleanNet).readFile(args[2]);
+
+		Network newNetwork = NetworkUtils.createNetwork(ConfigUtils.createConfig());
+		new MatsimNetworkReader(newNetwork).readFile(args[2]);
+
+		removeLinksFromTargetNetworkNotInSourceNetwork(cleanNet,newNetwork);
+		new NetworkWriter(newNetwork).write(args[3]);
+
 	}
 
 	public static void correctNetworkLinks(Network network) {
@@ -262,5 +272,17 @@ public class ExtractConnectedNetworkFavouringLinkVolume {
 		});
 		return outputNetwork;
 	}
+
+	public static void removeLinksFromTargetNetworkNotInSourceNetwork(Network source, Network target) {
+		List<Link> badLinks =
+				target.getLinks().values().stream().filter(link -> link.getAllowedModes().contains(TransportMode.pt) ?
+						false :
+						source.getLinks().get(link.getId()) == null).collect(Collectors.toList());
+		badLinks.forEach(link -> target.removeLink(link.getId()));
+		List<? extends Node> badNodes = target.getNodes().values().stream().filter(node -> node.getInLinks().size() == 0 && node.getOutLinks().size() == 0).collect(Collectors.toList());
+		badNodes.forEach(node -> target.getNodes().remove(node.getId()));
+
+	}
+
 
 }
