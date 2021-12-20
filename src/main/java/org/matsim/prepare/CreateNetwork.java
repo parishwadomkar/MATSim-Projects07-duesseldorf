@@ -66,7 +66,7 @@ public final class CreateNetwork implements MATSimAppCommand {
 	private Path output;
 
 	@CommandLine.Option(names = "--shp", description = "Shape file used for filtering",
-			defaultValue = "../../shared-svn/komodnext/matsim-input-files/duesseldorf-senozon/dilutionArea/dilutionArea.shp")
+			defaultValue = "scenarios/input/dilutionArea/dilutionArea.shp")
 	private Path shapeFile;
 
 	@CommandLine.Option(names = "--from-osm", description = "Import from OSM without lane information", defaultValue = "false")

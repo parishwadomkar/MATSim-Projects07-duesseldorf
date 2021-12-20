@@ -184,10 +184,12 @@ public class ExtractConnectedNetworkFavouringLinkVolume {
 		new MatsimNetworkReader(cleanNet).readFile(args[2]);
 
 		Network newNetwork = NetworkUtils.createNetwork(ConfigUtils.createConfig());
-		new MatsimNetworkReader(newNetwork).readFile(args[2]);
+		new MatsimNetworkReader(newNetwork).readFile(args[3]);
 
-		removeLinksFromTargetNetworkNotInSourceNetwork(cleanNet,newNetwork);
-		new NetworkWriter(newNetwork).write(args[3]);
+		removeLinksFromTargetNetworkNotInSourceNetwork(cleanNet, newNetwork);
+		removeNonPtLinksAndNodesFromNetwork(inputNetwork);
+		combineNetworks(inputNetwork, newNetwork);
+		new NetworkWriter(newNetwork).write(args[4]);
 
 	}
 
@@ -275,14 +277,45 @@ public class ExtractConnectedNetworkFavouringLinkVolume {
 
 	public static void removeLinksFromTargetNetworkNotInSourceNetwork(Network source, Network target) {
 		List<Link> badLinks =
-				target.getLinks().values().stream().filter(link -> link.getAllowedModes().contains(TransportMode.pt) ?
-						false :
-						source.getLinks().get(link.getId()) == null).collect(Collectors.toList());
+				target.getLinks().values().stream().filter(link -> {
+					if (link.getAllowedModes().contains(TransportMode.pt))
+						return false;
+
+					return source.getLinks().get(link.getId()) == null;
+				}).collect(Collectors.toList());
 		badLinks.forEach(link -> target.removeLink(link.getId()));
-		List<? extends Node> badNodes = target.getNodes().values().stream().filter(node -> node.getInLinks().size() == 0 && node.getOutLinks().size() == 0).collect(Collectors.toList());
-		badNodes.forEach(node -> target.getNodes().remove(node.getId()));
+		List<Id<Node>> badNodes = new ArrayList<>();
+				target.getNodes().values().forEach(node -> {
+					if (node.getInLinks().size() == 0 && node.getOutLinks().size() == 0) badNodes.add(node.getId());
+				});
+		badNodes.forEach(node -> target.removeNode(node));
 
 	}
 
+	public static void combineNetworks(Network source, Network target) {
+
+		source.getNodes().values().forEach(nn -> {
+			try {
+				target.addNode(nn);
+			} catch (IllegalArgumentException e) {
+			}
+		});
+		source.getLinks().values().forEach(ll -> {
+			try {
+				target.addLink(ll);
+			} catch (IllegalArgumentException e) {
+			}
+		});
+
+	}
+
+	public static void removeNonPtLinksAndNodesFromNetwork(Network target) {
+		List<Link> badLinks =
+				target.getLinks().values().stream().filter(link -> !link.getAllowedModes().contains(TransportMode.pt)).collect(Collectors.toList());
+		badLinks.forEach(link -> target.removeLink(link.getId()));
+		List<? extends Node> badNodes = target.getNodes().values().stream().filter(node -> node.getInLinks().size() == 0 && node.getOutLinks().size() == 0).collect(Collectors.toList());
+		badNodes.forEach(node -> target.removeNode(node.getId()));
+
+	}
 
 }

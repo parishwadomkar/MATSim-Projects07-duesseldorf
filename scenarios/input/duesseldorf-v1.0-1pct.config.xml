@@ -9,7 +9,7 @@
         <param name="lastIteration" value="450"/>
         <param name="overwriteFiles" value="failIfDirectoryExists"/>
         <param name="runId" value="duesseldorf-1pct"/>
-        <param name="outputDirectory" value="./output/v1.5-1pct"/>
+        <param name="outputDirectory" value="./output/v1.6-1pct"/>
         <param name="writeEventsInterval" value="50"/>
         <param name="writePlansInterval" value="50"/>
         <param name="enableLinkToLinkRouting" value="true" />
@@ -23,13 +23,13 @@
     </module>
 
     <module name="network">
-        <param name="inputNetworkFile" value="https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/duesseldorf/duesseldorf-v1.0/input/duesseldorf-v1.6-network-with-pt.xml.gz"/>
-        <param name="laneDefinitionsFile" value="https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/duesseldorf/duesseldorf-v1.0/input/duesseldorf-v1.6-network-lanes.xml.gz" />
+        <param name="inputNetworkFile" value="./duesseldorf-v1.6-network-with-pt.xml.gz"/>
+        <param name="laneDefinitionsFile" value="./duesseldorf-v1.6-network-lanes.xml.gz" />
     </module>
 
     <module name="plans">
         <param name="inputPlansFile"
-               value="https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/duesseldorf/duesseldorf-v1.0/input/duesseldorf-v1.6-1pct.plans.xml.gz"/>
+               value="./duesseldorf-v1.6-1pct.plans-calib.xml.gz"/>
         <param name="removingUnnecessaryPlanAttributes" value="true"/>
     </module>
 
@@ -39,9 +39,9 @@
 
     <module name="transit">
         <param name="transitScheduleFile"
-               value="https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/duesseldorf/duesseldorf-v1.0/input/duesseldorf-v1.6-transitSchedule.xml.gz"/>
+               value="./duesseldorf-v1.6-transitSchedule.xml.gz"/>
         <param name="vehiclesFile"
-               value="https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/duesseldorf/duesseldorf-v1.0/input/duesseldorf-v1.6-transitVehicles.xml.gz"/>
+               value="./duesseldorf-v1.6-transitVehicles.xml.gz"/>
         <param name="useTransit" value="true"/>
     </module>
 
@@ -101,7 +101,6 @@
             <param name="weight" value="0.025"/>
         </parameterset>
 
-
         <parameterset type="strategysettings" >
             <param name="strategyName" value="ChangeExpBeta" />
             <param name="subpopulation" value="freight" />
@@ -146,7 +145,7 @@
             <param name="performing" value="6.0" />
             <param name="marginalUtilityOfMoney" value="0.6" />
             <parameterset type="modeParams">
-                <param name="constant" value="-1.4"/>
+                <param name="constant" value="-1.4106346246621497"/>
                 <param name="marginalUtilityOfTraveling_util_hr" value="-0.5"/>
                 <param name="mode" value="car"/>
                 <param name="monetaryDistanceRate" value="-0.0002"/>
@@ -160,13 +159,13 @@
                 <param name="dailyMonetaryConstant" value="-0.0"/>
             </parameterset>
             <parameterset type="modeParams">
-                <param name="constant" value="-0.7"/>
+                <param name="constant" value="-0.5178215041185872"/>
                 <param name="marginalUtilityOfTraveling_util_hr" value="-2.0"/>
                 <param name="mode" value="pt"/>
                 <param name="dailyMonetaryConstant" value="-2.3"/>
             </parameterset>
             <parameterset type="modeParams">
-                <param name="constant" value="-1.9"/>
+                <param name="constant" value="-1.8277166994949736"/>
                 <param name="marginalUtilityOfTraveling_util_hr" value="-1.5"/>
                 <param name="mode" value="bike"/>
             </parameterset>
