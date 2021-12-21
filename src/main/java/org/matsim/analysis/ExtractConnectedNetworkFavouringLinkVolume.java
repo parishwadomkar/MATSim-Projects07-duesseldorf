@@ -14,6 +14,7 @@ import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.network.NetworkWriter;
 import org.matsim.api.core.v01.network.Node;
 import org.matsim.api.core.v01.population.*;
+import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.events.EventsManagerImpl;
 import org.matsim.core.events.MatsimEventsReader;
@@ -21,16 +22,25 @@ import org.matsim.core.events.handler.BasicEventHandler;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.network.io.MatsimNetworkReader;
 import org.matsim.core.population.PopulationUtils;
-import org.matsim.core.population.io.PopulationReader;
 import org.matsim.core.population.routes.NetworkRoute;
-import org.matsim.core.scenario.ScenarioUtils;
+import org.matsim.core.router.DijkstraFactory;
+import org.matsim.core.router.costcalculators.FreespeedTravelTimeAndDisutility;
+import org.matsim.core.router.costcalculators.OnlyTimeDependentTravelDisutilityFactory;
+import org.matsim.core.router.costcalculators.TravelDisutilityFactory;
+import org.matsim.core.router.util.LeastCostPathCalculator;
+import org.matsim.core.router.util.TravelDisutility;
+import org.matsim.core.router.util.TravelTime;
 import org.matsim.core.utils.gis.ShapeFileReader;
+import org.matsim.core.utils.io.IOUtils;
 import org.matsim.run.NetworkCleaner;
-import org.matsim.run.XY2Links;
+import org.matsim.vehicles.Vehicle;
 import org.opengis.feature.simple.SimpleFeature;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -109,7 +119,9 @@ public class ExtractConnectedNetworkFavouringLinkVolume {
 		scenario.getPopulation().getPersons().values().forEach(person -> {
 			Person newPerson = factory.createPerson(person.getId());
 			Plan plan = factory.createPlan();
-			person.getSelectedPlan().getPlanElements().forEach(planElement -> {
+			Activity lastAct = null;
+			Leg lastLeg = null;
+			for (PlanElement planElement : person.getSelectedPlan().getPlanElements()) {
 				if (planElement instanceof Activity) {
 					Activity activity = (Activity) planElement;
 					if (!activity.getType().contains("interaction")) {
@@ -121,7 +133,7 @@ public class ExtractConnectedNetworkFavouringLinkVolume {
 					Leg leg = (Leg) planElement;
 					plan.addLeg(leg);
 				}
-			});
+			}
 			newPerson.addPlan(plan);
 			newPerson.setSelectedPlan(plan);
 			out.addPerson(newPerson);
@@ -143,8 +155,8 @@ public class ExtractConnectedNetworkFavouringLinkVolume {
 		MultiPolygon finalPolygon = (MultiPolygon) polygon;
 		network.getNodes().values().forEach(node -> {
 			if (finalPolygon.contains(factory.createPoint(new Coordinate(node.getCoord().getX(), node.getCoord().getY())))) {
-				node.getInLinks().values().forEach(link -> link.getAttributes().putAttribute("insideBoundary", true));
-				node.getOutLinks().values().forEach(link -> link.getAttributes().putAttribute("insideBoundary", true));
+				node.getInLinks().values().forEach(link -> link.getAttributes().putAttribute("keepLink", true));
+				node.getOutLinks().values().forEach(link -> link.getAttributes().putAttribute("keepLink", true));
 			}
 		});
 		int numberOfIrrelevantLinks = network
@@ -152,8 +164,8 @@ public class ExtractConnectedNetworkFavouringLinkVolume {
 				.values()
 				.stream()
 				.filter(link -> {
-					Object insideBoundary = link.getAttributes().getAttribute("insideBoundary");
-					return insideBoundary != null && (boolean) insideBoundary;
+					Object keepLink = link.getAttributes().getAttribute("keepLink");
+					return keepLink != null && (boolean) keepLink;
 				})
 				.collect(Collectors.toList())
 				.size();
@@ -162,13 +174,14 @@ public class ExtractConnectedNetworkFavouringLinkVolume {
 	}
 
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException {
 		Network inputNetwork = NetworkUtils.createNetwork(ConfigUtils.createConfig());
 		new MatsimNetworkReader(inputNetwork).readFile(args[0]);
-
+//		networkSpatialJoinToCityBoundaryPolygon(args[1], inputNetwork);
+//		markLinksOnPathToMostCentralLink(inputNetwork, ConfigUtils.createConfig(), 3000,
+//				Id.createNodeId(Long.parseLong(args[2])));
 //		correctNetworkLinks(inputNetwork);
 
-//		networkSpatialJoinToCityBoundaryPolygon(args[1], inputNetwork);
 //
 //		Scenario routedScenario = ScenarioUtils.createScenario(ConfigUtils.createConfig());
 //		new PopulationReader(routedScenario).readFile(args[2]);
@@ -176,21 +189,35 @@ public class ExtractConnectedNetworkFavouringLinkVolume {
 //
 //		new NetworkWriter(inputNetwork).write(args[3]);
 
-		Network outNet = extractNetwork(100, inputNetwork);
-		new NetworkWriter(outNet).write(args[1]);
-		new NetworkCleaner().run(args[1], args[2]);
-
-		Network cleanNet = NetworkUtils.createNetwork(ConfigUtils.createConfig());
-		new MatsimNetworkReader(cleanNet).readFile(args[2]);
-
+//		Network outNet = extractNetwork(20, inputNetwork);
+//		new NetworkWriter(outNet).write(args[1]);
+		new org.matsim.core.network.algorithms.NetworkCleaner().run(inputNetwork);
+//
+//		Network cleanNet = NetworkUtils.createNetwork(ConfigUtils.createConfig());
+//		new MatsimNetworkReader(cleanNet).readFile(args[2]);
+//
 		Network newNetwork = NetworkUtils.createNetwork(ConfigUtils.createConfig());
-		new MatsimNetworkReader(newNetwork).readFile(args[3]);
-
-		removeLinksFromTargetNetworkNotInSourceNetwork(cleanNet, newNetwork);
-		removeNonPtLinksAndNodesFromNetwork(inputNetwork);
+		new MatsimNetworkReader(newNetwork).readFile(args[0]);
+//
+//		removeLinksFromTargetNetworkNotInSourceNetwork(inputNetwork, newNetwork);
+//		removeNonPtLinksAndNodesFromNetwork(newNetwork);
+		removeNonPtNodesFromNetwork(newNetwork);
 		combineNetworks(inputNetwork, newNetwork);
-		new NetworkWriter(newNetwork).write(args[4]);
-
+		;
+//		new NetworkWriter(extractNetwork(10000, newNetwork)).write(args[1]);
+		new NetworkWriter(newNetwork).write(args[1]);
+		BufferedWriter bufferedWriter = IOUtils.getBufferedWriter(args[2]);
+		bufferedWriter.write("link,cap\n");
+		newNetwork.getLinks().values().forEach(link -> {
+			if (!link.getAllowedModes().contains(TransportMode.pt))
+				try {
+					bufferedWriter.write(link.getId() + "," + Math.min(link.getCapacity(), 6000d) + "\n");
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+		});
+		bufferedWriter.flush();
+		bufferedWriter.close();
 	}
 
 	public static void correctNetworkLinks(Network network) {
@@ -248,8 +275,8 @@ public class ExtractConnectedNetworkFavouringLinkVolume {
 			if (traversalCount != null)
 				count = (int) traversalCount;
 			if (link.getAllowedModes().contains(TransportMode.pt) ||
-					(link.getAttributes().getAttribute("junction") != null) ||
-					(link.getAttributes().getAttribute("insideBoundary") != null) ||
+//					(link.getAttributes().getAttribute("junction") != null) ||
+					(link.getAttributes().getAttribute("keepLink") != null) ||
 					count >= minimumTraversals) {
 				try {
 					outputNetwork.addNode(link.getFromNode());
@@ -285,9 +312,9 @@ public class ExtractConnectedNetworkFavouringLinkVolume {
 				}).collect(Collectors.toList());
 		badLinks.forEach(link -> target.removeLink(link.getId()));
 		List<Id<Node>> badNodes = new ArrayList<>();
-				target.getNodes().values().forEach(node -> {
-					if (node.getInLinks().size() == 0 && node.getOutLinks().size() == 0) badNodes.add(node.getId());
-				});
+		target.getNodes().values().forEach(node -> {
+			if (node.getInLinks().size() == 0 || node.getOutLinks().size() == 0) badNodes.add(node.getId());
+		});
 		badNodes.forEach(node -> target.removeNode(node));
 
 	}
@@ -309,6 +336,13 @@ public class ExtractConnectedNetworkFavouringLinkVolume {
 
 	}
 
+	public static void removeNonPtNodesFromNetwork(Network target) {
+
+		List<Node> badNodes =
+				new ArrayList<>(target.getNodes().values().stream().filter(node -> !node.getId().toString().startsWith("pt")).collect(Collectors.toList()));
+		badNodes.forEach(node -> target.removeNode(node.getId()));
+
+	}
 	public static void removeNonPtLinksAndNodesFromNetwork(Network target) {
 		List<Link> badLinks =
 				target.getLinks().values().stream().filter(link -> !link.getAllowedModes().contains(TransportMode.pt)).collect(Collectors.toList());
@@ -318,4 +352,108 @@ public class ExtractConnectedNetworkFavouringLinkVolume {
 
 	}
 
+	public static void markLinksOnPathToMostCentralLink(Network network, Config config, double minimumCapacity,
+														Id<Node> centreNode) {
+		Node node = network.getNodes().get(centreNode);
+		Set<Id<Link>> linkstoKeep = new ConcurrentSkipListSet<>();
+		AtomicInteger i = new AtomicInteger(0);
+
+		network.getLinks().values().stream().filter(link -> link.getCapacity() >= minimumCapacity && !link.getAllowedModes().contains(TransportMode.pt)).forEach(link -> linkstoKeep.add(link.getId()));
+
+
+		class Runner implements Runnable {
+
+			FastFatPathCalculator pathCalculator = new FastFatPathCalculator(network, config);
+			final List<Id<Link>> myLinks;
+
+			Runner(List<Id<Link>> myLinks) {
+				this.myLinks = myLinks;
+			}
+
+			@Override
+			public void run() {
+				myLinks.forEach(link -> {
+					pathCalculator.getPath(network.getLinks().get(link).getToNode(), node).links.forEach(pathLink -> {
+						linkstoKeep.add(pathLink.getId());
+					});
+					pathCalculator.getPath(node, network.getLinks().get(link).getFromNode()).links.forEach(pathLink -> {
+						linkstoKeep.add(pathLink.getId());
+					});
+					System.out.print(i.get() + ":" + linkstoKeep.size() + "..." + (i.incrementAndGet() % 20 == 0 ? "\n" :
+							""));
+
+				});
+
+			}
+		}
+		;
+		int startIndex = 0;
+		List<List<Id<Link>>> linkLists = new ArrayList<>();
+
+		List<Id<Link>> links = new ArrayList<>();
+		links.addAll(linkstoKeep);
+		while (startIndex < links.size()) {
+			linkLists.add(links.subList(startIndex, Math.min(startIndex + 999, links.size())));
+			startIndex += 999;
+		}
+		linkLists.parallelStream().forEach(linkList -> {
+			new Runner(linkList).run();
+		});
+
+		linkstoKeep.forEach(link -> network.getLinks().get(link).getAttributes().putAttribute(
+				"keepLink", true));
+	}
+
+}
+
+class FastFatPathCalculator {
+	final Network network;
+	final Config config;
+	TravelDisutilityFactory disutilityFactory;
+	TravelTime travelTime;
+	LeastCostPathCalculator dijkstra;
+
+	// define how the travel disutility is computed:
+
+	FastFatPathCalculator(Network network, Config config) {
+		this.network = network;
+		this.config = config;
+		travelTime = new FreespeedTravelTimeAndDisutility(config.planCalcScore());
+		disutilityFactory = new OnlyTimeDependentTravelDisutilityFactory();
+		dijkstra = new DijkstraFactory().createPathCalculator(network,
+				disutilityFactory.createTravelDisutility(travelTime), travelTime
+		);
+	}
+
+	LeastCostPathCalculator.Path getPath(Node fromNode, Node toNode) {
+
+		return dijkstra.calcLeastCostPath(fromNode, toNode, 0, null, null);
+	}
+
+}
+
+class HighSpeedHighCapacityFavouringTravelDisutilityFactory implements TravelDisutilityFactory {
+
+	@Override
+	public TravelDisutility createTravelDisutility(TravelTime timeCalculator) {
+		return null;
+	}
+}
+
+class CapacityFavouringTravelDisutility implements TravelDisutility {
+	final TravelTime travelTime;
+
+	CapacityFavouringTravelDisutility(TravelTime travelTime) {
+		this.travelTime = travelTime;
+	}
+
+	@Override
+	public double getLinkTravelDisutility(Link link, double time, Person person, Vehicle vehicle) {
+		return getLinkMinimumTravelDisutility(link);
+	}
+
+	@Override
+	public double getLinkMinimumTravelDisutility(Link link) {
+		return travelTime.getLinkTravelTime(link, 0d, null, null) / link.getCapacity();
+	}
 }
