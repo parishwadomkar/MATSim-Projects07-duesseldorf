@@ -5,6 +5,7 @@ import com.google.common.collect.Sets;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.multibindings.Multibinder;
+import it.unimi.dsi.fastutil.Pair;
 import it.unimi.dsi.fastutil.doubles.Double2DoubleMap;
 import it.unimi.dsi.fastutil.doubles.Double2DoubleOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
@@ -253,18 +254,17 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 
 		// scale free flow speed
 		Map<Id<Link>, ? extends Link> links = scenario.getNetwork().getLinks();
-		Object2DoubleMap<Triple<Id<Link>, Id<Link>, Id<Lane>>> capacities = new Object2DoubleOpenHashMap<>();
+		Object2DoubleMap<Pair<Id<Link>, Id<Link>>> capacities = new Object2DoubleOpenHashMap<>();
 
 		if (laneCapacity != null) {
 
-			capacities = CreateNetwork.readLaneCapacities(laneCapacity);
+			capacities = CreateNetwork.readLinkCapacities(laneCapacity);
 
-			log.info("Overwrite capacities from {}, containing {} lanes", laneCapacity, capacities.size());
+			log.info("Overwrite capacities from {}, containing {} links", laneCapacity, capacities.size());
 
 			int n = CreateNetwork.setLinkCapacities(scenario.getNetwork(), capacities);
-			int n2 = CreateNetwork.setLaneCapacities(scenario.getLanes(), capacities);
 
-			log.info("Unmatched links: {}, lanes: {}", n, n2);
+			log.info("Unmatched links: {}", n);
 		}
 
 		if (vehicleShare.av > 0 || vehicleShare.acv > 0) {
@@ -274,7 +274,7 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 
 			log.info("Applying model AV {} ACV {} to road capacities", vehicleShare.av, vehicleShare.acv);
 
-			Set<Id<Link>> ids = capacities.keySet().stream().map(Triple::getLeft).collect(Collectors.toSet());
+			Set<Id<Link>> ids = capacities.keySet().stream().map(Pair::left).collect(Collectors.toSet());
 
 			Double2DoubleMap factors = new Double2DoubleOpenHashMap();
 

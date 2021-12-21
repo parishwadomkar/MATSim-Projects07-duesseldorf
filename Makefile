@@ -13,7 +13,7 @@ $(JAR):
 
 # Required files
 scenarios/input/network.osm.pbf:
-	curl https://download.geofabrik.de/europe/germany-211216.osm.pbf\
+	curl https://download.geofabrik.de/europe/germany-211219.osm.pbf\
 	  -o scenarios/input/network.osm.pbf
 
 scenarios/input/gtfs-vrr.zip:
@@ -62,7 +62,7 @@ scenarios/input/sumo.net.xml: scenarios/input/network.osm
 
 scenarios/input/duesseldorf-$V-network.xml.gz: scenarios/input/sumo.net.xml
 	java -jar $(JAR) prepare network $< scenarios/input/herzogstrasse.net.xml\
-	 --capacities CV-100_AV-000.csv\
+	 --capacities CV_100_ACV_0_AV_0.csv\
 	 --output $@
 
 scenarios/input/duesseldorf-$V-network-with-pt.xml.gz: scenarios/input/duesseldorf-$V-network.xml.gz scenarios/input/gtfs-vrs.zip scenarios/input/gtfs-vrr.zip scenarios/input/gtfs-avv.zip
