@@ -16,6 +16,7 @@ import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.network.NetworkWriter;
+import org.matsim.api.core.v01.network.Node;
 import org.matsim.application.MATSimAppCommand;
 import org.matsim.contrib.osm.networkReader.LinkProperties;
 import org.matsim.contrib.osm.networkReader.SupersonicOsmNetworkReader;
@@ -329,7 +330,69 @@ public final class CreateNetwork implements MATSimAppCommand {
 			getTurnEfficiencyMap(link).put(toLink.toString(), String.valueOf(e.getDoubleValue() / link.getCapacity()));
 		}
 
+
+		propagateJunctionCapacities(network);
+
 		return unmatched;
+	}
+
+	/**
+	 * Apply the capacities at intersection to up- and downstream links if applicable.
+	 */
+	private static void propagateJunctionCapacities(Network network) {
+
+		Set<Id<Link>> handled = new HashSet<>();
+
+		// First pass, apply downstream
+		for (Link link : network.getLinks().values()) {
+
+			if (link.getAttributes().getAttribute("junction") != Boolean.TRUE)
+				continue;
+
+			double cap = link.getCapacity();
+
+			Node from = link.getFromNode();
+			while (from.getOutLinks().size() == 1 && from.getInLinks().size() == 1) {
+				for (Link inLink : from.getInLinks().values()) {
+					handled.add(inLink.getId());
+					if (inLink.getCapacity() < cap) {
+						inLink.setCapacity(cap);
+					}
+
+					from = inLink.getFromNode();
+				}
+			}
+		}
+
+		// Second pass, apply min required capacity upstream
+		for (Link link : network.getLinks().values()) {
+
+			if (link.getAttributes().getAttribute("junction") != Boolean.TRUE || handled.contains(link.getId()))
+				continue;
+
+			Node to = link.getToNode();
+
+			double cap = to.getInLinks().values().stream().mapToDouble(Link::getCapacity).min().orElse(0);
+
+			Queue<Link> queue = new LinkedList<>(to.getOutLinks().values());
+
+			while (!queue.isEmpty()) {
+
+				Link outLink = queue.poll();
+				if (handled.contains(outLink.getId()))
+					continue;
+
+				handled.add(outLink.getId());
+
+				if (outLink.getCapacity() < cap)
+					outLink.setCapacity(cap);
+
+				// Capacity is only applied as long as there is no other intersection
+				if (outLink.getToNode().getOutLinks().size() == 1)
+					queue.addAll(outLink.getToNode().getOutLinks().values());
+
+			}
+		}
 	}
 
 	/**
