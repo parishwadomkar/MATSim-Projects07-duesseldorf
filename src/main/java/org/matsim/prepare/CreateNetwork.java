@@ -327,7 +327,8 @@ public final class CreateNetwork implements MATSimAppCommand {
 			if (link == null)
 				continue;
 
-			getTurnEfficiencyMap(link).put(toLink.toString(), String.valueOf(e.getDoubleValue() / link.getCapacity()));
+			double cap = Math.max(CAPACITY_THRESHOLD, e.getDoubleValue());
+			getTurnEfficiencyMap(link).put(toLink.toString(), String.valueOf(cap / link.getCapacity()));
 		}
 
 
