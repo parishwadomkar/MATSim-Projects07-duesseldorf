@@ -48,7 +48,7 @@ public class ExtractIntersections implements MATSimAppCommand {
 			return 2;
 		}
 
-		Network network = NetworkUtils.readTimeInvariantNetwork(this.network.toString());
+		Network network = NetworkUtils.readNetwork(this.network.toString());
 
 		// buffer around the network
 		Geometry geom = shp.getGeometry().getEnvelope().buffer(8000);
