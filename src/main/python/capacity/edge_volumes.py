@@ -107,7 +107,7 @@ def read_result(folder, edge, scale):
         data.append({
             "edgeId": edge,
             "laneId": f.replace(".xml", ""),
-            "flow": total * (3660 / (end - 60)),
+            "flow": total * (3600 / (end - 60)),
             "scale": float(scale),
             "count": total
         })

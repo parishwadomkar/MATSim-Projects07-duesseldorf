@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 # @author  Angelo Banse, Ronald Nippold, Christian Rakow
 
+import os
+import shutil
 import sys
 from os.path import join, basename
 
-from utils import init_env, create_args, write_scenario, filter_network
+from utils import init_env, create_args, init_workload, write_scenario, filter_network
 
 init_env()
 
@@ -19,7 +21,7 @@ sumoBinary = checkBinary('sumo')
 netconvert = checkBinary('netconvert')
 
 
-def writeRouteFile(f_name, departLane, arrivalLane, edges, qCV, qAV, qACV):
+def writeRouteFile(f_name, routes, qCV, qAV, qACV):
     text = """<?xml version="1.0" encoding="UTF-8"?>
 
 <routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/routes_file.xsd">
@@ -29,17 +31,18 @@ def writeRouteFile(f_name, departLane, arrivalLane, edges, qCV, qAV, qACV):
         <vType id="vehACV" probability="{qACV}" color="0,0,1" vClass="passenger" minGap="0.5" accel="2.6" decel="3.5" sigma="0" tau="0.6" speedFactor="1" speedDev="0"/>
         <vType id="vehAV" probability="{qAV}" color="0,1,0" vClass="passenger" decel="3.0" sigma="0.1" tau="1.5" speedFactor="1" speedDev="0"/>
     </vTypeDistribution>
-
-    <flow id="veh" begin="0" end= "3600" vehsPerHour="5000" type="vDist" departLane="best" arrivalLane="{arrivalLane}" departSpeed="max">
-        <route edges="{edges}"/>
-    </flow>
-</routes>
-
 """
+
+    for i, edges in enumerate(routes):
+        text += """
+            <flow id="veh%d" begin="0" end= "1800" vehsPerHour="5000" type="vDist" departLane="best" arrivalLane="current" departSpeed="max">
+               <route edges="%s"/>
+            </flow>
+        """ % (i, edges)
+
+    text += "</routes>"
+
     context = {
-        "departLane": departLane,
-        "arrivalLane": arrivalLane,
-        "edges": edges,
         "qCV": qCV,
         "qAV": qAV,
         "qACV": qACV
@@ -48,39 +51,46 @@ def writeRouteFile(f_name, departLane, arrivalLane, edges, qCV, qAV, qACV):
         f.write(text.format(**context))
 
 
-def writeDetectorFile(f_name, lane):
+def writeDetectorFile(f_name, output, lanes):
     text = """<?xml version="1.0" encoding="UTF-8"?>
-
-<additional xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/additional_file.xsd">
-    <e1Detector id="detector" lane="{lane}" pos="0" friendlyPos="true" freq="10.00" file="{output_file}.xml"/>
-</additional>
-
+        <additional xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/additional_file.xsd">
 """
-    context = {
-        "lane": lane,
-        "output_file": "detector"
-    }
+
+    for i, lane in enumerate(lanes):
+        text += """
+        <e1Detector id="detector%d" lane="%s" pos="-1" friendlyPos="true" freq="10.00" file="%s.xml"/>
+    """ % (i, lane, join(output, "lane%d" % i))
+
+    text += "</additional>"
+
     with open(f_name, 'w') as f:
-        f.write(text.format(**context))
+        f.write(text)
 
 
-def read_result(f, **kwargs):
-    total = 0
-    end = 0
+def read_result(folder, **kwargs):
+    flow = 0
 
-    for _, elem in ET.iterparse(f, events=("end",),
-                                tag=('interval',),
-                                remove_blank_text=True):
-
-        begin = float(elem.attrib["begin"])
-        end = float(elem.attrib["end"])
-        if begin < 60:
+    for f in os.listdir(folder):
+        if not f.endswith(".xml"):
             continue
 
-        total += float(elem.attrib["nVehContrib"])
+        total = 0
+        end = 0
 
-    kwargs["flow"] = total * (3660 / (end - 60))
-    kwargs["count"] = total
+        for _, elem in ET.iterparse(join(folder, f), events=("end",),
+                                    tag=('interval',),
+                                    remove_blank_text=True):
+
+            begin = float(elem.attrib["begin"])
+            end = float(elem.attrib["end"])
+            if begin < 60:
+                continue
+
+            total += float(elem.attrib["nVehContrib"])
+
+        flow += total * (3600 / (end - 60))
+
+    kwargs["flow"] = flow
     return kwargs
 
 
@@ -105,43 +115,52 @@ def run(args, nodes):
         print("####################################################################")
         print("Junction id: " + node._id)
 
+        folder = join(args.runner, "detector")
         p_network = join(args.runner, "filtered.net.xml")
 
         edges = [c.getFrom() for c in node.getConnections()] + [c.getTo() for c in node.getConnections()]
 
         filter_network(netconvert, args.network, edges, p_network, ["--no-internal-links", "false"])
 
+        pairs = set((c.getFrom(), c.getTo()) for c in node.getConnections())
+
         res = []
 
-        for connection in node.getConnections():
-            fromEdge = connection._from._id  # edge - string
-            departLane = connection._fromLane.getIndex()  # lane - int
-            toEdge = connection._to._id  # edge - string
-            arrivalLane = connection._toLane.getIndex()  # lane - int
+        for fromEdge, toEdge in pairs:
 
-            edges = fromEdge + " " + toEdge
-            lane = toEdge + "_" + str(arrivalLane)
+            # Clean old data
+            shutil.rmtree(folder, ignore_errors=True)
+            os.makedirs(folder, exist_ok=True)
 
             p_scenario = join(args.runner, "scenario.sumocfg")
             p_routes = join(args.runner, "route.rou.xml")
             p_detector = join(args.runner, "detector.add.xml")
 
-            writeRouteFile(p_routes, departLane, arrivalLane, edges, qCV, qAV, qACV)
-            writeDetectorFile(p_detector, lane)
+            routes = []
 
-            write_scenario(p_scenario, basename(p_network), basename(p_routes), basename(p_detector), args.step_length, time=3600)
+            # Build routes by trying to use incoming edge, when it is too short
+            if fromEdge._length < 30:
+                routes = [k._id + " " + fromEdge._id + " " + toEdge._id for k, v in fromEdge._incoming.items() if
+                          all(d._direction not in (d.LINKDIR_TURN, d.LINKDIR_LEFT, d.LINKDIR_RIGHT) for d in v)]
+
+            if not routes:
+                routes = [fromEdge._id + " " + toEdge._id]
+
+            lanes = [fromEdge._id + "_" + str(i) for i in range(len(fromEdge._lanes))]
+
+            writeRouteFile(p_routes, routes, qCV, qAV, qACV)
+
+            writeDetectorFile(p_detector, "detector", lanes)
+
+            write_scenario(p_scenario, basename(p_network), basename(p_routes), basename(p_detector), args.step_length, time=1800)
 
             go(p_scenario, args)
 
             # Read output
-            res.append(
-                read_result(join(args.runner, "detector.xml"),
-                            junctionId=node._id,
-                            fromEdgeId=fromEdge,
-                            toEdgeId=toEdge,
-                            fromLaneId=departLane,
-                            toLaneId=arrivalLane)
-            )
+            res.append(read_result(folder,
+                                   junctionId=node._id,
+                                   fromEdgeId=fromEdge._id,
+                                   toEdgeId=toEdge._id))
 
         df = pd.DataFrame(res)
         df.to_csv(join(args.output, "%s.csv" % node._id), index=False)
@@ -153,7 +172,7 @@ def run(args, nodes):
 def go(scenario, args):
     traci.start([sumoBinary, "-c", scenario])
 
-    end = int(3600 * (1 / args.step_length))
+    end = int(1800 * (1 / args.step_length))
 
     try:
         for step in range(0, end):
@@ -183,6 +202,9 @@ if __name__ == "__main__":
             traffic_light_nodes.append(node)
 
     print("Total number of traffic light junctions:", len(traffic_light_nodes))
+
+    init_workload(args, traffic_light_nodes)
+
     print("Processing: ", args.from_index, ' to ', args.to_index)
 
     run(args, traffic_light_nodes)

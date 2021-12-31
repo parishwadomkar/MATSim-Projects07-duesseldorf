@@ -189,8 +189,9 @@ public final class CreateNetwork implements MATSimAppCommand {
 				"23157292#0", // Corneliusstrasse
 				"207108052#0",
 				"219116943#0",
-				"239250010#2" // Brunnenstrasse
-
+				"239250010#2", // Brunnenstrasse
+				"30694311#0",
+				"432816762"
 				);
 
 		//dump it into a set in case we accidentally repeat an id in the list
@@ -199,27 +200,46 @@ public final class CreateNetwork implements MATSimAppCommand {
 
 		for (String l : incorrect) {
 			Link link = links.get(Id.createLinkId(l));
+
+			if (link == null || link.getNumberOfLanes() > 1) {
+				log.warn("Lanes for {} not modified", l);
+				continue;
+			}
+
 			link.setNumberOfLanes(link.getNumberOfLanes() * 2);
 			link.setCapacity(link.getCapacity() * 2);
 		}
 
 		// Fix the capacities of some links that are implausible in OSM
-		links.get(Id.createLinkId("314648993#0")).setCapacity(6000);
-		links.get(Id.createLinkId("239242545")).setCapacity(3000);
-		links.get(Id.createLinkId("800035681")).setCapacity(3000);
-		links.get(Id.createLinkId("145178328")).setCapacity(4000);
-		links.get(Id.createLinkId("157381200#0")).setCapacity(4000);
-		links.get(Id.createLinkId("145178328")).setCapacity(4000);
-		links.get(Id.createLinkId("45252320")).setCapacity(4000);
-		links.get(Id.createLinkId("375678205#0")).setCapacity(1200);
-		links.get(Id.createLinkId("40816222#0")).setCapacity(1200);
-		links.get(Id.createLinkId("233307305#0")).setCapacity(1200);
-		links.get(Id.createLinkId("23157292#0")).setCapacity(1200);
-		links.get(Id.createLinkId("-33473202#1")).setCapacity(1200);
-		links.get(Id.createLinkId("26014655#0")).setCapacity(1200);
-		links.get(Id.createLinkId("32523335#5")).setCapacity(1200);
+		increaseCapacity(links, "314648993#0", 6000);
+		increaseCapacity(links, "239242545", 3000);
+		increaseCapacity(links, "800035681", 3000);
+		increaseCapacity(links, "145178328", 4000);
+		increaseCapacity(links, "157381200#0", 4000);
+		increaseCapacity(links, "145178328", 4000);
+		increaseCapacity(links, "45252320", 4000);
+		increaseCapacity(links, "375678205#0", 1200);
+		increaseCapacity(links, "40816222#0", 1200);
+		increaseCapacity(links, "233307305#0", 1200);
+		increaseCapacity(links, "23157292#0", 1200);
+		increaseCapacity(links, "-33473202#1", 1200);
+		increaseCapacity(links, "26014655#0", 1200);
+		increaseCapacity(links, "32523335#5", 1200);
 
 	}
+
+	private static void increaseCapacity(Map<Id<Link>, ? extends Link> links, String id, double capacity) {
+
+		Link link = links.get(Id.createLinkId(id));
+
+		if (link == null || link.getCapacity() > capacity) {
+			log.warn("Capacity for {} not modified", id);
+			return;
+		}
+
+		link.setCapacity(capacity);
+	}
+
 
 	/**
 	 * Read lane capacities from csv file.

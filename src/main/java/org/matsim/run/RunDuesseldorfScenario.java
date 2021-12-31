@@ -29,6 +29,7 @@ import org.matsim.application.analysis.emissions.AirPollutionSpatialAggregation;
 import org.matsim.application.analysis.noise.NoiseAnalysis;
 import org.matsim.application.analysis.traffic.LinkStats;
 import org.matsim.application.analysis.travelTimeValidation.TravelTimeAnalysis;
+import org.matsim.application.analysis.travelTimeValidation.TravelTimePatterns;
 import org.matsim.application.options.SampleOptions;
 import org.matsim.application.prepare.freight.ExtractRelevantFreightTrips;
 import org.matsim.application.prepare.population.*;
@@ -69,7 +70,7 @@ import java.util.stream.Collectors;
 })
 @MATSimApplication.Analysis({
 		CheckPopulation.class, AirPollutionByVehicleCategory.class, AirPollutionSpatialAggregation.class,
-		LinkStats.class, NoiseAnalysis.class, TravelTimeAnalysis.class
+		LinkStats.class, NoiseAnalysis.class, TravelTimeAnalysis.class, TravelTimePatterns.class
 })
 public class RunDuesseldorfScenario extends MATSimApplication {
 
@@ -78,7 +79,7 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 	/**
 	 * Current version identifier.
 	 */
-	public static final String VERSION = "v1.6";
+	public static final String VERSION = "v1.7";
 
 	/**
 	 * Default coordinate system of the scenario.
