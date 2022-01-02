@@ -16,6 +16,7 @@ import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.network.NetworkWriter;
+import org.matsim.api.core.v01.network.Node;
 import org.matsim.application.MATSimAppCommand;
 import org.matsim.contrib.osm.networkReader.LinkProperties;
 import org.matsim.contrib.osm.networkReader.SupersonicOsmNetworkReader;
@@ -121,14 +122,13 @@ public final class CreateNetwork implements MATSimAppCommand {
 
 		if (capacities != null) {
 
-			Object2DoubleMap<Triple<Id<Link>, Id<Link>, Id<Lane>>> map = readLaneCapacities(capacities);
+			Object2DoubleMap<Pair<Id<Link>, Id<Link>>> map = readLinkCapacities(capacities);
 
-			log.info("Read lane capacities from {}, containing {} lanes", capacities, map.size());
+			log.info("Read lane capacities from {}, containing {} links", capacities, map.size());
 
 			int n = setLinkCapacities(network, map);
-			int n2 = setLaneCapacities(lanes, map);
 
-			log.info("Unmatched links: {}, lanes: {}", n, n2);
+			log.info("Unmatched links: {}", n);
 
 		}
 
@@ -273,6 +273,34 @@ public final class CreateNetwork implements MATSimAppCommand {
 	}
 
 	/**
+	 * Read link capacities from csv file.
+	 * @return pair of from link, to link -> capacity
+	 */
+	public static Object2DoubleMap<Pair<Id<Link>, Id<Link>>> readLinkCapacities(Path input) {
+
+		Object2DoubleMap<Pair<Id<Link>, Id<Link>>> result = new Object2DoubleOpenHashMap<>();
+
+		try (CSVParser parser = new CSVParser(IOUtils.getBufferedReader(input.toString()),
+				CSVFormat.DEFAULT.withDelimiter(',').withFirstRecordAsHeader())) {
+
+			for (CSVRecord record : parser) {
+
+				Id<Link> fromLinkId = Id.create(record.get("fromEdgeId"), Link.class);
+				Id<Link> toLinkId = Id.create(record.get("toEdgeId"), Link.class);
+
+				Pair<Id<Link>, Id<Link>> key = Pair.of(fromLinkId, toLinkId);
+
+				result.put(key, Double.parseDouble(record.get("flow")));
+
+			}
+
+		} catch (IOException e) {
+			throw new UncheckedIOException(e);
+		}
+		return result;
+	}
+
+	/**
 	 * Aggregate maximum lane capacities, independent of turning direction.
 	 */
 	public static Object2DoubleMap<Pair<Id<Link>, Id<Lane>>> calcMaxLaneCapacities(Object2DoubleMap<Triple<Id<Link>, Id<Link>, Id<Lane>>> map) {
@@ -288,12 +316,124 @@ public final class CreateNetwork implements MATSimAppCommand {
 	}
 
 	/**
+	 * Use provided link capacities and apply them to the network.
+	 *
+	 * @return number of links from file that are not in the network.
+	 */
+	public static int setLinkCapacities(Network network, Object2DoubleMap<Pair<Id<Link>, Id<Link>>> map) {
+
+		Object2DoubleMap<Id<Link>> linkCapacities = new Object2DoubleOpenHashMap<>();
+
+		// max of each link
+		for (Object2DoubleMap.Entry<Pair<Id<Link>, Id<Link>>> e : map.object2DoubleEntrySet()) {
+			linkCapacities.mergeDouble(e.getKey().key(), e.getDoubleValue(), Double::max);
+		}
+
+		int unmatched = 0;
+
+		for (Object2DoubleMap.Entry<Id<Link>> e : linkCapacities.object2DoubleEntrySet()) {
+
+			Link link = network.getLinks().get(e.getKey());
+
+			if (link != null) {
+				// ignore unplausible capacities
+				if (e.getDoubleValue() < CAPACITY_THRESHOLD * link.getNumberOfLanes())
+					continue;
+
+				link.setCapacity(e.getDoubleValue());
+				link.getAttributes().putAttribute("junction", true);
+			} else {
+				unmatched++;
+			}
+		}
+
+		// set turn capacities relative to whole link capacity
+		for (Object2DoubleMap.Entry<Pair<Id<Link>, Id<Link>>> e : map.object2DoubleEntrySet()) {
+
+			Id<Link> fromLink = e.getKey().left();
+			Id<Link> toLink = e.getKey().right();
+
+			Link link = network.getLinks().get(fromLink);
+
+			if (link == null)
+				continue;
+
+			double cap = Math.max(CAPACITY_THRESHOLD, e.getDoubleValue());
+			getTurnEfficiencyMap(link).put(toLink.toString(), String.valueOf(cap / link.getCapacity()));
+		}
+
+
+		propagateJunctionCapacities(network);
+
+		return unmatched;
+	}
+
+	/**
+	 * Apply the capacities at intersection to up- and downstream links if applicable.
+	 */
+	private static void propagateJunctionCapacities(Network network) {
+
+		Set<Id<Link>> handled = new HashSet<>();
+
+		// First pass, apply downstream
+		for (Link link : network.getLinks().values()) {
+
+			if (link.getAttributes().getAttribute("junction") != Boolean.TRUE)
+				continue;
+
+			double cap = link.getCapacity();
+
+			Node from = link.getFromNode();
+			while (from.getOutLinks().size() == 1 && from.getInLinks().size() == 1) {
+				for (Link inLink : from.getInLinks().values()) {
+					handled.add(inLink.getId());
+					if (inLink.getCapacity() < cap) {
+						inLink.setCapacity(cap);
+					}
+
+					from = inLink.getFromNode();
+				}
+			}
+		}
+
+		// Second pass, apply min required capacity upstream
+		for (Link link : network.getLinks().values()) {
+
+			if (link.getAttributes().getAttribute("junction") != Boolean.TRUE || handled.contains(link.getId()))
+				continue;
+
+			Node to = link.getToNode();
+
+			double cap = to.getInLinks().values().stream().mapToDouble(Link::getCapacity).min().orElse(0);
+
+			Queue<Link> queue = new LinkedList<>(to.getOutLinks().values());
+
+			while (!queue.isEmpty()) {
+
+				Link outLink = queue.poll();
+				if (handled.contains(outLink.getId()))
+					continue;
+
+				handled.add(outLink.getId());
+
+				if (outLink.getCapacity() < cap)
+					outLink.setCapacity(cap);
+
+				// Capacity is only applied as long as there is no other intersection
+				if (outLink.getToNode().getOutLinks().size() == 1)
+					queue.addAll(outLink.getToNode().getOutLinks().values());
+
+			}
+		}
+	}
+
+	/**
 	 * Use provided lane capacities, to calculate aggregated capacities for all links.
 	 * This does not modify lane capacities.
 	 *
 	 * @return number of links from file that are not in the network.
 	 */
-	public static int setLinkCapacities(Network network, Object2DoubleMap<Triple<Id<Link>, Id<Link>, Id<Lane>>> map) {
+	public static int setLinkCapacitiesFromLaneMap(Network network, Object2DoubleMap<Triple<Id<Link>, Id<Link>, Id<Lane>>> map) {
 
 		Object2DoubleMap<Id<Link>> linkCapacities = new Object2DoubleOpenHashMap<>();
 		Object2DoubleMap<Pair<Id<Link>, Id<Lane>>> laneCapacities = calcMaxLaneCapacities(map);

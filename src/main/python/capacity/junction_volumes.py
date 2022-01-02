@@ -21,21 +21,28 @@ sumoBinary = checkBinary('sumo')
 netconvert = checkBinary('netconvert')
 
 
-def writeRouteFile(f_name, routes, qCV, qAV, qACV):
+def writeRouteFile(f_name, routes, extra_routes, qCV, qAV, qACV):
     text = """<?xml version="1.0" encoding="UTF-8"?>
 
 <routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/routes_file.xsd">
 
     <vTypeDistribution id="vDist">
-        <vType id="vehCV" probability="{qCV}" color="1,0,0" vClass="passenger"/>
-        <vType id="vehACV" probability="{qACV}" color="0,0,1" vClass="passenger" minGap="0.5" accel="2.6" decel="3.5" sigma="0" tau="0.6" speedFactor="1" speedDev="0"/>
-        <vType id="vehAV" probability="{qAV}" color="0,1,0" vClass="passenger" decel="3.0" sigma="0.1" tau="1.5" speedFactor="1" speedDev="0"/>
+        <vType id="vehCV" probability="{qCV}" color="1,0,0" vClass="passenger" impatience="0.7"/>
+        <vType id="vehACV" probability="{qACV}" color="0,0,1" vClass="passenger" minGap="0.5" accel="2.6" decel="3.5" sigma="0" tau="0.6" speedFactor="1" speedDev="0" impatience="1"/>
+        <vType id="vehAV" probability="{qAV}" color="0,1,0" vClass="passenger" decel="3.0" sigma="0.1" tau="1.5" speedFactor="1" speedDev="0" impatience="0.3"/>
     </vTypeDistribution>
 """
 
     for i, edges in enumerate(routes):
         text += """
             <flow id="veh%d" begin="0" end= "1800" vehsPerHour="5000" type="vDist" departLane="best" arrivalLane="current" departSpeed="max">
+               <route edges="%s"/>
+            </flow>
+        """ % (i, edges)
+
+    for i, edges in enumerate(extra_routes):
+        text += """
+            <flow id="vehx%d" begin="0" end= "1800" vehsPerHour="500" type="vDist" departLane="best" arrivalLane="current" departSpeed="max">
                <route edges="%s"/>
             </flow>
         """ % (i, edges)
@@ -122,7 +129,7 @@ def run(args, nodes):
 
         filter_network(netconvert, args.network, edges, p_network, ["--no-internal-links", "false"])
 
-        pairs = set((c.getFrom(), c.getTo()) for c in node.getConnections())
+        pairs = set((c.getFrom(), c.getTo()) for c in node.getConnections() if c._direction != c.LINKDIR_TURN)
 
         res = []
 
@@ -146,9 +153,22 @@ def run(args, nodes):
             if not routes:
                 routes = [fromEdge._id + " " + toEdge._id]
 
+            extra_routes = []
+            # Produce car traffic on the other connections
+            for c in node.getConnections():
+                if c._direction == c.LINKDIR_TURN:
+                    continue
+
+                if c.getFrom() == fromEdge or c.getTo() == toEdge:
+                    continue
+
+                r = c.getFrom()._id + " " + c.getTo()._id
+                if r not in extra_routes:
+                    extra_routes.append(r)
+
             lanes = [fromEdge._id + "_" + str(i) for i in range(len(fromEdge._lanes))]
 
-            writeRouteFile(p_routes, routes, qCV, qAV, qACV)
+            writeRouteFile(p_routes, routes, extra_routes, qCV, qAV, qACV)
 
             writeDetectorFile(p_detector, "detector", lanes)
 

@@ -24,43 +24,44 @@ df <- tbl %>%
       filter(flow>0) %>%
       mutate(speed=speed*3.6)
 
-tf <- df %>% filter(av==0) %>% 
+tf <- df %>% filter(acv==0) %>% 
   group_by(speed) %>%
   mutate(base=mean(flow[cv==100])) %>%
   ungroup()
   
-ggplot(tf, aes(speed, flow, color=cv)) +
+ggplot(tf, aes(speed, flow, color=av)) +
   ylab("Flow capacity [veh/h]") +
   xlab("Allowed speed [km/h]") +
   geom_point()
 
 tf <- mutate(tf, speed=as.factor(round(speed))) %>%
-      mutate(cv2=cv*cv) %>%
-      mutate(cv3=cv*cv*cv)
+      mutate(i=av) %>%
+      mutate(i2=i*i) %>%
+      mutate(i3=i*i*i)
 
 x <- seq(0, 100, 1)
 
 res <- tf %>%
   nest_by(speed) %>%
-  mutate(mod = list(lm(flow ~ cv + cv2 + cv3, data = data))) %>%
-  mutate(x=list(x), pred= list(predict(mod, list(cv=x, cv2=x^2, cv3=x^3)))) %>%
+  mutate(mod = list(lm(flow ~ i + i2 + i3, data = data))) %>%
+  mutate(x=list(x), pred= list(predict(mod, list(i=x, i2=x^2, i3=x^3)))) %>%
   unnest(cols=c(pred, x))
 
 
-ggplot(tf, aes(cv, flow, color=speed)) +
-  xlab("Share of CV") +
+ggplot(tf, aes(av, flow, color=speed)) +
+  xlab("Share of AV") +
   ylab("Flow capacity [veh/h]") +
   geom_point() +
   geom_line(data=res, aes(x, pred, color=speed))
 
 res <- tf %>%
-    group_by(speed, cv) %>%
+    group_by(speed, av) %>%
     summarise(rel=mean(flow) / base)
 
 write_csv(res, 'acv.csv')
 
-ggplot(res, aes(cv, rel, color=speed)) +
-  xlab("Share of CV") +
+ggplot(res, aes(av, rel, color=speed)) +
+  xlab("Share of AV") +
   ylab("Rel. flow capacity") +
   geom_point()
 #  geom_line(data=res, aes(x, pred, color=speed))
