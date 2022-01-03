@@ -19,20 +19,19 @@ import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.events.EventsManagerImpl;
 import org.matsim.core.events.MatsimEventsReader;
 import org.matsim.core.events.handler.BasicEventHandler;
+import org.matsim.core.gbl.MatsimRandom;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.network.io.MatsimNetworkReader;
 import org.matsim.core.population.PopulationUtils;
 import org.matsim.core.population.routes.NetworkRoute;
 import org.matsim.core.router.DijkstraFactory;
 import org.matsim.core.router.costcalculators.FreespeedTravelTimeAndDisutility;
-import org.matsim.core.router.costcalculators.OnlyTimeDependentTravelDisutilityFactory;
 import org.matsim.core.router.costcalculators.TravelDisutilityFactory;
 import org.matsim.core.router.util.LeastCostPathCalculator;
 import org.matsim.core.router.util.TravelDisutility;
 import org.matsim.core.router.util.TravelTime;
 import org.matsim.core.utils.gis.ShapeFileReader;
 import org.matsim.core.utils.io.IOUtils;
-import org.matsim.run.NetworkCleaner;
 import org.matsim.vehicles.Vehicle;
 import org.opengis.feature.simple.SimpleFeature;
 
@@ -177,9 +176,17 @@ public class ExtractConnectedNetworkFavouringLinkVolume {
 	public static void main(String[] args) throws IOException {
 		Network inputNetwork = NetworkUtils.createNetwork(ConfigUtils.createConfig());
 		new MatsimNetworkReader(inputNetwork).readFile(args[0]);
-//		networkSpatialJoinToCityBoundaryPolygon(args[1], inputNetwork);
+		new org.matsim.core.network.algorithms.NetworkCleaner().run(inputNetwork);
+		networkSpatialJoinToCityBoundaryPolygon(args[1], inputNetwork);
 //		markLinksOnPathToMostCentralLink(inputNetwork, ConfigUtils.createConfig(), 3000,
 //				Id.createNodeId(Long.parseLong(args[2])));
+//		markOSMLinksOnPathToMostCentralLink(inputNetwork, ConfigUtils.createConfig(), 3d,
+//				Id.createNodeId(Long.parseLong(args[2])));
+		markLinksConnectingRandomLinksOfQualifyingLevelInHierarchy(inputNetwork, ConfigUtils.createConfig(), 1.5,
+				0.2);
+//		new NetworkWriter(inputNetwork).write(args[3]);
+		inputNetwork = extractNetwork(1, inputNetwork);
+
 //		correctNetworkLinks(inputNetwork);
 
 //
@@ -196,19 +203,19 @@ public class ExtractConnectedNetworkFavouringLinkVolume {
 //		Network cleanNet = NetworkUtils.createNetwork(ConfigUtils.createConfig());
 //		new MatsimNetworkReader(cleanNet).readFile(args[2]);
 //
-		Network newNetwork = NetworkUtils.createNetwork(ConfigUtils.createConfig());
-		new MatsimNetworkReader(newNetwork).readFile(args[0]);
+//		Network newNetwork = NetworkUtils.createNetwork(ConfigUtils.createConfig());
+//		new MatsimNetworkReader(newNetwork).readFile(args[0]);
 //
 //		removeLinksFromTargetNetworkNotInSourceNetwork(inputNetwork, newNetwork);
 //		removeNonPtLinksAndNodesFromNetwork(newNetwork);
-		removeNonPtNodesFromNetwork(newNetwork);
-		combineNetworks(inputNetwork, newNetwork);
+//		removeNonPtNodesFromNetwork(newNetwork);
+//		combineNetworks(inputNetwork, newNetwork);
 		;
 //		new NetworkWriter(extractNetwork(10000, newNetwork)).write(args[1]);
-		new NetworkWriter(newNetwork).write(args[1]);
-		BufferedWriter bufferedWriter = IOUtils.getBufferedWriter(args[2]);
+		new NetworkWriter(inputNetwork).write(args[4]);
+		BufferedWriter bufferedWriter = IOUtils.getBufferedWriter(args[5]);
 		bufferedWriter.write("link,cap\n");
-		newNetwork.getLinks().values().forEach(link -> {
+		inputNetwork.getLinks().values().forEach(link -> {
 			if (!link.getAllowedModes().contains(TransportMode.pt))
 				try {
 					bufferedWriter.write(link.getId() + "," + Math.min(link.getCapacity(), 6000d) + "\n");
@@ -343,6 +350,7 @@ public class ExtractConnectedNetworkFavouringLinkVolume {
 		badNodes.forEach(node -> target.removeNode(node.getId()));
 
 	}
+
 	public static void removeNonPtLinksAndNodesFromNetwork(Network target) {
 		List<Link> badLinks =
 				target.getLinks().values().stream().filter(link -> !link.getAllowedModes().contains(TransportMode.pt)).collect(Collectors.toList());
@@ -404,6 +412,157 @@ public class ExtractConnectedNetworkFavouringLinkVolume {
 				"keepLink", true));
 	}
 
+	public static void markOSMLinksOnPathToMostCentralLink(Network network, Config config, double maxOSMLinkTypeCost,
+														   Id<Node> centreNode) {
+		Node node = network.getNodes().get(centreNode);
+		Set<Id<Link>> linkstoKeep = new ConcurrentSkipListSet<>();
+		AtomicInteger i = new AtomicInteger(0);
+
+		network.getLinks()
+				.values()
+				.stream()
+				.filter(
+						link -> OSMHierarchyTravelDisutility.getOSMLinkTypeCost(link) <= maxOSMLinkTypeCost &&
+								!link.getAllowedModes().contains(TransportMode.pt))
+				.forEach(link -> linkstoKeep.add(link.getId()));
+
+
+		class Runner implements Runnable {
+
+			FastFatPathCalculator pathCalculator = new FastFatPathCalculator(network, config);
+			final List<Id<Link>> myLinks;
+
+			Runner(List<Id<Link>> myLinks) {
+				this.myLinks = myLinks;
+			}
+
+			@Override
+			public void run() {
+				myLinks.forEach(link -> {
+					pathCalculator.getPath(network.getLinks().get(link).getToNode(), node).links.forEach(pathLink -> {
+						linkstoKeep.add(pathLink.getId());
+					});
+//					pathCalculator.getPath(node, network.getLinks().get(link).getFromNode()).links.forEach(pathLink -> {
+//						linkstoKeep.add(pathLink.getId());
+//					});
+					int localI = i.incrementAndGet();
+					if (localI % 50 == 0)
+						System.out.print(i.get() + ":" + linkstoKeep.size() + "..." + (localI % 1000 == 0 ?
+								"\n" :
+								""));
+
+				});
+
+			}
+		}
+		;
+		int startIndex = 0;
+		List<List<Id<Link>>> linkLists = new ArrayList<>();
+
+		List<Id<Link>> links = new ArrayList<>();
+		links.addAll(linkstoKeep);
+		while (startIndex < links.size()) {
+			linkLists.add(links.subList(startIndex, Math.min(startIndex + 999, links.size())));
+			startIndex += 999;
+		}
+//		new Runner(links).run();
+
+		linkLists.parallelStream().forEach(linkList -> {
+			new Runner(linkList).run();
+		});
+
+		linkstoKeep.forEach(link -> network.getLinks().get(link).getAttributes().putAttribute(
+				"keepLink", true));
+	}
+
+	public static void markLinksConnectingRandomLinksOfQualifyingLevelInHierarchy(Network network, Config config,
+																				  double maxOSMLinkTypeCost,
+																				  double sampleRate) {
+		Set<Id<Link>> linkstoKeep = new ConcurrentSkipListSet<>();
+		AtomicInteger i = new AtomicInteger(0);
+
+		network.getLinks()
+				.values()
+				.stream()
+				.filter(
+						link -> OSMHierarchyTravelDisutility.getOSMLinkTypeCost(link) <= maxOSMLinkTypeCost &&
+								!link.getAllowedModes().contains(TransportMode.pt))
+				.forEach(link -> linkstoKeep.add(link.getId()));
+
+//		network.getNodes()
+//				.values()
+//				.stream()
+//				.filter(
+//						node -> node.getAttributes().getAttribute("type") != null && node.getAttributes().getAttribute("type").toString().equals("priority")
+//				).forEach(node -> {
+//					linkstoKeep.addAll(node.getOutLinks().keySet());
+//					linkstoKeep.addAll(node.getInLinks().keySet());
+//				});
+
+
+		class Runner implements Runnable {
+
+			FastFatPathCalculator pathCalculator = new FastFatPathCalculator(network, config);
+			final List<Id<Link>> myOriginLinks;
+			final List<Id<Link>> myDestinationLinks;
+
+			Runner(List<Id<Link>> myLinks) {
+				this.myOriginLinks = myLinks.subList(0, myLinks.size() / 2);
+				this.myDestinationLinks = myLinks.subList(myLinks.size() / 2, myLinks.size());
+			}
+
+			@Override
+			public void run() {
+//				for (Id<Link> link : myOriginLinks) {
+//					for (Id<Link> dlink : myDestinationLinks) {
+				for (int j = 0; j < Math.min(myOriginLinks.size(), myDestinationLinks.size()); j++) {
+					Id<Link> link = myOriginLinks.get(j);
+					Id<Link> dlink = myDestinationLinks.get(j);
+					pathCalculator.getPath(network.getLinks().get(link).getToNode(),
+							network.getLinks().get(dlink).getFromNode()).links.forEach(pathLink -> {
+						linkstoKeep.add(pathLink.getId());
+					});
+//					pathCalculator.getPath(node, network.getLinks().get(link).getFromNode()).links.forEach(pathLink -> {
+//						linkstoKeep.add(pathLink.getId());
+//					});
+					int localI = i.incrementAndGet();
+					if (localI % 100 == 0)
+						System.out.print(String.format("%06d:%06d...%s", i.get(), linkstoKeep.size(),
+								(localI % 1000 == 0 ?
+										"\n" :
+										"")));
+
+				}
+//				}
+
+
+			}
+		}
+		;
+		int startIndex = 0;
+		List<List<Id<Link>>> linkLists = new ArrayList<>();
+
+		List<Id<Link>> links = new ArrayList<>();
+		links.addAll(linkstoKeep);
+		Collections.shuffle(links);
+		Random random = MatsimRandom.getRandom();
+		double targetSize = sampleRate * (double) links.size();
+		while (links.size() > targetSize)
+			links.remove(random.nextInt(links.size()));
+		while (startIndex < links.size()) {
+			linkLists.add(links.subList(startIndex, Math.min(startIndex + 49, links.size())));
+			startIndex += 49;
+		}
+//		new Runner(links).run();
+
+		linkLists.parallelStream().forEach(linkList -> {
+			new Runner(linkList).run();
+		});
+
+		linkstoKeep.forEach(link -> network.getLinks().get(link).getAttributes().putAttribute(
+				"keepLink", true));
+	}
+
 }
 
 class FastFatPathCalculator {
@@ -419,7 +578,8 @@ class FastFatPathCalculator {
 		this.network = network;
 		this.config = config;
 		travelTime = new FreespeedTravelTimeAndDisutility(config.planCalcScore());
-		disutilityFactory = new OnlyTimeDependentTravelDisutilityFactory();
+//		disutilityFactory = new HighSpeedHighCapacityFavouringTravelDisutilityFactory();
+		disutilityFactory = new OSMHierarchyTravelDisutilityFactory();
 		dijkstra = new DijkstraFactory().createPathCalculator(network,
 				disutilityFactory.createTravelDisutility(travelTime), travelTime
 		);
@@ -432,11 +592,19 @@ class FastFatPathCalculator {
 
 }
 
+class OSMHierarchyTravelDisutilityFactory implements TravelDisutilityFactory {
+
+	@Override
+	public TravelDisutility createTravelDisutility(TravelTime timeCalculator) {
+		return new OSMHierarchyTravelDisutility(timeCalculator);
+	}
+}
+
 class HighSpeedHighCapacityFavouringTravelDisutilityFactory implements TravelDisutilityFactory {
 
 	@Override
 	public TravelDisutility createTravelDisutility(TravelTime timeCalculator) {
-		return null;
+		return new CapacityFavouringTravelDisutility(timeCalculator);
 	}
 }
 
@@ -457,3 +625,55 @@ class CapacityFavouringTravelDisutility implements TravelDisutility {
 		return travelTime.getLinkTravelTime(link, 0d, null, null) / link.getCapacity();
 	}
 }
+
+class OSMHierarchyTravelDisutility implements TravelDisutility {
+	final TravelTime travelTime;
+	static Map<String, Double> osmHierarchyMap = new HashMap<>();
+
+	static {
+		osmHierarchyMap.put("highway.motorway", 1d);
+		osmHierarchyMap.put("highway.motorway_link", 1d);
+		osmHierarchyMap.put("highway.trunk", 1.1);
+		osmHierarchyMap.put("highway.trunk_link", 1.1);
+		osmHierarchyMap.put("highway.primary", 1.21);
+		osmHierarchyMap.put("highway.primary_link", 1.21);
+		osmHierarchyMap.put("highway.primary|railway.tram", 1.21);
+		osmHierarchyMap.put("highway.secondary", 1.331);
+		osmHierarchyMap.put("highway.secondary_link", 1.331);
+		osmHierarchyMap.put("highway.secondary|railway.tram", 1.331);
+		osmHierarchyMap.put("highway.tertiary", 1.4641);
+		osmHierarchyMap.put("highway.tertiary|railway.tram", 1.4641);
+		osmHierarchyMap.put("highway.unclassified", 1.61);
+		osmHierarchyMap.put("highway.residential", 1.772);
+		osmHierarchyMap.put("highway.residential|railway.tram", 1.772);
+		osmHierarchyMap.put("highway.living_street", 1.949);
+		osmHierarchyMap.put("ZZZ", 2.14);
+	}
+
+	OSMHierarchyTravelDisutility(TravelTime travelTime) {
+		this.travelTime = travelTime;
+	}
+
+	@Override
+	public double getLinkTravelDisutility(Link link, double time, Person person, Vehicle vehicle) {
+		return getLinkMinimumTravelDisutility(link);
+	}
+
+	@Override
+	public double getLinkMinimumTravelDisutility(Link link) {
+		double linkTypeCost = getOSMLinkTypeCost(link);
+		return travelTime.getLinkTravelTime(link, 0d, null, null) * linkTypeCost;
+	}
+
+	static double getOSMLinkTypeCost(Link link) {
+		String type = getOSMLinkType(link);
+		double linkTypeCost = osmHierarchyMap.get(type);
+		return linkTypeCost;
+	}
+
+	static String getOSMLinkType(Link link) {
+		Object type = link.getAttributes().getAttribute("type");
+		return type == null ? "ZZZ" : type.toString();
+	}
+}
+
