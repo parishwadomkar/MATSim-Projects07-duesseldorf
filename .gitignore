@@ -4,7 +4,6 @@ output/
 scenarios/output
 *.gz
 *.pbf
-*.csv
 
 .classpath
 .project
@@ -292,4 +291,3 @@ $RECYCLE.BIN/
 # End of https://www.toptal.com/developers/gitignore/api/osx,java,maven,linux,windows,intellij,eclipse
 *.iml
 *.xml
-.Rproj.user
