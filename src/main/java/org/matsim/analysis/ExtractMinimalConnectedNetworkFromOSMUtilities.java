@@ -1,5 +1,7 @@
 package org.matsim.analysis;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.locationtech.jts.geom.*;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.TransportMode;
@@ -38,6 +40,7 @@ import java.util.stream.Collectors;
  * @author Pieter Fourie
  */
 public class ExtractMinimalConnectedNetworkFromOSMUtilities {
+	static Logger log = LogManager.getLogger(ExtractMinimalConnectedNetworkFromOSMUtilities.class);
 
 	/**
 	 * Use this to add a link attribute <tt>"keepLink" = true</tt> to network links
@@ -76,11 +79,13 @@ public class ExtractMinimalConnectedNetworkFromOSMUtilities {
 				})
 				.collect(Collectors.toList())
 				.size();
-		System.out.println(String.format("This network has a total of %d links of which %d appear inside the city polygon boundary",
+		log.info
+				(String.format("This network has a total of %d links of which %d appear inside the city polygon " +
+					"boundary",
 				network.getLinks().size(), numberOfIrrelevantLinks));
 	}
 
-	public static void main(String[] args) throws IOException {
+	public static void main(String[] args) {
 		Network inputNetwork = NetworkUtils.createNetwork(ConfigUtils.createConfig());
 		new MatsimNetworkReader(inputNetwork).readFile(args[0]);
 
@@ -100,17 +105,20 @@ public class ExtractMinimalConnectedNetworkFromOSMUtilities {
 		// arb code to write out some values to display using SimWrapper
 		new NetworkWriter(inputNetwork).write(args[4]);
 		BufferedWriter bufferedWriter = IOUtils.getBufferedWriter(args[5]);
-		bufferedWriter.write("link,cap\n");
-		inputNetwork.getLinks().values().forEach(link -> {
-			if (!link.getAllowedModes().contains(TransportMode.pt))
-				try {
-					bufferedWriter.write(link.getId() + "," + Math.min(link.getCapacity(), 6000d) + "\n");
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-		});
-		bufferedWriter.flush();
-		bufferedWriter.close();
+		try (bufferedWriter) {
+			bufferedWriter.write("link,cap\n");
+			inputNetwork.getLinks().values().forEach(link -> {
+				if (!link.getAllowedModes().contains(TransportMode.pt))
+					try {
+						bufferedWriter.write(link.getId() + "," + Math.min(link.getCapacity(), 6000d) + "\n");
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+			});
+			bufferedWriter.flush();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	/**
@@ -192,8 +200,6 @@ public class ExtractMinimalConnectedNetworkFromOSMUtilities {
 
 			@Override
 			public void run() {
-//				for (Id<Link> link : myOriginLinks) {
-//					for (Id<Link> dlink : myDestinationLinks) {
 				for (int j = 0; j < Math.min(myOriginLinks.size(), myDestinationLinks.size()); j++) {
 					Id<Link> link = myOriginLinks.get(j);
 					Id<Link> dlink = myDestinationLinks.get(j);
@@ -201,10 +207,9 @@ public class ExtractMinimalConnectedNetworkFromOSMUtilities {
 							network.getLinks().get(dlink).getFromNode()).links.forEach(pathLink -> {
 						linkstoKeep.add(pathLink.getId());
 					});
-//					pathCalculator.getPath(node, network.getLinks().get(link).getFromNode()).links.forEach(pathLink -> {
-//						linkstoKeep.add(pathLink.getId());
-//					});
+
 					int localI = i.incrementAndGet();
+					// pieter jan 22: this is only to get some indication of progress, so not logging it.
 					if (localI % 100 == 0)
 						System.out.print(String.format("%06d:%06d...%s", i.get(), linkstoKeep.size(),
 								(localI % 1000 == 0 ?
@@ -212,9 +217,6 @@ public class ExtractMinimalConnectedNetworkFromOSMUtilities {
 										"")));
 
 				}
-//				}
-
-
 			}
 		}
 		;
@@ -232,7 +234,8 @@ public class ExtractMinimalConnectedNetworkFromOSMUtilities {
 			linkLists.add(links.subList(startIndex, Math.min(startIndex + 49, links.size())));
 			startIndex += 49;
 		}
-//		new Runner(links).run();
+		// pieter jan 22: if something goes wrong, run the set in a single thread and debug with
+		// new Runner(links).run();
 
 		linkLists.parallelStream().forEach(linkList -> {
 			new Runner(linkList).run();
