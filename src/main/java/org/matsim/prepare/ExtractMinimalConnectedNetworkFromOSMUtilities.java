@@ -68,8 +68,6 @@ public class ExtractMinimalConnectedNetworkFromOSMUtilities implements MATSimApp
 	@Override
 	public Integer call() throws Exception {
 
-		Network inputNetwork = NetworkUtils.readNetwork(input.get(0).toString());
-
 		// TODO: Already run and should not be necessary ?
 		//new org.matsim.core.network.algorithms.NetworkCleaner().run(inputNetwork);
 
@@ -77,6 +75,8 @@ public class ExtractMinimalConnectedNetworkFromOSMUtilities implements MATSimApp
 			log.error("Shp file is required as input");
 			return 2;
 		}
+
+		Network inputNetwork = NetworkUtils.readNetwork(input.get(0).toString());
 
 		networkSpatialJoinToBoundaryPolygon(inputNetwork, shp);
 
