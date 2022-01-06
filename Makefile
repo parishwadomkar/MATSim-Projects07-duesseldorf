@@ -65,6 +65,10 @@ scenarios/input/duesseldorf-$V-network.xml.gz: scenarios/input/sumo.net.xml
 	 --capacities CV-100_ACV-0_AV-0.csv\
 	 --output $@
 
+	java -jar $(JAR) prepare extract-network $@\
+	 --shp ../public-svn/matsim/scenarios/countries/de/duesseldorf/duesseldorf-v1.0/input/area/area.shp\
+	 --output $@
+
 scenarios/input/duesseldorf-$V-network-with-pt.xml.gz: scenarios/input/duesseldorf-$V-network.xml.gz scenarios/input/gtfs-vrs.zip scenarios/input/gtfs-vrr.zip scenarios/input/gtfs-avv.zip
 	java -jar $(JAR) prepare transit-from-gtfs $(filter-out $<,$^)\
 	 --network $<\

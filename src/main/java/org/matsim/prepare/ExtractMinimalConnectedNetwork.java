@@ -18,9 +18,9 @@ import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.gbl.MatsimRandom;
 import org.matsim.core.network.NetworkUtils;
-import org.matsim.core.router.DijkstraFactory;
 import org.matsim.core.router.costcalculators.FreespeedTravelTimeAndDisutility;
 import org.matsim.core.router.costcalculators.TravelDisutilityFactory;
+import org.matsim.core.router.speedy.SpeedyALTFactory;
 import org.matsim.core.router.util.LeastCostPathCalculator;
 import org.matsim.core.router.util.TravelDisutility;
 import org.matsim.core.router.util.TravelTime;
@@ -32,7 +32,7 @@ import picocli.CommandLine;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.matsim.run.RunDuesseldorfScenario.VERSION;
@@ -48,9 +48,9 @@ import static org.matsim.run.RunDuesseldorfScenario.VERSION;
 		description = "Extract most relevant and major links of a network.",
 		showDefaultValues = true
 )
-public class ExtractMinimalConnectedNetworkFromOSMUtilities implements MATSimAppCommand {
+public class ExtractMinimalConnectedNetwork implements MATSimAppCommand {
 
-	private static final Logger log = LogManager.getLogger(ExtractMinimalConnectedNetworkFromOSMUtilities.class);
+	private static final Logger log = LogManager.getLogger(ExtractMinimalConnectedNetwork.class);
 
 	@CommandLine.Parameters(arity = "1..*", paramLabel = "INPUT", description = "Input network xml", defaultValue = "scenarios/input/duesseldorf-" + VERSION + "-network.xml.gz")
 	private List<Path> input;
@@ -62,14 +62,11 @@ public class ExtractMinimalConnectedNetworkFromOSMUtilities implements MATSimApp
 	private ShpOptions shp = new ShpOptions();
 
 	public static void main(String[] args) {
-		new ExtractMinimalConnectedNetworkFromOSMUtilities().execute(args);
+		new ExtractMinimalConnectedNetwork().execute(args);
 	}
 
 	@Override
 	public Integer call() throws Exception {
-
-		// TODO: Already run and should not be necessary ?
-		//new org.matsim.core.network.algorithms.NetworkCleaner().run(inputNetwork);
 
 		if (shp.getShapeFile() == null) {
 			log.error("Shp file is required as input");
@@ -77,6 +74,9 @@ public class ExtractMinimalConnectedNetworkFromOSMUtilities implements MATSimApp
 		}
 
 		Network inputNetwork = NetworkUtils.readNetwork(input.get(0).toString());
+
+		// TODO: Already run and should not be necessary ?
+		//new org.matsim.core.network.algorithms.NetworkCleaner().run(inputNetwork);
 
 		networkSpatialJoinToBoundaryPolygon(inputNetwork, shp);
 
@@ -151,29 +151,25 @@ public class ExtractMinimalConnectedNetworkFromOSMUtilities implements MATSimApp
 	 */
 	public static Network extractNetworkContainingMarkedLinks(Network inputNetwork) {
 		Network outputNetwork = NetworkUtils.createNetwork(ConfigUtils.createConfig());
-		// use these sets to keep track if elements have already been added, so as to suppress warnings.
-		Set<Node> addedNodes = new HashSet<>();
-		Set<Link> addedLinks = new HashSet<>();
-		inputNetwork.getLinks().values().forEach(link -> {
+
+		for (Link link : inputNetwork.getLinks().values()) {
 			if (link.getAttributes().getAttribute("keepLink") != null) {
-				try {
-					if (!addedNodes.contains(link.getFromNode()))
+
+				// clean attribute
+				link.getAttributes().removeAttribute("keepLink");
+
+				if (!outputNetwork.getNodes().containsKey(link.getFromNode().getId()))
 						outputNetwork.addNode(link.getFromNode());
-				} catch (IllegalArgumentException e) {
 
-				}
-				try {
-					if (!addedNodes.contains(link.getToNode()))
-						outputNetwork.addNode(link.getToNode());
+				if (!outputNetwork.getNodes().containsKey(link.getToNode().getId()))
+					outputNetwork.addNode(link.getToNode());
 
-				} catch (IllegalArgumentException e) {
-
-				}
-				if (!addedLinks.contains(link))
+				if (!outputNetwork.getLinks().containsKey(link.getId()))
 					outputNetwork.addLink(link);
 
 			}
-		});
+		}
+
 		return outputNetwork;
 	}
 
@@ -207,9 +203,9 @@ public class ExtractMinimalConnectedNetworkFromOSMUtilities implements MATSimApp
 				.forEach(link -> linkstoKeep.add(link.getId()));
 
 
-		class Runner implements Runnable {
+		class Runner implements Callable<Integer> {
 
-			OSMHierarchyFavouringFastestPathCalculator pathCalculator = new OSMHierarchyFavouringFastestPathCalculator(network, config);
+			final OSMHierarchyFavouringFastestPathCalculator pathCalculator = new OSMHierarchyFavouringFastestPathCalculator(network, config);
 			final List<Id<Link>> myOriginLinks;
 			final List<Id<Link>> myDestinationLinks;
 
@@ -219,14 +215,21 @@ public class ExtractMinimalConnectedNetworkFromOSMUtilities implements MATSimApp
 			}
 
 			@Override
-			public void run() {
+			public Integer call() {
 				for (int j = 0; j < Math.min(myOriginLinks.size(), myDestinationLinks.size()); j++) {
 					Id<Link> link = myOriginLinks.get(j);
 					Id<Link> dlink = myDestinationLinks.get(j);
-					pathCalculator.getPath(network.getLinks().get(link).getToNode(),
-							network.getLinks().get(dlink).getFromNode()).links.forEach(pathLink -> {
+					LeastCostPathCalculator.Path path = pathCalculator.getPath(network.getLinks().get(link).getToNode(),
+							network.getLinks().get(dlink).getFromNode());
+
+					if (path == null) {
+						log.warn("No route found for {} and {}", link, dlink);
+						continue;
+					}
+
+					for (Link pathLink : path.links) {
 						linkstoKeep.add(pathLink.getId());
-					});
+					}
 
 					int localI = i.incrementAndGet();
 					// pieter jan 22: this is only to get some indication of progress, so not logging it.
@@ -235,11 +238,12 @@ public class ExtractMinimalConnectedNetworkFromOSMUtilities implements MATSimApp
 								(localI % 1000 == 0 ?
 										"\n" :
 										"")));
-
 				}
+
+				return 0;
 			}
 		}
-		;
+
 		int startIndex = 0;
 		List<List<Id<Link>>> linkLists = new ArrayList<>();
 
@@ -258,7 +262,7 @@ public class ExtractMinimalConnectedNetworkFromOSMUtilities implements MATSimApp
 		// new Runner(links).run();
 
 		linkLists.parallelStream().forEach(linkList -> {
-			new Runner(linkList).run();
+			new Runner(linkList).call();
 		});
 
 		linkstoKeep.forEach(linkId -> {
@@ -279,25 +283,34 @@ public class ExtractMinimalConnectedNetworkFromOSMUtilities implements MATSimApp
 	private static class OSMHierarchyFavouringFastestPathCalculator {
 		final Network network;
 		final Config config;
-		TravelDisutilityFactory disutilityFactory;
-		TravelTime travelTime;
-		LeastCostPathCalculator dijkstra;
+
+		final LeastCostPathCalculator lcpc;
+
+		final static ThreadLocal<LeastCostPathCalculator> var = new ThreadLocal<>();
 
 		// define how the travel disutility is computed:
 
 		OSMHierarchyFavouringFastestPathCalculator(Network network, Config config) {
 			this.network = network;
 			this.config = config;
-			travelTime = new FreespeedTravelTimeAndDisutility(config.planCalcScore());
-			disutilityFactory = new OSMHierarchyTravelDisutilityFactory();
-			dijkstra = new DijkstraFactory().createPathCalculator(network,
-					disutilityFactory.createTravelDisutility(travelTime), travelTime
-			);
+
+			// Cache this instance for each thread
+			if (var.get() == null) {
+
+				TravelDisutilityFactory disutilityFactory = new OSMHierarchyTravelDisutilityFactory();
+				TravelTime travelTime = new FreespeedTravelTimeAndDisutility(config.planCalcScore());
+
+				var.set(new SpeedyALTFactory().createPathCalculator(network,
+						disutilityFactory.createTravelDisutility(travelTime), travelTime
+				));
+			}
+
+			lcpc = var.get();
 		}
 
 		LeastCostPathCalculator.Path getPath(Node fromNode, Node toNode) {
 
-			return dijkstra.calcLeastCostPath(fromNode, toNode, 0, null, null);
+			return lcpc.calcLeastCostPath(fromNode, toNode, 0, null, null);
 		}
 
 	}
@@ -318,7 +331,7 @@ public class ExtractMinimalConnectedNetworkFromOSMUtilities implements MATSimApp
 	 * each level of the OSM hierarchy observed in the Duesseldorf scenario.
 	 * <p>
 	 * The map of disutilities is pretty arbitrary, tuned after several runs of
-	 * {@link ExtractMinimalConnectedNetworkFromOSMUtilities#markConnectedLinksOfQualifyingLevelInOSMHierarchy(Network, Config, double, double)}
+	 * {@link ExtractMinimalConnectedNetwork#markConnectedLinksOfQualifyingLevelInOSMHierarchy(Network, Config, double, double)}
 	 * to produce a network providing adequate connection and few orphaned links. May have to be adjusted based on
 	 * context, and certainly does not contain the entire hierarchy specified in the <a href="">OSM wiki</a>.
 	 */

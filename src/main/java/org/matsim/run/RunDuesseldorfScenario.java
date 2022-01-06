@@ -13,7 +13,6 @@ import it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
-import org.apache.commons.lang3.tuple.Triple;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.analysis.ACVModel;
@@ -50,10 +49,7 @@ import org.matsim.core.replanning.strategies.DefaultPlanStrategiesModule;
 import org.matsim.core.router.AnalysisMainModeIdentifier;
 import org.matsim.lanes.Lane;
 import org.matsim.lanes.LanesToLinkAssignment;
-import org.matsim.prepare.CreateBAStCounts;
-import org.matsim.prepare.CreateCityCounts;
-import org.matsim.prepare.CreateNetwork;
-import org.matsim.prepare.ExtractEvents;
+import org.matsim.prepare.*;
 import picocli.CommandLine;
 
 import java.io.IOException;
@@ -67,7 +63,7 @@ import java.util.stream.Collectors;
 		CreateNetwork.class, CreateTransitScheduleFromGtfs.class, CreateCityCounts.class, CleanPopulation.class,
 		ExtractEvents.class, CreateBAStCounts.class, TrajectoryToPlans.class, ExtractRelevantFreightTrips.class,
 		GenerateShortDistanceTrips.class, MergePopulations.class, DownSamplePopulation.class, ResolveGridCoordinates.class,
-		ExtractHomeCoordinates.class
+		ExtractHomeCoordinates.class, ExtractMinimalConnectedNetwork.class
 })
 @MATSimApplication.Analysis({
 		CheckPopulation.class, AirPollutionByVehicleCategory.class, AirPollutionSpatialAggregation.class,
