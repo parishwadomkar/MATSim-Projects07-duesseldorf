@@ -52,7 +52,7 @@ public class ExtractMinimalConnectedNetwork implements MATSimAppCommand {
 
 	private static final Logger log = LogManager.getLogger(ExtractMinimalConnectedNetwork.class);
 
-	@CommandLine.Parameters(arity = "1..*", paramLabel = "INPUT", description = "Input network xml", defaultValue = "scenarios/input/duesseldorf-" + VERSION + "-network.xml.gz")
+	@CommandLine.Parameters(arity = "1", paramLabel = "INPUT", description = "Input network xml", defaultValue = "scenarios/input/duesseldorf-" + VERSION + "-network.xml.gz")
 	private List<Path> input;
 
 	@CommandLine.Option(names = "--output", description = "Output network xml", defaultValue = "scenarios/input/duesseldorf-" + VERSION + "-network-filtered.xml.gz")

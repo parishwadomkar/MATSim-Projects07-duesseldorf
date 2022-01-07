@@ -63,7 +63,7 @@ import java.util.stream.Collectors;
 		CreateNetwork.class, CreateTransitScheduleFromGtfs.class, CreateCityCounts.class, CleanPopulation.class,
 		ExtractEvents.class, CreateBAStCounts.class, TrajectoryToPlans.class, ExtractRelevantFreightTrips.class,
 		GenerateShortDistanceTrips.class, MergePopulations.class, DownSamplePopulation.class, ResolveGridCoordinates.class,
-		ExtractHomeCoordinates.class, ExtractMinimalConnectedNetwork.class
+		ExtractHomeCoordinates.class, ExtractMinimalConnectedNetwork.class, AdjustPopulationForCutout.class
 })
 @MATSimApplication.Analysis({
 		CheckPopulation.class, AirPollutionByVehicleCategory.class, AirPollutionSpatialAggregation.class,
