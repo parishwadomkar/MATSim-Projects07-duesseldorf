@@ -75,16 +75,10 @@ public class ExtractMinimalConnectedNetwork implements MATSimAppCommand {
 
 		Network inputNetwork = NetworkUtils.readNetwork(input.get(0).toString());
 
-		// TODO: Already run and should not be necessary ?
-		//new org.matsim.core.network.algorithms.NetworkCleaner().run(inputNetwork);
-
 		networkSpatialJoinToBoundaryPolygon(inputNetwork, shp);
 
 		markConnectedLinksOfQualifyingLevelInOSMHierarchy(inputNetwork, ConfigUtils.createConfig(), 1.5,
 				0.2);
-
-		// TODO: is this still needed ?
-		//new NetworkWriter(inputNetwork).write(output.toString());
 
 		inputNetwork = extractNetworkContainingMarkedLinks(inputNetwork);
 
@@ -221,7 +215,37 @@ public class ExtractMinimalConnectedNetwork implements MATSimAppCommand {
 					Id<Link> dlink = myDestinationLinks.get(j);
 					LeastCostPathCalculator.Path path = pathCalculator.getPath(network.getLinks().get(link).getToNode(),
 							network.getLinks().get(dlink).getFromNode());
+					if (path == null) {
+						log.warn("No route found for {} and {}", link, dlink);
+						continue;
+					}
 
+					for (Link pathLink : path.links) {
+						linkstoKeep.add(pathLink.getId());
+					}
+					//checking all possible combinations
+					path = pathCalculator.getPath(network.getLinks().get(link).getFromNode(),
+							network.getLinks().get(dlink).getToNode());
+					if (path == null) {
+						log.warn("No route found for {} and {}", link, dlink);
+						continue;
+					}
+
+					for (Link pathLink : path.links) {
+						linkstoKeep.add(pathLink.getId());
+					}
+					path = pathCalculator.getPath(network.getLinks().get(link).getFromNode(),
+							network.getLinks().get(dlink).getFromNode());
+					if (path == null) {
+						log.warn("No route found for {} and {}", link, dlink);
+						continue;
+					}
+
+					for (Link pathLink : path.links) {
+						linkstoKeep.add(pathLink.getId());
+					}
+					path = pathCalculator.getPath(network.getLinks().get(link).getToNode(),
+							network.getLinks().get(dlink).getToNode());
 					if (path == null) {
 						log.warn("No route found for {} and {}", link, dlink);
 						continue;
