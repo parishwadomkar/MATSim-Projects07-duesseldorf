@@ -86,7 +86,7 @@ scenarios/input/freight-trips.xml.gz:
 	 --cut-on-boundary\
 	 --output $@
 
-scenarios/input/duesseldorf-$V-10pct.plans.xml.gz: scenarios/input/freight-trips.xml.gz
+scenarios/input/duesseldorf-$V-10pct.plans.xml.gz: scenarios/input/freight-trips.xml.gz scenarios/input/duesseldorf-$V-network.xml.gz
 
 	java -jar $(JAR) prepare trajectory-to-plans\
 	 --name prepare\
@@ -112,7 +112,7 @@ scenarios/input/duesseldorf-$V-10pct.plans.xml.gz: scenarios/input/freight-trips
 	 --shp ../public-svn/matsim/scenarios/countries/de/duesseldorf/duesseldorf-v1.0/input/area/area.shp\
 	 --output scenarios/input/prepare-25pct.plans-adj.xml.gz
 
-	java -jar $(JAR) prepare merge-populations scenarios/input/prepare-25pct.plans-adj.xml.gz $<\
+	java -jar $(JAR) prepare merge-populations scenarios/input/prepare-25pct.plans-adj.xml.gz scenarios/input/freight-trips.xml.gz\
 	 --output scenarios/input/duesseldorf-$V-25pct.plans.xml.gz
 
 	java -jar $(JAR) prepare downsample-population scenarios/input/duesseldorf-$V-25pct.plans.xml.gz\
