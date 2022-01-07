@@ -101,7 +101,7 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 	@CommandLine.Option(names = {"--dc"}, defaultValue = "1.14", description = "Correct demand by downscaling links.")
 	private double demandCorrection;
 
-	@CommandLine.Option(names = {"--no-lanes"}, defaultValue = "true", description = "Deactivate the use of lane information.")
+	@CommandLine.Option(names = {"--no-lanes"}, defaultValue = "false", description = "Deactivate the use of lane information.")
 	private boolean noLanes;
 
 	@CommandLine.Option(names = {"--lane-capacity"}, description = "CSV file with lane capacities.", required = false)
