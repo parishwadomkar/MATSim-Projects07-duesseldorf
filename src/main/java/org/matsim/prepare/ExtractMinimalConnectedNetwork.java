@@ -77,15 +77,15 @@ public class ExtractMinimalConnectedNetwork implements MATSimAppCommand {
 
 		networkSpatialJoinToBoundaryPolygon(inputNetwork, shp);
 
-		markConnectedLinksOfQualifyingLevelInOSMHierarchy(inputNetwork, ConfigUtils.createConfig(), 1.5,
-				0.2);
+		markConnectedLinksOfQualifyingLevelInOSMHierarchy(inputNetwork, ConfigUtils.createConfig(), 1.5, 0.2);
 
-		inputNetwork = extractNetworkContainingMarkedLinks(inputNetwork);
+		extractNetworkContainingMarkedLinks(inputNetwork);
+		removeDeadEnds(inputNetwork);
 
 		new org.matsim.core.network.algorithms.NetworkCleaner().run(inputNetwork);
 
 		// arb code to write out some values to display using SimWrapper
-		new NetworkWriter(inputNetwork).write(output.toString());
+		NetworkUtils.writeNetwork(inputNetwork, output.toString());
 
 		try (CSVPrinter csv = new CSVPrinter(IOUtils.getBufferedWriter(output.toString().replace(".xml.gz", ".csv")), CSVFormat.DEFAULT)) {
 			csv.printRecord("link", "cap");
@@ -101,6 +101,25 @@ public class ExtractMinimalConnectedNetwork implements MATSimAppCommand {
 		}
 
 		return 0;
+	}
+
+	/**
+	 * Remove nodes without ingoing *and* outgoing links
+	 */
+	private void removeDeadEnds(Network network) {
+
+		Set<Id<Node>> toRemove = new HashSet<>();
+
+		for (Node node : network.getNodes().values()) {
+
+			if (node.getInLinks().size() == 0 || node.getOutLinks().size() == 0)
+				toRemove.add(node.getId());
+		}
+
+		log.info("Removing {} dead-ends", toRemove.size());
+
+		toRemove.forEach(network::removeNode);
+
 	}
 
 	/**
@@ -143,28 +162,19 @@ public class ExtractMinimalConnectedNetwork implements MATSimAppCommand {
 	 * @param inputNetwork
 	 * @return
 	 */
-	public static Network extractNetworkContainingMarkedLinks(Network inputNetwork) {
-		Network outputNetwork = NetworkUtils.createNetwork(ConfigUtils.createConfig());
+	public static void extractNetworkContainingMarkedLinks(Network inputNetwork) {
+
+		Set<Id<Link>> toRemove = new HashSet<>();
 
 		for (Link link : inputNetwork.getLinks().values()) {
-			if (link.getAttributes().getAttribute("keepLink") != null) {
-
+			if (link.getAttributes().getAttribute("keepLink") == null) {
+				toRemove.add(link.getId());
+			} else
 				// clean attribute
 				link.getAttributes().removeAttribute("keepLink");
-
-				if (!outputNetwork.getNodes().containsKey(link.getFromNode().getId()))
-						outputNetwork.addNode(link.getFromNode());
-
-				if (!outputNetwork.getNodes().containsKey(link.getToNode().getId()))
-					outputNetwork.addNode(link.getToNode());
-
-				if (!outputNetwork.getLinks().containsKey(link.getId()))
-					outputNetwork.addLink(link);
-
-			}
 		}
 
-		return outputNetwork;
+		toRemove.forEach(inputNetwork::removeLink);
 	}
 
 	/**
