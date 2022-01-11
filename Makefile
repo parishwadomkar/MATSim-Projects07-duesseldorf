@@ -65,6 +65,10 @@ scenarios/input/duesseldorf-$V-network.xml.gz: scenarios/input/sumo.net.xml
 	 --capacities CV-100_ACV-0_AV-0.csv\
 	 --output $@
 
+	java -jar $(JAR) prepare extract-network $@\
+	 --shp ../public-svn/matsim/scenarios/countries/de/duesseldorf/duesseldorf-v1.0/input/area/area.shp\
+	 --output $@
+
 scenarios/input/duesseldorf-$V-network-with-pt.xml.gz: scenarios/input/duesseldorf-$V-network.xml.gz scenarios/input/gtfs-vrs.zip scenarios/input/gtfs-vrr.zip scenarios/input/gtfs-avv.zip
 	java -jar $(JAR) prepare transit-from-gtfs $(filter-out $<,$^)\
 	 --network $<\
@@ -82,7 +86,7 @@ scenarios/input/freight-trips.xml.gz:
 	 --cut-on-boundary\
 	 --output $@
 
-scenarios/input/duesseldorf-$V-10pct.plans.xml.gz: scenarios/input/freight-trips.xml.gz
+scenarios/input/duesseldorf-$V-10pct.plans.xml.gz: scenarios/input/freight-trips.xml.gz scenarios/input/duesseldorf-$V-network.xml.gz
 
 	java -jar $(JAR) prepare trajectory-to-plans\
 	 --name prepare\
@@ -104,7 +108,11 @@ scenarios/input/duesseldorf-$V-10pct.plans.xml.gz: scenarios/input/freight-trips
 	 --input-crs EPSG:25832\
 	 --num-trips 95000
 
-	java -jar $(JAR) prepare merge-populations scenarios/input/prepare-25pct.plans-with-trips.xml.gz $<\
+	java -jar $(JAR) prepare adjust-population scenarios/input/prepare-25pct.plans-with-trips.xml.gz\
+	 --shp ../public-svn/matsim/scenarios/countries/de/duesseldorf/duesseldorf-v1.0/input/area/area.shp\
+	 --output scenarios/input/prepare-25pct.plans-adj.xml.gz
+
+	java -jar $(JAR) prepare merge-populations scenarios/input/prepare-25pct.plans-adj.xml.gz scenarios/input/freight-trips.xml.gz\
 	 --output scenarios/input/duesseldorf-$V-25pct.plans.xml.gz
 
 	java -jar $(JAR) prepare downsample-population scenarios/input/duesseldorf-$V-25pct.plans.xml.gz\
