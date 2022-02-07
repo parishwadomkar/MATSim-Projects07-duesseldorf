@@ -9,9 +9,39 @@ layout:
     - type: "links"
       title: "Overview"
       description: "Link volumes in the study area"
-      height: 8
+      height: 12
       props:
         csvFile: "link_volumes.csv"
         geojsonFile: "network.geojson"
-        widthFactor: 1
-        sampleRate: 0.25
+        display:
+          color:
+            dataset: csvFile
+            columnName: volume
+            colorRamp:
+              ramp: Purples
+              reverse: false
+              steps: 7
+          width:
+            dataset: csvFile
+            columnName: volume
+            scaleFactor: 10000
+
+  row1:
+    - type: "line"
+      title: "Car traffic"
+      description: "Number of agents en-route"
+      width: 4
+      props:
+        dataset: "base_car_traffic.csv"
+        x: "time"
+        xAxisName: "Time"
+        yAxisName: "Number of agents"
+
+    - type: "pie"
+      title: "Mode-Share"
+      description: "Mode-share in city area"
+      width: 1
+      height: 5
+      props:
+        dataset: "base_modeshare.csv"
+        useLastRow: true
