@@ -1,0 +1,17 @@
+header:
+  tab: "Düsseldorf scenario"
+  title: "Overview of the Düsseldorf MATSim scenario"
+  description: "This dashboards show an overview and some key insights into the Düsseldorf MATSim scenario."
+
+
+layout:
+  map:
+    - type: "links"
+      title: "Overview"
+      description: "Link volumes in the study area"
+      height: 8
+      props:
+        csvFile: "link_volumes.csv"
+        geojsonFile: "network.geojson"
+        widthFactor: 0
+        sampleRate: 0.25
