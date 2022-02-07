@@ -18,7 +18,7 @@ layout:
             dataset: csvFile
             columnName: volume
             colorRamp:
-              ramp: Purples
+              ramp: RdBu
               reverse: false
               steps: 7
           width:
