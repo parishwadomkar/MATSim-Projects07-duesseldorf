@@ -24,7 +24,7 @@ layout:
           width:
             dataset: csvFile
             columnName: volume
-            scaleFactor: 10000
+            scaleFactor: 5000
 
   row1:
     - type: "line"
