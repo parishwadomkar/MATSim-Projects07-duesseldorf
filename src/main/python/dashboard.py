@@ -44,7 +44,7 @@ df["wkt"] = gpd.GeoSeries.from_wkt(df["wkt"], crs="EPSG:25832")
 #%%
 
 gdf = gpd.GeoDataFrame(df, geometry="wkt").set_index("link_id")
-gdf = gpd.sjoin(gdf, shp, how="inner", op="intersects")
+gdf = gpd.sjoin(gdf, shp, how="inner", op="intersects").to_crs("EPSG:4326")
 
 
 #%%
@@ -69,7 +69,9 @@ link_volumes = gdf.merge(link_volumes, left_on="link_id", right_index=True)
 
 with open(join(out, "link_volumes.csv"), "w") as f:
     
-    f.write("link;vol\n")
+    f.write("link;")    
+    f.write(";".join("%02d:00" % h for h in range(24)))
+    f.write("\n")
     
     for row in link_volumes.itertuples():
         

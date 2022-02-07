@@ -13,5 +13,5 @@ layout:
       props:
         csvFile: "link_volumes.csv"
         geojsonFile: "network.geojson"
-        widthFactor: 0
+        widthFactor: 1
         sampleRate: 0.25
