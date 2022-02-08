@@ -1,65 +1,30 @@
 header:
   tab: "Flow capacity"
   title: "Effect of AVs on flow capacity"
-  description: "This dashboard shows how we modeled the effect of automated vehicles (AV) and highly autonomous vehicles (ACV) on flow capacity."
-
+  description: "This dashboard shows the effect of conventional vehicles (CV), automated vehicles (AV) and highly autonomous vehicles (ACV) on flow capacity.
+                We modeled the driving behaviour microscopically in SUMO and evaluated for intersections in the study area."
 
 layout:
-  modestats:
-    - type: "pie"
-      title: "Final mode shares"
-      description: "By iteration"
+  intro:
+    - type: "text"
+      title: "Conventional & automated vehicles (CVs & AVs)"
       props:
-        dataset: "*.modestats.txt"
-        ignoreColumns: ["Iteration"]
-        useLastRow: true
+        file: flow/cv.md
 
-    - type: "line"
-      title: "Mode Share vs. Iteration"
-      description: "For all modes in modestats.txt"
+    - type: "text"
+      title: "Autonomous connected vehicles (ACVs)"
       props:
-        dataset: "*.modestats.txt"
-        x: "Iteration"
+        file: flow/acv.md
 
-  phm-pkm:
-    - type: "bar"
-      title: "Passenger-hours traveled per mode"
-      description: "For all modes in modestats.txt"
-      height: 8
+  flow:
+    - type: vega
+      title: "Flow capacity for AVs"
+      height: 6
       props:
-        dataset: "*.ph_modestats.txt"
-        x: "Iteration"
-        stacked: true
+        config: flow/flow-av-vega.json
 
-    - type: "bar"
-      title: "Passenger-kilometers traveled per mode"
-      description: "For all modes in modestats.txt"
+    - type: vega
+      title: "Flow capacity for ACVs"
+      height: 6
       props:
-        dataset: "*.pkm_modestats.txt"
-        x: "Iteration"
-        stacked: true
-
-  scores:
-    - type: "line"
-      title: "Score statistics"
-      description: "by iteration"
-      props:
-        dataset: "*.scorestats.txt"
-        x: "ITERATION"
-
-    - type: "line"
-      title: "Leg travel distance statistics"
-      description: "avg. Average Leg distance"
-      props:
-        dataset: "*.traveldistancestats.txt"
-        x: "ITERATION"
-        columns: ['avg. Average Leg distance']
-
-    - type: "line"
-      title: "Trip travel distance statistics"
-      description: "avg. Average Trip distance"
-      props:
-        dataset: "*.traveldistancestats.txt"
-        x: "ITERATION"
-        columns: ['avg. Average Trip distance']
-
+        config: flow/flow-acv-vega.json

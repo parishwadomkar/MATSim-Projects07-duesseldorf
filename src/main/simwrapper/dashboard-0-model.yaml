@@ -8,7 +8,7 @@ layout:
   map:
     - type: "links"
       title: "Overview"
-      description: "Link volumes in the study area"
+      description: "Simulated volumes in the study area. These do not represent real volumes, but down-sampled volumes of agents using their car for private transport."
       height: 12
       props:
         csvFile: "link_volumes.csv"
