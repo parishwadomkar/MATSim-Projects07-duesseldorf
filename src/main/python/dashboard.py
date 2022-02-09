@@ -45,6 +45,9 @@ df["wkt"] = gpd.GeoSeries.from_wkt(df["wkt"], crs="EPSG:25832")
 #%%
 
 gdf = gpd.GeoDataFrame(df, geometry="wkt").set_index("link_id")
+
+city_links = gpd.sjoin(gdf, city, how="inner", op="intersects")
+
 gdf = gpd.sjoin(gdf, shp, how="inner", op="intersects").to_crs("EPSG:4326")
 
 
@@ -105,7 +108,7 @@ def mt(df):
     df.loc[df.main_mode == "ride", "main_mode"] = "car"
     return df[df.main_mode != "freight"]
 
-mode_share = calc_mode_share("Z:/matsim-duesseldorf/experiment/output/base", person_filter=pf, map_trips=mt)
+#mode_share = calc_mode_share("Z:/matsim-duesseldorf/experiment/output/base", person_filter=pf, map_trips=mt)
 
 #%%
 
@@ -115,5 +118,102 @@ with open(join(out, "base_modeshare.csv"), "w") as f:
     f.write("\n")    
     f.write(",".join(str(s) for s in mode_share))
 
+
+#%%
+from subprocess import call, check_output
+from os.path import abspath
+
+def cp(scenario, f, dst):  
+    if os.path.exists(dst):
+        os.remove(dst)
+
+    cmd = ["scp", "rakow@cluster.math.tu-berlin.de:/net/ils/matsim-duesseldorf/experiment/output/%s/%s" % (scenario, f), dst]
+    out = check_output(cmd)
+    return dst
+
+
+def read_trips(run, filter_trips=None):
+    """ Read trips and persons from run directory """
+    trips = cp(run, "dd.output_trips.csv.gz", "trips_tmp.csv.gz")
+
+    df = pd.read_csv(trips, sep=";")
+    nans = df.main_mode.isnull()
+
+    # use longest distance mode if there is no main mode
+    df.loc[nans, "main_mode"] = df.loc[nans, "longest_distance_mode"]
+
+    if filter_trips is not None:
+        df = df[df.apply(filter_trips, axis=1)]
+
+    df = mt(df)
+
+    return df
+
+#%%
+
+from shapely.geometry import Point
+
+geom = city.loc[0].geometry.envelope
+
+def in_city_region(r):
+    
+    if r.main_mode == "freight":
+        return False
+    
+    #if r.main_mode != "car":
+    #    return False
+    
+    f = Point(r.start_x, r.start_y)
+    t = Point(r.end_x, r.end_y)
+    
+    if geom.contains(f) and geom.contains(t):
+        return True
+    
+    return False
+
+def tt(df):
+    return sum(pd.to_timedelta(df.trav_time).dt.seconds)
+
+def dist(df):
+    return sum(df.traveled_distance)
+
+#%%
+
+base = read_trips("base", in_city_region)
+
+#%%%
+
+acv100 = read_trips("CV-0_ACV-100_AV-0", in_city_region)
+acv25 = read_trips("CV-75_ACV-25_AV-0", in_city_region)
+acv50 = read_trips("CV-50_ACV-50_AV-0", in_city_region)
+acv75 = read_trips("CV-25_ACV-75_AV-0", in_city_region)
+
+#%%
+
+acv50_st = read_trips("CV-50_ACV-50_AV-0--no-mc", in_city_region)
+acv100_st = read_trips("CV-0_ACV-100_AV-0--no-mc", in_city_region)
+
+#%%
+
+shift_50 = pd.merge(base, acv50, on="trip_id")
+df = shift_50.groupby(["main_mode_x", "main_mode_y"]).size()
+df.to_csv(join(out, "shift_acv50.csv"))
+
+shift_100 = pd.merge(base, acv100, on="trip_id")
+df = shift_100.groupby(["main_mode_x", "main_mode_y"]).size()
+df.to_csv(join(out, "shift_acv100.csv"))
+
+#%%
+
+c0 = pd.read_csv("Z:/matsim-duesseldorf/experiment/output/base/congestion.csv.gz").set_index("link_id")
+c100 = pd.read_csv("Z:/matsim-duesseldorf/experiment/output/CV-0_ACV-100_AV-0--no-mc/congestion.csv.gz").set_index("link_id")
+
+
+#%%
+
+congestion = city_links.merge(c0, left_on="link_id", right_index=True)
+
+
+#%%
 
 
