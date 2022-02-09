@@ -2,7 +2,7 @@ version: 1
 
 header:
   tab: "AVs & ACVs"
-  title: Long- and short-term effects of AVs and ACVs
+  title: Short- and long-term effects of AVs and ACVs
   description: This page shows the potential effects when introducing automated (AVs) and connected autonomous vehicles (ACVs), together with intelligent infrastructure uniformly and unrestricted to the scenario.
 
 layout:
