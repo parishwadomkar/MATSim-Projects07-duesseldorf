@@ -206,14 +206,49 @@ df.to_csv(join(out, "shift_acv100.csv"))
 #%%
 
 c0 = pd.read_csv("Z:/matsim-duesseldorf/experiment/output/base/congestion.csv.gz").set_index("link_id")
-c100 = pd.read_csv("Z:/matsim-duesseldorf/experiment/output/CV-0_ACV-100_AV-0--no-mc/congestion.csv.gz").set_index("link_id")
+c100 = pd.read_csv("Z:/matsim-duesseldorf/experiment/output/CV-50_ACV-50_AV-0--no-mc/congestion.csv.gz").set_index("link_id")
+c50 = pd.read_csv("Z:/matsim-duesseldorf/experiment/output/CV-0_ACV-100_AV-0--no-mc/congestion.csv.gz").set_index("link_id")
+
+ci0 = city_links.merge(c0, left_on="link_id", right_index=True).drop(columns=['index_right', 'Quelle', 'Stand', 'congestion_index', 'average_daily_speed', 'wkt'])
+
+# Only look at links that are at least slightly congested
+ci0 = ci0[ci0.mean(axis=1) != 1]
+
+#%%
+
+def convertSeconds(seconds):
+    h = seconds//(60*60)
+    m = (seconds-h*60*60)//60
+    s = seconds-(h*60*60)-(m*60)
+    return [h, m, s]
+
+def ci_index(df, name):
+    ds = []
+    for t, y in df.mean().iteritems():
+    
+        #t = convertSeconds(int(t))    
+    
+        ds.append({
+            "scenario": name,
+            "t": int(t),
+            "y": y
+        })
+    return ds
+
+
+ci100 = c100.loc[ci0.index].drop(columns=['congestion_index', 'average_daily_speed'])
+ci50 = c50.loc[ci0.index].drop(columns=['congestion_index', 'average_daily_speed'])
 
 
 #%%
 
-congestion = city_links.merge(c0, left_on="link_id", right_index=True)
+ds = []
 
+ds.extend(ci_index(ci0, "Base"))
+ds.extend(ci_index(ci50, "50% ACV"))
+ds.extend(ci_index(ci100, "100% ACV"))
 
-#%%
+df = pd.DataFrame(ds)
 
+df.to_csv(join(out, "rel_tt.csv"), index=False)
 

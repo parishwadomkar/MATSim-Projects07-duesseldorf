@@ -1,0 +1,27 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "width": "container",
+  "data": {"url": "scenarios/rel_tt.csv"},
+  "mark": "line",
+  "transform": [{
+    "timeUnit": "seconds",
+    "field": "t",
+    "as": "d"
+  }],
+  "encoding": {
+    "x": {
+      "field": "t",
+      "type": "quantitative",
+      "title": "Seconds of day"
+    },
+    "y": {
+      "field": "y",
+      "type": "quantitative",
+      "title": "Rel. travel time",
+      "scale" : {"domain": [0.88, 1]}
+    },
+    "color": {
+      "field":"scenario", "type" : "nominal"
+    }
+  }
+}
