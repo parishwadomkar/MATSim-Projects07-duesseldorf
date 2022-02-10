@@ -19,6 +19,7 @@ def create_args(description):
     parser.add_argument("--cv", type=float, default=1, help="Share of conventional vehicles")
     parser.add_argument("--av", type=float, default=0, help="Share of automated vehicles")
     parser.add_argument("--acv", type=float, default=0, help="Share of connected autonomous vehicles")
+    parser.add_argument("--scenario", type=str, default=None, choices=["st", "mt", "lt"], help="Name of scenario for vehicle share and capabilities")
     parser.add_argument("--from-index", type=int, default=0, help="Start from number")
     parser.add_argument("--to-index", type=int, default=-1, help="Stop at number")
     parser.add_argument("--step-length", type=float, default=0.2, help="SUMO step length")
@@ -33,6 +34,30 @@ def create_args(description):
     os.makedirs(args.runner, exist_ok=True)
 
     return args
+
+
+def vehicle_parameter(scenario):
+    """ Predefined scenarios for vehicle parameters """
+
+    if scenario == "st": # 5-10 years
+        return """
+            <vType id="vehCV" probability="0.7" color="1,0,0" vClass="passenger" impatience="0.2"/>
+            <vType id="vehAV" probability="0.3" color="0,1,0" vClass="passenger" decel="3.0" sigma="0.1" tau="1.2" speedFactor="1" speedDev="0" />
+        """
+    elif scenario == "mt": # 15-20 years
+        return """
+            <vType id="vehCV" probability="0.3" color="1,0,0" vClass="passenger" impatience="0.2"/>
+            <vType id="vehAV" probability="0.55" color="0,1,0" vClass="passenger" decel="4.5" sigma="0.05" tau="0.9" speedFactor="1" speedDev="0" />
+            <vType id="vehACV" probability="0.15" color="0,0,1" vClass="passenger" minGap="1" accel="2.6" decel="4.5" sigma="0.05" tau="0.8" speedFactor="1" speedDev="0" impatience="0"/>
+        """
+    elif scenario == "lt": # 25+ years
+        return """
+            <vType id="vehCV" probability="0.05" color="1,0,0" vClass="passenger" impatience="0.2"/>
+            <vType id="vehAV" probability="0.15" color="0,1,0" vClass="passenger" decel="4.5" sigma="0.05" tau="0.9" speedFactor="1" speedDev="0" />
+            <vType id="vehACV" probability="0.8" color="0,0,1" vClass="passenger" minGap="0.5" accel="2.6" decel="4.5" sigma="0" tau="0.6" speedFactor="1" speedDev="0" impatience="0.8"/>
+    """
+
+    raise Exception("Unknown scenario: " + scenario)
 
 
 def init_workload(args, items):

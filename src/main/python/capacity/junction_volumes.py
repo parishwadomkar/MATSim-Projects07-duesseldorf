@@ -6,7 +6,7 @@ import shutil
 import sys
 from os.path import join, basename
 
-from utils import init_env, create_args, init_workload, write_scenario, filter_network
+from utils import init_env, create_args, init_workload, write_scenario, filter_network, vehicle_parameter
 
 init_env()
 
@@ -21,17 +21,27 @@ sumoBinary = checkBinary('sumo')
 netconvert = checkBinary('netconvert')
 
 
-def writeRouteFile(f_name, routes, extra_routes, qCV, qAV, qACV):
+def writeRouteFile(f_name, routes, extra_routes, qCV, qAV, qACV, scenario=None):
     text = """<?xml version="1.0" encoding="UTF-8"?>
 
 <routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/routes_file.xsd">
 
-    <vTypeDistribution id="vDist">
-        <vType id="vehCV" probability="{qCV}" color="1,0,0" vClass="passenger" impatience="0.7"/>
-        <vType id="vehACV" probability="{qACV}" color="0,0,1" vClass="passenger" minGap="0.5" accel="2.6" decel="3.5" sigma="0" tau="0.6" speedFactor="1" speedDev="0" impatience="1"/>
-        <vType id="vehAV" probability="{qAV}" color="0,1,0" vClass="passenger" decel="3.0" sigma="0.1" tau="1.5" speedFactor="1" speedDev="0" impatience="0.3"/>
-    </vTypeDistribution>
+
 """
+    if scenario is None:
+        text += """
+        <vTypeDistribution id="vDist">
+            <vType id="vehCV" probability="{qCV}" color="1,0,0" vClass="passenger" impatience="0.2"/>
+            <vType id="vehACV" probability="{qACV}" color="0,0,1" vClass="passenger" minGap="0.5" accel="2.6" decel="3.5" sigma="0" tau="0.6" speedFactor="1" speedDev="0" impatience="0"/>
+            <vType id="vehAV" probability="{qAV}" color="0,1,0" vClass="passenger" decel="3.0" sigma="0.1" tau="1.2" speedFactor="1" speedDev="0" />
+        </vTypeDistribution>
+        """
+    else:
+        text += """<vTypeDistribution id="vDist">
+                        %s
+                    </vTypeDistribution>
+                """ % vehicle_parameter(scenario)
+
 
     for i, edges in enumerate(routes):
         text += """
@@ -108,7 +118,10 @@ def run(args, nodes):
     qAV = (args.av / total)
     qACV = (args.acv / total)
 
-    print("Running vehicle shares cv: %.2f, av: %.2f, acv: %.2f" % (qCV, qAV, qACV))
+    if args.scenario:
+        print("Running scenario: " + args.scenario)
+    else:
+        print("Running vehicle shares cv: %.2f, av: %.2f, acv: %.2f" % (qCV, qAV, qACV))
 
     if args.to_index <= 0:
         args.to_index = len(nodes)
@@ -168,7 +181,7 @@ def run(args, nodes):
 
             lanes = [fromEdge._id + "_" + str(i) for i in range(len(fromEdge._lanes))]
 
-            writeRouteFile(p_routes, routes, extra_routes, qCV, qAV, qACV)
+            writeRouteFile(p_routes, routes, extra_routes, qCV, qAV, qACV, args.scenario)
 
             writeDetectorFile(p_detector, "detector", lanes)
 
