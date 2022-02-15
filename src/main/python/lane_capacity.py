@@ -128,10 +128,10 @@ def read_edges(sumo_network):
 
 if __name__ == "__main__":
 
-    #network = read_network("../../../scenarios/input/sumo.net.xml")
-    edges = read_edges("../../../scenarios/input/sumo.net.xml")
+    network = read_network("../../../scenarios/input/sumo.net.xml")
+    #edges = read_edges("../../../scenarios/input/sumo.net.xml")
 
-    #network.to_csv("lanes.csv.gz", index=False)
+    network.to_csv("lanes.csv.gz", index=False)
 
 
 #%%

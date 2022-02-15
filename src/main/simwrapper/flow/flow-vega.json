@@ -1,0 +1,15 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "width": "container",
+  "data": {"url": "flow/intersections.csv"},
+  "mark": "boxplot",
+  "encoding": {
+    "y": {"field": "scenario", "type": "nominal", "sort": {}},
+    "x": {
+      "field": "change",
+      "type": "quantitative",
+      "title": "Capacity Change"
+    },
+    "color": {"field": "direction", "type": "nominal"}
+  }
+}

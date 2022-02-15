@@ -7,6 +7,9 @@ import pandas as pd
 import geopandas as gpd
 import matsim
 import simwrapper
+import seaborn as sns
+import matplotlib.pyplot as plt
+
 
 out = "../simwrapper"
 
@@ -252,3 +255,79 @@ df = pd.DataFrame(ds)
 
 df.to_csv(join(out, "rel_tt.csv"), index=False)
 
+
+#%%
+
+# enum ("s" = straight, "t" = turn, "l" = left, "r" = right, "L" = partially left, R = partially right, "invalid" = no direction)
+
+def direction(x):
+    if x == "s":
+        return "straight"
+    elif x in ("L", "l"):
+        return "left"    
+    elif x in ("R", "r"):
+        return "right"
+    
+    return "turn"
+
+lanes = pd.read_csv("lanes.csv.gz").groupby(["fromEdgeId", "toEdgeId"]).first()
+lanes["direction"] = lanes.dir.apply(direction)
+lanes = lanes[["direction", "numLanes"]]
+
+
+base = pd.read_csv("scenario-base.csv")
+
+# Low flows are filtered out, because these are often network defects
+base = base[base.flow > 350]
+
+base = base.rename(columns={"flow": "base"})
+
+#%%
+
+df = pd.merge(base, lanes, left_on=["fromEdgeId", "toEdgeId"], right_index=True)
+
+for sc in ("st", "mt", "lt"):
+    
+    tmp = pd.read_csv("scenario-%s.csv" % sc)
+    tmp = tmp.drop(columns={"junctionId"})
+        
+    df = pd.merge(df, tmp, left_on=["fromEdgeId", "toEdgeId"], right_on=["fromEdgeId", "toEdgeId"])
+    
+    df[sc] = df.flow / df.base
+    df = df.drop(columns=["flow"])
+    
+    
+    
+df = df.drop(columns={"junctionId", "fromEdgeId", "toEdgeId"})
+    
+df = pd.melt(df, id_vars=["direction"], value_vars=["st", "mt", "lt"], value_name="change",  var_name="scenario")
+
+limits = {s: (float(df[df.scenario==s].quantile(0.02)), float(df[df.scenario==s].quantile(0.98))) for s in set(df.scenario)}
+
+# Remove few outliers
+def outlier(x):
+    l, h = limits[x.scenario]    
+    return l <= x.change <= h
+
+df = df[df.apply(outlier, axis=1)]
+
+df.to_csv(join(out, "flow", "intersections.csv"), index=False)
+
+#%%
+
+sns.set_theme(style="whitegrid", context="paper")
+
+df.loc[df.direction != "straight", "direction"] = "turn"
+
+df.loc[df.scenario == "st", "scenario"] = "Near future"
+df.loc[df.scenario == "mt", "scenario"] = "Mid-term"
+df.loc[df.scenario == "lt", "scenario"] = "Distant future"
+
+
+fig, ax = plt.subplots(dpi=350, figsize=(9, 3.2))
+
+ax = sns.violinplot(y="scenario", x="change", hue="direction", data=df, split=True, ax=ax)
+
+plt.xlim(0.8, None)
+plt.xlabel("Relative flow capacity")
+plt.ylabel("Scenario")

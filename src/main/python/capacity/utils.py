@@ -19,7 +19,7 @@ def create_args(description):
     parser.add_argument("--cv", type=float, default=1, help="Share of conventional vehicles")
     parser.add_argument("--av", type=float, default=0, help="Share of automated vehicles")
     parser.add_argument("--acv", type=float, default=0, help="Share of connected autonomous vehicles")
-    parser.add_argument("--scenario", type=str, default=None, choices=["st", "mt", "lt"], help="Name of scenario for vehicle share and capabilities")
+    parser.add_argument("--scenario", type=str, default=None, choices=["base", "sst", "st", "mt", "lt"], help="Name of scenario for vehicle share and capabilities")
     parser.add_argument("--from-index", type=int, default=0, help="Start from number")
     parser.add_argument("--to-index", type=int, default=-1, help="Stop at number")
     parser.add_argument("--step-length", type=float, default=0.2, help="SUMO step length")
@@ -39,7 +39,19 @@ def create_args(description):
 def vehicle_parameter(scenario):
     """ Predefined scenarios for vehicle parameters """
 
-    if scenario == "st": # 5-10 years
+    if scenario == "base":
+        return """
+            <vType id="vehCV" probability="0.99" color="1,0,0" vClass="passenger" impatience="0.2"/>
+            <vType id="vehAV" probability="0.01" color="0,1,0" vClass="passenger" decel="3.0" sigma="0.1" tau="1.5" speedFactor="1" speedDev="0" />
+        """
+
+    elif scenario == "sst":
+        return """
+            <vType id="vehCV" probability="0.9" color="1,0,0" vClass="passenger" impatience="0.2"/>
+            <vType id="vehAV" probability="0.1" color="0,1,0" vClass="passenger" decel="3.0" sigma="0.1" tau="1.3" speedFactor="1" speedDev="0" />
+        """
+
+    elif scenario == "st": # 5-10 years
         return """
             <vType id="vehCV" probability="0.7" color="1,0,0" vClass="passenger" impatience="0.2"/>
             <vType id="vehAV" probability="0.3" color="0,1,0" vClass="passenger" decel="3.0" sigma="0.1" tau="1.2" speedFactor="1" speedDev="0" />
