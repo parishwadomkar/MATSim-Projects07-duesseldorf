@@ -1,7 +1,7 @@
 version: 1
 
 header:
-  tab: "AVs & ACVs"
+  tab: "System-wide effects"
   title: Short- and long-term effects of AVs and ACVs
   description: "This page shows the potential effects when introducing automated (AVs) and autonomous connected vehicles (ACVs),
                 together with intelligent infrastructure uniformly and unrestricted to the scenario. We simulated short-term effects by only allowing agents
@@ -10,8 +10,8 @@ header:
 layout:
   st:
     - type: "text"
-      title: "Short-term effects"
-      width: 3
+      title: "Short-term travel time savings"
+      width: 4
       props:
         file: scenarios/short-term.md
 
@@ -24,7 +24,7 @@ layout:
 
   lt:
     - type: "text"
-      title: "Long-term effects"
+      title: "Long-term effects with Mode-choice"
       width: 30
       props:
         file: scenarios/long-term.md

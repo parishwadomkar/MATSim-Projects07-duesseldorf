@@ -182,28 +182,70 @@ def dist(df):
 
 #%%
 
-base = read_trips("base", in_city_region)
+base = read_trips("scenario-base", in_city_region)
+base_nmc = read_trips("scenario-base--no-mc", in_city_region)
 
 #%%%
 
-acv100 = read_trips("CV-0_ACV-100_AV-0", in_city_region)
-acv25 = read_trips("CV-75_ACV-25_AV-0", in_city_region)
-acv50 = read_trips("CV-50_ACV-50_AV-0", in_city_region)
-acv75 = read_trips("CV-25_ACV-75_AV-0", in_city_region)
+sc_st = read_trips("scenario-st", in_city_region)
+sc_mt = read_trips("scenario-mt", in_city_region)
+sc_lt = read_trips("scenario-lt", in_city_region)
 
 #%%
 
-acv50_st = read_trips("CV-50_ACV-50_AV-0--no-mc", in_city_region)
-acv100_st = read_trips("CV-0_ACV-100_AV-0--no-mc", in_city_region)
+sc_st_nmc = read_trips("scenario-st--no-mc", in_city_region)
+sc_mt_nmc = read_trips("scenario-mt--no-mc", in_city_region)
+sc_lt_nmc = read_trips("scenario-lt--no-mc", in_city_region)
 
 #%%
+
+def norm(x):
+    return round((x - 1) * 1000) / 10
+
+def cmp(base, ref):
+    b = base[base.main_mode == "car"]
+    r = ref[ref.main_mode == "car"]
+    
+    print("trips", norm(len(r) / len(b)), "%")
+    print("dist", norm(dist(r) / dist(b)), "%")
+    print("tt",  norm(tt(r) / tt(b)), "%")
+
+
+#%%
+
+def netto_shift(series):
+    # Calculate the netto mode-choice shift by substracting differences    
+    for idx, count in series.iteritems():
+        
+        if idx[0] == idx[1]:
+            continue
+                
+        r_idx = (idx[1], idx[0])
+        
+        reverse = df.loc[r_idx]
+        
+        if reverse < count:
+            series.loc[r_idx] = 0
+            series.loc[idx] = count - reverse
+            
+        else:            
+            series.loc[r_idx] = reverse - count
+            series.loc[idx] = 0        
+        
+        
+    return series
+
 
 shift_50 = pd.merge(base, acv50, on="trip_id")
 df = shift_50.groupby(["main_mode_x", "main_mode_y"]).size()
+df = netto_shift(df)
+
 df.to_csv(join(out, "shift_acv50.csv"))
 
 shift_100 = pd.merge(base, acv100, on="trip_id")
 df = shift_100.groupby(["main_mode_x", "main_mode_y"]).size()
+df = netto_shift(df)
+
 df.to_csv(join(out, "shift_acv100.csv"))
 
 #%%
@@ -218,6 +260,8 @@ ci0 = city_links.merge(c0, left_on="link_id", right_index=True).drop(columns=['i
 ci0 = ci0[ci0.mean(axis=1) != 1]
 
 #%%
+
+# TODO: relative travel time für long-term (Mit MC)
 
 def convertSeconds(seconds):
     h = seconds//(60*60)

@@ -13,6 +13,8 @@ layout:
       props:
         csvFile: "link_volumes.csv"
         geojsonFile: "network.geojson"
+        center: [6.779091, 51.23347]
+        zoom: 11
         display:
           color:
             dataset: csvFile
