@@ -14,12 +14,16 @@ layout:
       props:
         file: flow/st.md
 
-    - type: "text"
+    - type: "video"
       title: "Visualization"
       width: 2
       height: 2
       props:
-        file: flow/st_video.md
+        controls: true
+        allowfullscreen: true
+        loop: true
+        sources:
+          video/webm: flow/st.webm
 
   mt:
     - type: "text"
@@ -29,12 +33,16 @@ layout:
       props:
         file: flow/mt.md
 
-    - type: "text"
+    - type: "video"
       title: "Visualization"
       width: 2
       height: 2
       props:
-        file: flow/mt_video.md
+        controls: true
+        allowfullscreen: true
+        loop: true
+        sources:
+          video/webm: flow/mt.webm
 
   lt:
     - type: "text"
@@ -44,12 +52,16 @@ layout:
       props:
         file: flow/lt.md
 
-    - type: "text"
+    - type: "video"
       title: "Visualization"
       width: 2
       height: 2
       props:
-        file: flow/lt_video.md
+        controls: true
+        allowfullscreen: true
+        loop: true
+        sources:
+          video/webm: flow/lt.webm
 
   flow1:
     - type: text
