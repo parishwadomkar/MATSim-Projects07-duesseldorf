@@ -30,13 +30,13 @@ layout:
         file: scenarios/long-term.md
 
     - type: "sankey"
-      title: "Mode-Shift 50% ACVs"
+      title: "Mode-Shift Mid-term"
       width: 35
       props:
-        csv: shift_acv50.csv
+        csv: shift_mt.csv
 
     - type: "sankey"
-      title: "Mode-Shift 100% ACVs"
+      title: "Mode-Shift Distant future"
       width: 35
       props:
-        csv: shift_acv100.csv
+        csv: shift_lt.csv

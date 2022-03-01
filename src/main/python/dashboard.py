@@ -236,25 +236,26 @@ def netto_shift(series):
     return series
 
 
-shift_50 = pd.merge(base, acv50, on="trip_id")
+shift_50 = pd.merge(base, sc_mt, on="trip_id")
 df = shift_50.groupby(["main_mode_x", "main_mode_y"]).size()
 df = netto_shift(df)
 
-df.to_csv(join(out, "shift_acv50.csv"))
+df.to_csv(join(out, "shift_mt.csv"))
 
-shift_100 = pd.merge(base, acv100, on="trip_id")
+shift_100 = pd.merge(base, sc_lt, on="trip_id")
 df = shift_100.groupby(["main_mode_x", "main_mode_y"]).size()
 df = netto_shift(df)
 
-df.to_csv(join(out, "shift_acv100.csv"))
+df.to_csv(join(out, "shift_lt.csv"))
 
 #%%
 
-c0 = pd.read_csv("Z:/matsim-duesseldorf/experiment/output/base/congestion.csv.gz").set_index("link_id")
-c100 = pd.read_csv("Z:/matsim-duesseldorf/experiment/output/CV-50_ACV-50_AV-0--no-mc/congestion.csv.gz").set_index("link_id")
-c50 = pd.read_csv("Z:/matsim-duesseldorf/experiment/output/CV-0_ACV-100_AV-0--no-mc/congestion.csv.gz").set_index("link_id")
+c_base = pd.read_csv("Z:/matsim-duesseldorf/experiment/output/scenario-base--no-mc/congestion.csv.gz").set_index("link_id")
+c_st = pd.read_csv("Z:/matsim-duesseldorf/experiment/output/scenario-st--no-mc/congestion.csv.gz").set_index("link_id")
+c_mt = pd.read_csv("Z:/matsim-duesseldorf/experiment/output/scenario-mt--no-mc/congestion.csv.gz").set_index("link_id")
+c_lt = pd.read_csv("Z:/matsim-duesseldorf/experiment/output/scenario-lt--no-mc/congestion.csv.gz").set_index("link_id")
 
-ci0 = city_links.merge(c0, left_on="link_id", right_index=True).drop(columns=['index_right', 'Quelle', 'Stand', 'congestion_index', 'average_daily_speed', 'wkt'])
+ci0 = city_links.merge(c_base, left_on="link_id", right_index=True).drop(columns=['index_right', 'Quelle', 'Stand', 'congestion_index', 'average_daily_speed', 'wkt'])
 
 # Only look at links that are at least slightly congested
 ci0 = ci0[ci0.mean(axis=1) != 1]
@@ -283,8 +284,9 @@ def ci_index(df, name):
     return ds
 
 
-ci100 = c100.loc[ci0.index].drop(columns=['congestion_index', 'average_daily_speed'])
-ci50 = c50.loc[ci0.index].drop(columns=['congestion_index', 'average_daily_speed'])
+ci_st = c_st.loc[ci0.index].drop(columns=['congestion_index', 'average_daily_speed'])
+ci_mt = c_mt.loc[ci0.index].drop(columns=['congestion_index', 'average_daily_speed'])
+ci_lt = c_lt.loc[ci0.index].drop(columns=['congestion_index', 'average_daily_speed'])
 
 
 #%%
@@ -292,12 +294,13 @@ ci50 = c50.loc[ci0.index].drop(columns=['congestion_index', 'average_daily_speed
 ds = []
 
 ds.extend(ci_index(ci0, "Base"))
-ds.extend(ci_index(ci50, "50% ACV"))
-ds.extend(ci_index(ci100, "100% ACV"))
+ds.extend(ci_index(ci_st, "Near future"))
+ds.extend(ci_index(ci_mt, "Mid term"))
+ds.extend(ci_index(ci_lt, "Distant future"))
 
 df = pd.DataFrame(ds)
 
-df.to_csv(join(out, "rel_tt.csv"), index=False)
+df.to_csv(join(out, "scenarios", "rel_tt.csv"), index=False)
 
 
 #%%
