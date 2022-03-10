@@ -8,8 +8,12 @@ import com.google.inject.multibindings.Multibinder;
 import it.unimi.dsi.fastutil.Pair;
 import it.unimi.dsi.fastutil.doubles.Double2DoubleMap;
 import it.unimi.dsi.fastutil.doubles.Double2DoubleOpenHashMap;
+import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
+import it.unimi.dsi.fastutil.doubles.DoubleList;
 import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
 import it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
@@ -55,7 +59,10 @@ import picocli.CommandLine;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @CommandLine.Command(header = ":: Open Düsseldorf Scenario ::", version = RunDuesseldorfScenario.VERSION)
@@ -119,14 +126,11 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 	@CommandLine.Option(names = "--no-mc", defaultValue = "false", description = "Disable mode choice as replanning strategy.")
 	private boolean noModeChoice;
 
-	@CommandLine.Option(names = "--intersections", defaultValue = "intersections.csv", description = "Path to the ordered csv of scored intersections.")
-	private Path intersections;
-
-	@CommandLine.Option(names = "--top-n", defaultValue = "0", description = "If greater than 0, apply capacity modifications only to the top n intersections from the csv.")
-	private int topN;
-
 	@CommandLine.ArgGroup(exclusive = false, heading = "Flow capacity models\n")
 	private final VehicleShare vehicleShare = new VehicleShare();
+
+	@CommandLine.ArgGroup(exclusive = false, heading = "Policy options\n")
+	private final Policy policy = new Policy();
 
 	public RunDuesseldorfScenario() {
 		super("scenarios/input/duesseldorf-v1.0-1pct.config.xml");
@@ -258,7 +262,7 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 
 			log.info("Overwrite capacities from {}, containing {} links", laneCapacity, capacities.size());
 
-			int n = CreateNetwork.setLinkCapacities(scenario.getNetwork(), capacities);
+			int n = CreateNetwork.setLinkCapacities(scenario.getNetwork(), capacities, null);
 
 			log.info("Unmatched links: {}", n);
 		}
@@ -266,7 +270,7 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 		if (vehicleShare.av > 0 || vehicleShare.acv > 0) {
 
 			if (vehicleShare.av > 0 && vehicleShare.acv > 0)
-				 throw new IllegalArgumentException("Only one of ACV or AV can be greater 0!");
+				throw new IllegalArgumentException("Only one of ACV or AV can be greater 0!");
 
 			log.info("Applying model AV {} ACV {} to road capacities", vehicleShare.av, vehicleShare.acv);
 
@@ -285,9 +289,9 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 
 				double cap = 1d;
 				if (vehicleShare.av > 0)
-					cap = factors.computeIfAbsent( (double) link.getAttributes().getAttribute("allowed_speed"), s -> AVModel.score(s, vehicleShare.av / 100d));
+					cap = factors.computeIfAbsent((double) link.getAttributes().getAttribute("allowed_speed"), s -> AVModel.score(s, vehicleShare.av / 100d));
 				else
-					cap = factors.computeIfAbsent( (double) link.getAttributes().getAttribute("allowed_speed"), s -> ACVModel.score(s, vehicleShare.acv / 100d));
+					cap = factors.computeIfAbsent((double) link.getAttributes().getAttribute("allowed_speed"), s -> ACVModel.score(s, vehicleShare.acv / 100d));
 
 				link.setCapacity(link.getCapacity() * cap);
 			}
@@ -305,23 +309,68 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 			}
 		}
 
-		Set<Id<Link>> top = new HashSet<>();
-		if (topN > 0) {
+		Object2IntMap<Id<Link>> linkFilter = new Object2IntOpenHashMap<>();
+		Set<Id<Link>> noCar = new HashSet<>();
 
-			log.info("Reading top {} intersections from {}", topN, intersections);
+		if (policy.carFilter != null) {
 
-			try (CSVParser parser = new CSVParser(Files.newBufferedReader(intersections), CSVFormat.DEFAULT.withFirstRecordAsHeader())) {
-
-				Iterator<CSVRecord> it = parser.iterator();
-				for (int i = 0; it.hasNext() && i < topN; i++) {
-					CSVRecord r = it.next();
-					top.add(Id.createLinkId(r.get("linkId")));
+			try (CSVParser parser = new CSVParser(Files.newBufferedReader(policy.carFilter), CSVFormat.DEFAULT.withFirstRecordAsHeader())) {
+				for (CSVRecord record : parser) {
+					noCar.add(Id.createLinkId(record.get("ID")));
 				}
 
 			} catch (IOException e) {
 				throw new IllegalStateException("Could not read csv", e);
 			}
+
+			log.info("Reading car filter from {} with {} links", policy.carFilter, noCar.size());
+
 		}
+
+		if (policy.linkFilter != null) {
+			log.info("Reading link filter from {}", policy.linkFilter);
+
+			try (CSVParser parser = new CSVParser(Files.newBufferedReader(policy.linkFilter), CSVFormat.DEFAULT.withFirstRecordAsHeader())) {
+				for (CSVRecord record : parser) {
+					linkFilter.put(Id.createLinkId(record.get("ID")), Integer.parseInt(record.get("corridor")));
+				}
+
+			} catch (IOException e) {
+				throw new IllegalStateException("Could not read csv", e);
+			}
+
+			double factor = 1;
+
+			if (policy.capacity != null) {
+
+				Object2DoubleMap<Pair<Id<Link>, Id<Link>>> newCapacities = CreateNetwork.readLinkCapacities(policy.capacity);
+				newCapacities.keySet().removeIf(e -> !linkFilter.containsKey(e.key()));
+
+				log.info("Policy capacities from {}, containing {} links", policy.capacity, newCapacities.size());
+
+				if (capacities.isEmpty())
+					throw new IllegalStateException("Policy requires the base capacities to be set.");
+
+
+				DoubleList rel = new DoubleArrayList();
+
+				for (Object2DoubleMap.Entry<Pair<Id<Link>, Id<Link>>> e : newCapacities.object2DoubleEntrySet()) {
+					rel.add(e.getDoubleValue() / capacities.getDouble(e.getKey()));
+				}
+
+				factor = rel.doubleStream().average().orElseThrow();
+
+				log.info("Capacity increase factor is {}", factor);
+
+				// Empty filter, will be set in separate function
+				int n = CreateNetwork.setLinkCapacities(scenario.getNetwork(), newCapacities, new HashSet<>());
+
+				log.info("Unmatched links: {}", n);
+			}
+
+			CreateNetwork.reduceLinkLanesAndMultiplyPerLaneCapacity(scenario.getNetwork(), linkFilter, factor, policy.laneReduction);
+		}
+
 
 		for (Link link : links.values()) {
 			if (link.getFreespeed() < 25.5 / 3.6) {
@@ -332,7 +381,7 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 			if (link.getAttributes().getAttribute("junction") == Boolean.TRUE
 					|| "traffic_light".equals(link.getToNode().getAttributes().getAttribute("type"))) {
 
-				if (top.isEmpty() || top.contains(link.getId())) {
+				if (capacityFactor != 1 && (linkFilter.isEmpty() || linkFilter.containsKey(link.getId())) ) {
 					log.debug("Setting capacity for link: {}", link);
 					link.setCapacity(link.getCapacity() * capacityFactor);
 				}
@@ -347,6 +396,13 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 
 				link.setAllowedModes(newModes);
 			}
+
+			// make link unattractive for cars
+			if (noCar.contains(link.getId())) {
+				link.setFreespeed(15 / 3.6);
+				link.setCapacity(300);
+			}
+
 		}
 
 	}
@@ -452,4 +508,24 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 		@CommandLine.Option(names = "--acv", defaultValue = "0", description = "Percentage of autonomous connected vehicles. [0, 100]")
 		int acv;
 	}
+
+	/**
+	 * Policy options
+	 */
+	static final class Policy {
+
+		@CommandLine.Option(names = {"--link-filter"}, description = "CSV file with links to filter the provided link capacities from SUMO.", required = false)
+		private Path linkFilter;
+
+		@CommandLine.Option(names = {"--car-filter"}, description = "CSV file with links to exclude car and freight.", required = false)
+		private Path carFilter;
+
+		@CommandLine.Option(names = {"--lane-reduction"}, defaultValue = "0", description = "Lanes in --link-filter will be reduced by lane.", required = false)
+		private double laneReduction;
+
+		@CommandLine.Option(names = {"--policy-capacity"}, description = "CSV file with lane capacities for link-filter.", required = false)
+		private Path capacity;
+
+	}
+
 }

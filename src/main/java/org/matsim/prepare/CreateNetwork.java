@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import it.unimi.dsi.fastutil.Pair;
 import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
 import it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.ObjectReferencePair;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -35,6 +36,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.matsim.run.RunDuesseldorfScenario.VERSION;
 import static org.matsim.run.TurnDependentFlowEfficiencyCalculator.ATTR_TURN_EFFICIENCY;
@@ -126,7 +128,7 @@ public final class CreateNetwork implements MATSimAppCommand {
 
 			log.info("Read lane capacities from {}, containing {} links", capacities, map.size());
 
-			int n = setLinkCapacities(network, map);
+			int n = setLinkCapacities(network, map, null);
 
 			log.info("Unmatched links: {}", n);
 
@@ -320,7 +322,7 @@ public final class CreateNetwork implements MATSimAppCommand {
 	 *
 	 * @return number of links from file that are not in the network.
 	 */
-	public static int setLinkCapacities(Network network, Object2DoubleMap<Pair<Id<Link>, Id<Link>>> map) {
+	public static int setLinkCapacities(Network network, Object2DoubleMap<Pair<Id<Link>, Id<Link>>> map, Set<Id<Link>> filter) {
 
 		Object2DoubleMap<Id<Link>> linkCapacities = new Object2DoubleOpenHashMap<>();
 
@@ -363,7 +365,7 @@ public final class CreateNetwork implements MATSimAppCommand {
 		}
 
 
-		propagateJunctionCapacities(network);
+		propagateJunctionCapacities(network, filter);
 
 		return unmatched;
 	}
@@ -371,12 +373,15 @@ public final class CreateNetwork implements MATSimAppCommand {
 	/**
 	 * Apply the capacities at intersection to up- and downstream links if applicable.
 	 */
-	private static void propagateJunctionCapacities(Network network) {
+	private static void propagateJunctionCapacities(Network network, Set<Id<Link>> filter) {
 
 		Set<Id<Link>> handled = new HashSet<>();
 
 		// First pass, apply downstream
 		for (Link link : network.getLinks().values()) {
+
+			if (filter != null && !filter.contains(link.getId()))
+				continue;
 
 			if (link.getAttributes().getAttribute("junction") != Boolean.TRUE)
 				continue;
@@ -398,6 +403,9 @@ public final class CreateNetwork implements MATSimAppCommand {
 
 		// Second pass, apply min required capacity upstream
 		for (Link link : network.getLinks().values()) {
+
+			if (filter != null && !filter.contains(link.getId()))
+				continue;
 
 			if (link.getAttributes().getAttribute("junction") != Boolean.TRUE || handled.contains(link.getId()))
 				continue;
@@ -425,6 +433,59 @@ public final class CreateNetwork implements MATSimAppCommand {
 
 			}
 		}
+	}
+
+	/**
+	 * Use provided link ids and corridor ids and reduce them by one lane, and process the links' per-lane flow
+	 * capacities by multiplying them by factor
+	 *
+	 * @return number of links from file that are not in the network.
+	 */
+	public static int reduceLinkLanesAndMultiplyPerLaneCapacity(Network network, Object2IntMap<Id<Link>> map, double factor, double reduceLanes) {
+
+		Set<Integer> corridors = new HashSet<>(map.values());
+		int unmatched = 0;
+
+		log.info("Processing {} corridors for lane reduction...", corridors.size());
+		for (Integer corridor : corridors) {
+
+			Set<Link> links = new HashSet<>();
+			map.object2IntEntrySet().stream()
+					.filter(entry -> corridor.equals(entry.getIntValue()))
+					.forEach(entry -> links.add(network.getLinks().get(entry.getKey())));
+
+			if (links.size() == 0)
+				return map.size();
+
+			for (Link link : links) {
+
+				// Non intersection links are scaled with an average
+				if (link.getAttributes().getAttribute("junction") != Boolean.TRUE) {
+					link.setCapacity(link.getCapacity() * factor);
+				}
+
+				if (link.getNumberOfLanes() > 1) {
+					double newLanes = Math.max(1d, link.getNumberOfLanes() - reduceLanes);
+
+					// Reduce capacity proportional with number of lanes
+					if (newLanes < link.getNumberOfLanes()) {
+						link.setNumberOfLanes(newLanes);
+						link.setCapacity(link.getCapacity() * newLanes/link.getNumberOfLanes());
+					}
+				}
+			}
+
+			AtomicReference<Double> capLengthPerLane = new AtomicReference<>(0d);
+			AtomicReference<Double> corridorLength = new AtomicReference<>(0d);
+			links.forEach(link -> {
+				capLengthPerLane.accumulateAndGet(link.getCapacity() * link.getLength() / link.getNumberOfLanes(), Double::sum);
+				corridorLength.accumulateAndGet(link.getLength(), Double::sum);
+			});
+			double avgCapPerLane = capLengthPerLane.get() / corridorLength.get();
+			log.info("Corridor {} has an avg. capacity of {} per lane and has total length of {} km.", corridor, avgCapPerLane, corridorLength.get() / 1000d);
+		}
+
+		return unmatched;
 	}
 
 	/**

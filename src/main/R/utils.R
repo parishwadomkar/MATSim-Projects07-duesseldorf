@@ -42,7 +42,7 @@ read_legs <- function(f, crs=25832) {
 read_link_stats <- function(f) {
   
   p <- file.path(f, "linkStats.csv.gz")
-  df <- read_csv(p) %>%
+  df <- read_csv(p, col_types = cols(linkId = col_character())) %>%
     filter(!str_starts(linkId, "pt_"))
   
   return (df)
