@@ -5,11 +5,11 @@
 <div class="container">
 
 <div class="logos">
-    <img src="https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries//de/duesseldorf/projects/komodnext/website/logos/logos/KoMoDnext.svg"/>
-    <img src="https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries//de/duesseldorf/projects/komodnext/website/logos/logos/TU.svg"/>
-    <img src="https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries//de/duesseldorf/projects/komodnext/website/logos/logos/DLR.svg"/>
-    <img src="https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries//de/duesseldorf/projects/komodnext/website/logos/logos/MATSim.svg"/>
-    <img class="bmdv" src="https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries//de/duesseldorf/projects/komodnext/website/logos/logos/BMDV.svg"/>
+    <img src="https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries//de/duesseldorf/projects/komodnext/website/logos/KoMoDnext.svg"/>
+    <img src="https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries//de/duesseldorf/projects/komodnext/website/logos/TU.svg"/>
+    <img src="https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries//de/duesseldorf/projects/komodnext/website/logos/DLR.svg"/>
+    <img src="https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries//de/duesseldorf/projects/komodnext/website/logos/MATSim.svg"/>
+    <img class="bmdv" src="https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries//de/duesseldorf/projects/komodnext/website/logos/BMDV.svg"/>
 </div>
 
 <div class="menu">
