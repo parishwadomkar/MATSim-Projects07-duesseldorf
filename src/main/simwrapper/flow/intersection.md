@@ -20,7 +20,7 @@ Nonetheless, the next figures show that the results are structurally similar if 
 
 <div>
 
-![Figure](http://localhost:8000/flow/flow-violin.png)
+![Figure](https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/duesseldorf/projects/komodnext/website//flow/flow-violin.png)
 
 The figure shows the relative flow capacity change compared to the base scenario aggregated over all studied relations.
 The data is additionally separated by whether a relation requires a turning maneuver.
