@@ -1,7 +1,10 @@
 header:
   tab: "Düsseldorf scenario"
-  title: "Overview of the Düsseldorf MATSim scenario"
-  description: "This dashboards show an overview and some key insights into the Düsseldorf MATSim scenario."
+  title: "The MATSim Open Düsseldorf Scenario"
+  description: >
+    This dashboards shows an overview and some key insights into the Düsseldorf MATSim scenario available at https://github.com/matsim-scenarios/matsim-duesseldorf
+    , a transport model for Düsseldorf, provided by the Transport Systems Planning and Transport Telematics group of Technische Universität Berlin.
+    This model has been used within the KoMoDnext project, but is all model code and data is openly available and can be used for further transportation study research.
 
 
 layout:

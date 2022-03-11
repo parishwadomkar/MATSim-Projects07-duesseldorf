@@ -16,29 +16,41 @@ import org.matsim.core.gbl.MatsimRandom;
 import org.matsim.testcases.MatsimTestUtils;
 
 public class RunDuesseldorfIntegrationTest {
+
+	private static final String URL = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/duesseldorf/duesseldorf-v1.0/input/";
+
 	@Rule
 	public MatsimTestUtils utils = new MatsimTestUtils();
 
+	private void updateConfig(Config config) {
+
+		config.plans().setInputFile(URL + config.plans().getInputFile());
+		config.transit().setTransitScheduleFile(URL + config.transit().getTransitScheduleFile());
+		config.transit().setVehiclesFile(URL + config.transit().getVehiclesFile());
+		config.network().setInputFile(URL + config.network().getInputFile());
+
+
+		config.controler().setLastIteration(0);
+		config.strategy().setFractionOfIterationsToDisableInnovation(1);
+		config.controler().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
+		config.controler().setOutputDirectory(utils.getOutputDirectory());
+
+	}
 
 	@Test
 	public final void runNoLaneTestNormalCapacity() {
 		Config config = ConfigUtils.loadConfig("scenarios/input/duesseldorf-v1.0-1pct.config.xml");
-		config.controler().setLastIteration(0);
-		config.strategy().setFractionOfIterationsToDisableInnovation(1);
-		config.controler()
-				.setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
-		config.controler().setOutputDirectory(utils.getOutputDirectory());
+
+		updateConfig(config);
+
 		MATSimApplication.execute(RunDuesseldorfScenario.class, config, "--no-lanes");
 	}
 
 	@Test
 	public final void runNoLaneTestIncreasedCapacity() {
 		Config config = ConfigUtils.loadConfig("scenarios/input/duesseldorf-v1.0-1pct.config.xml");
-		config.controler().setLastIteration(0);
-		config.strategy().setFractionOfIterationsToDisableInnovation(1);
-		config.controler()
-				.setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
-		config.controler().setOutputDirectory(utils.getOutputDirectory());
+
+		updateConfig(config);
 
 		MATSimApplication.execute(RunDuesseldorfScenario.class, config,
 				"--no-lanes", "--infiniteCapacity");
@@ -48,11 +60,8 @@ public class RunDuesseldorfIntegrationTest {
 	@Test
 	public final void runWithLaneTest() {
 		Config config = ConfigUtils.loadConfig("scenarios/input/duesseldorf-v1.0-1pct.config.xml");
-		config.controler().setLastIteration(1);
-		config.strategy().setFractionOfIterationsToDisableInnovation(1);
-		config.controler()
-				.setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
-		config.controler().setOutputDirectory(utils.getOutputDirectory());
+
+		updateConfig(config);
 
 		org.matsim.core.controler.Controler controler = MATSimApplication.prepare(RunDuesseldorfScenario.class, config);
 		downsample(controler.getScenario().getPopulation().getPersons(), 0.01);

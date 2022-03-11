@@ -1,4 +1,12 @@
 
+html {
+  font-size: 16px !important;
+}
+
+h2 {
+  font-size: 2rem;
+}
+
 #dashboard {
   width: 80%;
   margin: auto;
@@ -12,17 +20,23 @@
   display: none;
 }
 
+.tabs.is-centered ul {
+  justify-content: left !important;
+  padding-left: 170px;
+}
+
 img.project-logo {
   position: absolute;
   height: 48px;
 }
 
 .tabs a {
-  font-size: larger;
+  font-size: 1.4rem;
 }
 
 .project-header {
   margin: 0 !important;
+  padding-bottom: 0 !important;
 }
 
 .project-footer {
