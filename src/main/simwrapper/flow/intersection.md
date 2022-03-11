@@ -1,6 +1,6 @@
+<div style="display: flex; gap: 40px">
 
-
-![Figure](http://localhost:8000/flow/flow-violin.png)
+<div>
 
 Given the defined scenario as above, we obtain the following average capacities changes at intersections:
 
@@ -15,3 +15,16 @@ Due to the defensively driving vehicles we can even see a slight decrease assumi
 
 In the urban areas intersections are the main limiting factor.
 Nonetheless, the next figures show that the results are structurally similar if we look free flowing traffic.
+
+</div>
+
+<div>
+
+![Figure](http://localhost:8000/flow/flow-violin.png)
+
+The figure shows the relative flow capacity change compared to the base scenario aggregated over all studied relations.
+The data is additionally separated by whether a relation requires a turning maneuver.
+
+</div>
+
+</div>

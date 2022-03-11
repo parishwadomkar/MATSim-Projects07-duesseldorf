@@ -50,3 +50,12 @@ layout:
       props:
         dataset: "base_modeshare.csv"
         useLastRow: true
+
+  row2:
+    - type: vega
+      title: "Distance Classes"
+      description: "Comparison of the distance classes by mode"
+      width: 10
+      height: 10
+      props:
+        config: overview/dis-vega.json
