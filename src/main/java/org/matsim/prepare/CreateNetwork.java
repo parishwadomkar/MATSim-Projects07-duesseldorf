@@ -469,20 +469,23 @@ public final class CreateNetwork implements MATSimAppCommand {
 
 					// Reduce capacity proportional with number of lanes
 					if (newLanes < link.getNumberOfLanes()) {
-						link.setNumberOfLanes(newLanes);
 						link.setCapacity(link.getCapacity() * newLanes/link.getNumberOfLanes());
+						link.setNumberOfLanes(newLanes);
 					}
 				}
 			}
 
 			AtomicReference<Double> capLengthPerLane = new AtomicReference<>(0d);
+			AtomicReference<Double> capLength = new AtomicReference<>(0d);
 			AtomicReference<Double> corridorLength = new AtomicReference<>(0d);
 			links.forEach(link -> {
 				capLengthPerLane.accumulateAndGet(link.getCapacity() * link.getLength() / link.getNumberOfLanes(), Double::sum);
+				capLength.accumulateAndGet(link.getCapacity() * link.getLength(), Double::sum);
 				corridorLength.accumulateAndGet(link.getLength(), Double::sum);
 			});
 			double avgCapPerLane = capLengthPerLane.get() / corridorLength.get();
-			log.info("Corridor {} has an avg. capacity of {} per lane and has total length of {} km.", corridor, avgCapPerLane, corridorLength.get() / 1000d);
+			double avgCap = capLength.get() / corridorLength.get();
+			log.info("Corridor {} has an avg. capacity of {} with {} per lane and has total length of {} km.", corridor, avgCap, avgCapPerLane, corridorLength.get() / 1000d);
 		}
 
 		return unmatched;
