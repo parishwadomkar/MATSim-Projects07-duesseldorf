@@ -278,7 +278,7 @@ def ci_index(df, name):
     
         ds.append({
             "scenario": name,
-            "t": int(t),
+            "t": pd.to_datetime(t, unit='s'),
             "y": y
         })
     return ds
@@ -371,7 +371,7 @@ df.loc[df.scenario == "mt", "scenario"] = "Mid-term"
 df.loc[df.scenario == "lt", "scenario"] = "Distant future"
 
 
-fig, ax = plt.subplots(dpi=350, figsize=(9, 3.2))
+fig, ax = plt.subplots(dpi=450, figsize=(5, 3))
 
 ax = sns.violinplot(y="scenario", x="change", hue="direction", data=df, split=True, ax=ax)
 

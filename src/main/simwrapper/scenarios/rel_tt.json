@@ -10,9 +10,14 @@
   }],
   "encoding": {
     "x": {
+      "timeUnit": "hoursminutes",
+      "scale": { "domainMin": {"hours": 0}, "domainMax":{"hours": 23,"minutes": 45}},
       "field": "t",
       "type": "quantitative",
-      "title": "Seconds of day"
+      "title": "Time",
+      "axis": {
+        "values":[{"hours": 4},{"hours": 8},{"hours": 12},{"hours": 16},{"hours": 20}]
+      }
     },
     "y": {
       "field": "y",
@@ -21,7 +26,8 @@
       "scale" : {"domain": [0.88, 1]}
     },
     "color": {
-      "field":"scenario", "type" : "nominal"
+      "field":"scenario", "type" : "nominal",
+      "sort": {}
     }
   }
 }
