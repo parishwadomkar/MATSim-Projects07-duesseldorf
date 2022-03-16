@@ -58,7 +58,7 @@ lt_bike <- read_scenario("policy-scenario-lt-red_bike")
 mt <- read_scenario("policy-scenario-mt-red_0")
 mt_rd <- read_scenario("policy-scenario-mt-red_1")
 
-df <- cmp(base, mt_rd)
+df <- cmp(base, lt_bike)
 sdf <- merge_geom(df, geom)
 
 

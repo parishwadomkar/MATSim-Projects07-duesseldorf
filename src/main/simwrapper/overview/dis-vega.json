@@ -4,8 +4,8 @@
     "url": "overview/sim_srv.csv"
   },
   "mark": "bar",
-  "width": 10,
-  "height": 10,
+  "width": 220,
+  "height": 200,
   "encoding": {
     "column": {
       "field": "source",

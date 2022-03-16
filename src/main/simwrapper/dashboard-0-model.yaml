@@ -53,9 +53,15 @@ layout:
 
   row2:
     - type: vega
-      title: "Distance Classes"
-      description: "Comparison of the distance classes by mode"
-      width: 10
-      height: 10
+      title: "Trips by mode and distance"
+      description: "Comparison of the trip distance distribution by mode between simulation and SrV 2018"
+      height: 6
       props:
         config: overview/dis-vega.json
+
+    - type: vega
+      title: "Travel-time validation"
+      height: 6
+      description: "Travel time was validated for a random selection of trips against an online API with traffic information."
+      props:
+        config: overview/validate-vega.json

@@ -25,6 +25,14 @@ h2 {
   padding-left: 170px;
 }
 
+.row-scenarios .dash-card-frame {
+  margin-bottom: 0 !important;
+}
+
+.row-videos .dash-card-headers {
+  display: none !important;
+}
+
 img.project-logo {
   position: absolute;
   height: 48px;
