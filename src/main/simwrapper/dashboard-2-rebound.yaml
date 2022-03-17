@@ -38,7 +38,7 @@ layout:
 
     - type: "slideshow"
       title: "Emissions"
-      description: "Partiuclar matter emissions according to HBEFA"
+      description: "Particulate matter emissions according to HBEFA. Red areas represent roughly an increase in 10%."
       width: 35
       height: 8
       props:
