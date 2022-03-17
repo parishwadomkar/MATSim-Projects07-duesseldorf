@@ -30,13 +30,20 @@ layout:
         file: scenarios/long-term.md
 
     - type: "sankey"
-      title: "Mode-Shift Mid-term"
-      width: 35
-      props:
-        csv: shift_mt.csv
-
-    - type: "sankey"
       title: "Mode-Shift Distant future"
+      description: "Number of agents switching mode of transportation"
       width: 35
       props:
         csv: shift_lt.csv
+
+    - type: "slideshow"
+      title: "Emissions"
+      description: "Partiuclar matter emissions according to HBEFA"
+      width: 35
+      height: 8
+      props:
+        slides:
+          - image: scenarios/pm_mid_cropped.png
+            title: Mid-term scenario
+          - image: scenarios/pm_long_cropped.png
+            title: Distant future scenario

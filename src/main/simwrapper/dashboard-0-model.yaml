@@ -31,7 +31,21 @@ layout:
             columnName: volume
             scaleFactor: 5000
 
+
   row1:
+    - type: "video"
+      title: "Visualization"
+      description: "Visualization of the scenario from 5:00 - 9:00"
+      width: 2
+      props:
+        controls: true
+        allowfullscreen: true
+        loop: true
+        autoplay: true
+        muted: true
+        sources:
+          video/mp4: overview/video.mp4
+
     - type: "line"
       title: "Car traffic"
       description: "Number of agents en-route"
