@@ -35,8 +35,8 @@ layout:
   row1:
     - type: "video"
       title: "Visualization"
-      description: "Visualization of the scenario from 5:00 - 9:00"
-      width: 2
+      description: "Visualization of the scenario"
+      width: 3
       props:
         controls: true
         allowfullscreen: true
@@ -44,7 +44,7 @@ layout:
         autoplay: true
         muted: true
         sources:
-          video/mp4: overview/video.mp4
+          video/mp4: overview/video2.mp4
 
     - type: "line"
       title: "Car traffic"
@@ -56,25 +56,27 @@ layout:
         xAxisName: "Time"
         yAxisName: "Number of agents"
 
-    - type: "pie"
-      title: "Mode-Share"
-      description: "Mode-share in city area"
-      width: 1
-      height: 5
-      props:
-        dataset: "base_modeshare.csv"
-        useLastRow: true
-
   row2:
     - type: vega
       title: "Trips by mode and distance"
       description: "Comparison of the trip distance distribution by mode between simulation and SrV 2018"
+      width: 3
       height: 6
       props:
         config: overview/dis-vega.json
 
+    - type: "pie"
+      title: "Mode-Share"
+      description: "Mode-share in city area"
+      width: 1
+      height: 6
+      props:
+        dataset: "base_modeshare.csv"
+        useLastRow: true
+
     - type: vega
       title: "Travel-time validation"
+      width: 2
       height: 6
       description: "Travel time was validated for a random selection of trips against an online API with traffic information."
       props:
