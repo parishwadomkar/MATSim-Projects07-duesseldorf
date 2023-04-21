@@ -35,7 +35,7 @@ import org.matsim.application.analysis.traffic.LinkStats;
 import org.matsim.application.analysis.travelTimeValidation.TravelTimeAnalysis;
 import org.matsim.application.analysis.travelTimeValidation.TravelTimePatterns;
 import org.matsim.application.options.SampleOptions;
-import org.matsim.application.prepare.freight.ExtractRelevantFreightTrips;
+import org.matsim.application.prepare.freight.tripExtraction.ExtractRelevantFreightTrips;
 import org.matsim.application.prepare.population.*;
 import org.matsim.application.prepare.pt.CreateTransitScheduleFromGtfs;
 import org.matsim.contrib.signals.otfvis.OTFVisWithSignalsLiveModule;
