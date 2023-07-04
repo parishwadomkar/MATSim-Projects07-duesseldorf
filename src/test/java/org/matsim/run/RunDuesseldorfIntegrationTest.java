@@ -17,18 +17,10 @@ import org.matsim.testcases.MatsimTestUtils;
 
 public class RunDuesseldorfIntegrationTest {
 
-	private static final String URL = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/duesseldorf/duesseldorf-v1.0/input/";
-
 	@Rule
 	public MatsimTestUtils utils = new MatsimTestUtils();
 
 	private void updateConfig(Config config) {
-
-		config.plans().setInputFile(URL + config.plans().getInputFile());
-		config.transit().setTransitScheduleFile(URL + config.transit().getTransitScheduleFile());
-		config.transit().setVehiclesFile(URL + config.transit().getVehiclesFile());
-		config.network().setInputFile(URL + config.network().getInputFile());
-
 
 		config.controler().setLastIteration(0);
 		config.strategy().setFractionOfIterationsToDisableInnovation(1);
@@ -43,7 +35,7 @@ public class RunDuesseldorfIntegrationTest {
 
 		updateConfig(config);
 
-		MATSimApplication.execute(RunDuesseldorfScenario.class, config, "--no-lanes");
+		MATSimApplication.execute(RunDuesseldorfScenario.class, config);
 	}
 
 	@Test
@@ -53,7 +45,7 @@ public class RunDuesseldorfIntegrationTest {
 		updateConfig(config);
 
 		MATSimApplication.execute(RunDuesseldorfScenario.class, config,
-				"--no-lanes", "--infiniteCapacity");
+				 "--infiniteCapacity");
 	}
 
 	@Ignore
