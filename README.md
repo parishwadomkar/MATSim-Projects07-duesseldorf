@@ -11,7 +11,7 @@
 
 This repository provides an open MATSim transport model for Düsseldorf, provided by the [Transport Systems Planning and Transport Telematics group](https://www.vsp.tu-berlin.de) of [Technische Universität Berlin](http://www.tu-berlin.de).
 
-<a rel="TU Berlin" href="https://www.vsp.tu-berlin.de"><img src="https://svn.vsp.tu-berlin.de/repos/public-svn/ueber_uns/logo/TUB_Logo.png" width="15%" height="15%"/></a>
+<a rel="TU Berlin" href="https://www.vsp.tu-berlin.de"><img src="https://svn.vsp.tu-berlin.de/repos/public-svn/ueber_uns/logo/TU_BERLIN_Logo_Lang_RGB_SR_rot.svg" width="25%"/></a>
 
 > Currently, there are two pre-release versions available for testing
 
@@ -57,3 +57,15 @@ It can be used by using either of these methods:
     1. For example, one can disable lanes or run the 25pct scenario using the available options
 1. Start this scenario using the default config by running `java -jar matsim-duesseldorf-1.0.jar`
 1. "Open" the output directory.  You can drag files into VIA as was already done above.
+
+## More information
+
+Please visit https://vsp.berlin/simwrapper/komodnext to see application of the scenario. 
+
+A description of the scenario and methology can be found in the Paper ["Investigation of the system-wide effects of intelligent infrastructure concepts with microscopic and mesoscopic traffic simulation"](https://elib.dlr.de/144810/)
+
+For more information about MATSim, see here: https://www.matsim.org/
+
+## Internal documentation
+
+Documents can be found at https://drive.google.com/drive/folders/1Xb7iXquDb9OCMZJC4MEp3h4tPEZtBw18?usp=drive_link and https://svn.vsp.tu-berlin.de/repos/shared-svn/projects/komodnext/doc/
