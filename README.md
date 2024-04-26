@@ -13,8 +13,6 @@ This repository provides an open MATSim transport model for Düsseldorf, provide
 
 <a rel="TU Berlin" href="https://www.vsp.tu-berlin.de"><img src="https://svn.vsp.tu-berlin.de/repos/public-svn/ueber_uns/logo/TU_BERLIN_Logo_Lang_RGB_SR_rot.svg" width="25%"/></a>
 
-> Currently, there are two pre-release versions available for testing
-
 This scenario contains a 1pct and 25pct sample of Düsseldorf and its surrounding area; road capacities are accordingly reduced. The scenario is calibrated taking into consideration the traffic counts, modal split and mode-specific trip distance distributions.
 
 ### Licenses
