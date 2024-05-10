@@ -28,13 +28,12 @@
     </module>
 
     <module name="plans">
-        <param name="inputPlansFile"
-               value="https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/duesseldorf/duesseldorf-v1.0/input/duesseldorf-v1.7-1pct.plans.xml.gz"/>
+        <param name="inputPlansFile" value="C:\Users\omkarp\IdeaProjects\MATSim-Projects07-duesseldorf\Inputfiles\mod_duf-v1.7-1pct.plans.xml"/>
         <param name="removingUnnecessaryPlanAttributes" value="true"/>
     </module>
 
     <module name="vehicles">
-        <param name="vehiclesFile" value="https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/duesseldorf/duesseldorf-v1.0/input/duesseldorf-v1.0-vehicle-types.xml"/>
+        <param name="vehiclesFile" value="C:\\Users\\omkarp\\IdeaProjects\\MATSim-Projects07-duesseldorf\\Inputfiles\\duesseldorf-v1.0-vehicle-types.xml"/>
     </module>
 
     <module name="transit">
